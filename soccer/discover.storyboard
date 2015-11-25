@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="9059" systemVersion="15B42" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="6Av-Ta-OMB">
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="9049"/>
+    </dependencies>
+    <scenes>
+        <!--发现-->
+        <scene sceneID="T3e-59-fvf">
+            <objects>
+                <navigationController storyboardIdentifier="tabDiscoverNavigationController" id="6Av-Ta-OMB" sceneMemberID="viewController">
+                    <tabBarItem key="tabBarItem" title="发现" image="tab_discover" id="PvV-4Y-Ul1">
+                        <userDefinedRuntimeAttributes>
+                            <userDefinedRuntimeAttribute type="image" keyPath="selectedImage" value="search_strong"/>
+                        </userDefinedRuntimeAttributes>
+                    </tabBarItem>
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" id="lC0-ky-8AX">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                        <animations/>
+                        <color key="barTintColor" red="0.39607843139999999" green="0.75294117650000003" blue="0.34901960780000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <textAttributes key="titleTextAttributes">
+                            <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        </textAttributes>
+                    </navigationBar>
+                    <connections>
+                        <segue destination="eNO-xZ-Gsu" kind="relationship" relationship="rootViewController" id="ioL-hN-Gtc"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Kxh-x9-Fcw" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-120" y="5564"/>
+        </scene>
+        <!--Discover Collection View Controller-->
+        <scene sceneID="Gia-ye-4lJ">
+            <objects>
+                <collectionViewController id="eNO-xZ-Gsu" customClass="VTDiscoverCollectionViewController" customModule="soccer" customModuleProvider="target" sceneMemberID="viewController">
+                    <collectionView key="view" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" delaysContentTouches="NO" dataMode="prototypes" id="A9N-q9-Dyh">
+                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <animations/>
+                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <collectionViewFlowLayout key="collectionViewLayout" minimumLineSpacing="10" minimumInteritemSpacing="10" id="Suf-bg-aM5">
+                            <size key="itemSize" width="300" height="100"/>
+                            <size key="headerReferenceSize" width="0.0" height="0.0"/>
+                            <size key="footerReferenceSize" width="0.0" height="0.0"/>
+                            <inset key="sectionInset" minX="0.0" minY="0.0" maxX="0.0" maxY="0.0"/>
+                        </collectionViewFlowLayout>
+                        <cells>
+                            <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" reuseIdentifier="discoverOptionCell" id="jjE-jX-o19">
+                                <rect key="frame" x="150" y="64" width="300" height="100"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
+                                    <rect key="frame" x="0.0" y="0.0" width="300" height="100"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                    <subviews>
+                                        <imageView userInteractionEnabled="NO" tag="1" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="wwv-Wb-zSq">
+                                            <rect key="frame" x="134" y="24" width="33" height="33"/>
+                                            <animations/>
+                                            <constraints>
+                                                <constraint firstAttribute="height" constant="33" id="fh0-8l-KgE"/>
+                                                <constraint firstAttribute="width" constant="33" id="oiJ-Sr-ZRP"/>
+                                            </constraints>
+                                        </imageView>
+                                        <label opaque="NO" userInteractionEnabled="NO" tag="2" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="jOr-J1-b2j">
+                                            <rect key="frame" x="132" y="62" width="36" height="17"/>
+                                            <animations/>
+                                            <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                            <color key="textColor" red="0.58823529411764708" green="0.58823529411764708" blue="0.58823529411764708" alpha="1" colorSpace="calibratedRGB"/>
+                                            <nil key="highlightedColor"/>
+                                        </label>
+                                    </subviews>
+                                    <animations/>
+                                    <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                </view>
+                                <animations/>
+                                <constraints>
+                                    <constraint firstItem="jOr-J1-b2j" firstAttribute="top" secondItem="wwv-Wb-zSq" secondAttribute="bottom" constant="5" id="IJ3-OV-RYd"/>
+                                    <constraint firstItem="jOr-J1-b2j" firstAttribute="centerX" secondItem="jjE-jX-o19" secondAttribute="centerX" id="Pp2-4B-KtH"/>
+                                    <constraint firstItem="wwv-Wb-zSq" firstAttribute="centerY" secondItem="jjE-jX-o19" secondAttribute="centerY" constant="-10" id="bSG-HG-a4g"/>
+                                    <constraint firstItem="wwv-Wb-zSq" firstAttribute="centerX" secondItem="jjE-jX-o19" secondAttribute="centerX" id="mlH-rH-xqE"/>
+                                </constraints>
+                            </collectionViewCell>
+                        </cells>
+                        <connections>
+                            <outlet property="dataSource" destination="eNO-xZ-Gsu" id="IGT-rb-zKV"/>
+                            <outlet property="delegate" destination="eNO-xZ-Gsu" id="qSe-gY-B6T"/>
+                        </connections>
+                    </collectionView>
+                    <navigationItem key="navigationItem" id="1mf-Ek-ZQ4"/>
+                </collectionViewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="XOl-z3-5K5" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="657" y="5564"/>
+        </scene>
+    </scenes>
+    <resources>
+        <image name="search_strong" width="25" height="25"/>
+        <image name="tab_discover" width="25" height="25"/>
+    </resources>
+</document>

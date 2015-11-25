@@ -1,0 +1,25 @@
+{
+  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "fa5cf8de-4aaf-4143-8859-7f0e163c1fb1++403",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
+    "fa5cf8de-4aaf-4143-8859-7f0e163c1fb1++403" : {
+
+    }
+  },
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
+    "fa5cf8de-4aaf-4143-8859-7f0e163c1fb1++403" : 0
+  },
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "6F466F25-190E-4557-84F1-99F89F9A1A81",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
+    "fa5cf8de-4aaf-4143-8859-7f0e163c1fb1++403" : "soccer_ios"
+  },
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "soccer",
+  "DVTSourceControlWorkspaceBlueprintVersion" : 204,
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "soccer.xcodeproj",
+  "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "svn:\/\/localhost",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Subversion",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "fa5cf8de-4aaf-4143-8859-7f0e163c1fb1++403"
+    }
+  ]
+}
