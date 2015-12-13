@@ -36,9 +36,9 @@ import UIKit
         // setup Weixin social share SDK
         UMSocialWechatHandler.setWXAppId(ApiKeys.WXAppId.rawValue, appSecret: ApiKeys.WXAppSecret.rawValue, url: "http://www.umeng.com/social")
         // setup pgyer beta test SDK and enable check for update function
-        PgyManager.sharedPgyManager().startManagerWithAppId(ApiKeys.PGY.rawValue)
-        PgyManager.sharedPgyManager().checkUpdate()
-        PgyManager.sharedPgyManager().enableFeedback = true
+        // PgyManager.sharedPgyManager().startManagerWithAppId(ApiKeys.PGY.rawValue)
+        // PgyManager.sharedPgyManager().checkUpdate()
+        // PgyManager.sharedPgyManager().enableFeedback = true
         
         // Initialize Reachability
         let reachability = Reachability(hostname: TestConnectivityHostname)

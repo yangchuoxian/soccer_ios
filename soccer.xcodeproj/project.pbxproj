@@ -152,12 +152,7 @@
 		E487DF251BDA37C800CDD2E8 /* nearby_users.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E487DF241BDA37C800CDD2E8 /* nearby_users.storyboard */; };
 		E487DF271BDA399800CDD2E8 /* nearby_matches.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E487DF261BDA399700CDD2E8 /* nearby_matches.storyboard */; };
 		E487DF291BDA3A2000CDD2E8 /* nearby_grounds.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E487DF281BDA3A2000CDD2E8 /* nearby_grounds.storyboard */; };
-		E48DC7AA1B76CEF20027C79A /* PgySDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E48DC7A91B76CEF20027C79A /* PgySDK.framework */; };
-		E48DC7AC1B76D0F60027C79A /* SceneKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E48DC7AB1B76D0F60027C79A /* SceneKit.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
-		E48DC7AE1B76D10D0027C79A /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E48DC7AD1B76D10D0027C79A /* CoreMotion.framework */; };
-		E48DC7B01B76D14D0027C79A /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E48DC7AF1B76D14D0027C79A /* AVFoundation.framework */; };
 		E494F96B1B993563004F0E59 /* VTUpdateActivityScoreViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E494F96A1B993563004F0E59 /* VTUpdateActivityScoreViewController.swift */; };
-		E4988B6D1AC795F2000FEA26 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E4988B6C1AC795F2000FEA26 /* AudioToolbox.framework */; };
 		E4994C551AB5207300E1B8A9 /* libbaidumapapi.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E4994C541AB5207300E1B8A9 /* libbaidumapapi.a */; };
 		E49F75081BD3978100495754 /* VTNewActivityAddressViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E49F75071BD3978100495754 /* VTNewActivityAddressViewController.swift */; };
 		E4A707CD1B68545D008A9FEA /* VTUserInfoTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4A707CC1B68545D008A9FEA /* VTUserInfoTableViewController.swift */; };
@@ -226,7 +221,6 @@
 		E4D4455D1BD9B45A0086CCFA /* Singleton_UserOwnedTeam.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4D4455C1BD9B45A0086CCFA /* Singleton_UserOwnedTeam.swift */; };
 		E4DDE2701AB98CBD00F7BD53 /* Social.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E4DDE26F1AB98CBD00F7BD53 /* Social.framework */; };
 		E4DDE2721AB98CC600F7BD53 /* Accounts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E4DDE2711AB98CC600F7BD53 /* Accounts.framework */; };
-		E4DDE2741AB98CCE00F7BD53 /* CoreTelephony.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E4DDE2731AB98CCE00F7BD53 /* CoreTelephony.framework */; };
 		E4DDE2761AB98CE100F7BD53 /* ImageIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E4DDE2751AB98CE100F7BD53 /* ImageIO.framework */; };
 		E4DDE2781AB98CF300F7BD53 /* libstdc++.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E4DDE2771AB98CF300F7BD53 /* libstdc++.dylib */; };
 		E4DDE27A1AB98D0000F7BD53 /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E4DDE2791AB98D0000F7BD53 /* libsqlite3.dylib */; };
@@ -537,7 +531,6 @@
 		E487DF241BDA37C800CDD2E8 /* nearby_users.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = nearby_users.storyboard; sourceTree = "<group>"; };
 		E487DF261BDA399700CDD2E8 /* nearby_matches.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = nearby_matches.storyboard; sourceTree = "<group>"; };
 		E487DF281BDA3A2000CDD2E8 /* nearby_grounds.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = nearby_grounds.storyboard; sourceTree = "<group>"; };
-		E48DC7A91B76CEF20027C79A /* PgySDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PgySDK.framework; path = soccer/libs/PgySDK.framework; sourceTree = "<group>"; };
 		E48DC7AB1B76D0F60027C79A /* SceneKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SceneKit.framework; path = System/Library/Frameworks/SceneKit.framework; sourceTree = SDKROOT; };
 		E48DC7AD1B76D10D0027C79A /* CoreMotion.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMotion.framework; path = System/Library/Frameworks/CoreMotion.framework; sourceTree = SDKROOT; };
 		E48DC7AF1B76D14D0027C79A /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
@@ -706,15 +699,10 @@
 				E4DDE27C1AB98D0A00F7BD53 /* libz.dylib in Frameworks */,
 				E4DDE2781AB98CF300F7BD53 /* libstdc++.dylib in Frameworks */,
 				E4D445521BD9AEB40086CCFA /* libUMSocial_Sdk_4.2.5.a in Frameworks */,
-				E4DDE2741AB98CCE00F7BD53 /* CoreTelephony.framework in Frameworks */,
 				E4DDE27A1AB98D0000F7BD53 /* libsqlite3.dylib in Frameworks */,
 				E46755BD1AB02A70005D2E78 /* CoreGraphics.framework in Frameworks */,
 				E454C8261B894D54008824AD /* libiconv.dylib in Frameworks */,
 				E4E81AB31AAC8A3F00059204 /* Security.framework in Frameworks */,
-				E48DC7B01B76D14D0027C79A /* AVFoundation.framework in Frameworks */,
-				E4988B6D1AC795F2000FEA26 /* AudioToolbox.framework in Frameworks */,
-				E48DC7AE1B76D10D0027C79A /* CoreMotion.framework in Frameworks */,
-				E48DC7AC1B76D0F60027C79A /* SceneKit.framework in Frameworks */,
 				E46755C51AB02AB7005D2E78 /* CoreLocation.framework in Frameworks */,
 				E481FFB71AC179CF00045E4B /* libicucore.dylib in Frameworks */,
 				E4DDE2761AB98CE100F7BD53 /* ImageIO.framework in Frameworks */,
@@ -725,7 +713,6 @@
 				E46755C11AB02AA9005D2E78 /* OpenGLES.framework in Frameworks */,
 				E4994C551AB5207300E1B8A9 /* libbaidumapapi.a in Frameworks */,
 				E4C94FAF1BDB43FC006833A8 /* libSocialWechat.a in Frameworks */,
-				E48DC7AA1B76CEF20027C79A /* PgySDK.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1527,7 +1514,6 @@
 			isa = PBXGroup;
 			children = (
 				E4504CB01B8FE975000BF078 /* StoreKit.framework */,
-				E48DC7A91B76CEF20027C79A /* PgySDK.framework */,
 				E48DC7AF1B76D14D0027C79A /* AVFoundation.framework */,
 				E48DC7AD1B76D10D0027C79A /* CoreMotion.framework */,
 				E48DC7AB1B76D0F60027C79A /* SceneKit.framework */,
@@ -2201,6 +2187,7 @@
 					"$(PROJECT_DIR)/soccer/libs/Wechat",
 					"$(PROJECT_DIR)/soccer/libs/UMSocial_Sdk_4.2.5",
 				);
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-all_load";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.visiontech.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
