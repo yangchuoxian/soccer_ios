@@ -516,10 +516,10 @@ enum BaiduMapZoomLevel: Float {
 }
 
 /// http request urls
-let BaseUrl = "http://qiozu.com"    // the production server
+//let BaseUrl = "http://qiozu.com"    // the production server
 //let BaseUrl = "http://192.168.0.102:1337" // the local ip address for iOS device test
 //let BaseUrl = "http://192.168.1.109:1337"    // ip address in Yueyang
-//let BaseUrl = "http://localhost:1337" // the local address for iOS simulator test
+let BaseUrl = "http://localhost:1337" // the local address for iOS simulator test
 let TestConnectivityHostname = "www.baidu.com"
 let URLGetPostByTitle = BaseUrl + "/mobile/get_post_by_title?postTitle="
 let URLSubmitLogin = BaseUrl + "/mobile/submit_login"
