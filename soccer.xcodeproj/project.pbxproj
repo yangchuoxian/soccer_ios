@@ -76,8 +76,6 @@
 		E4477DA01BD508950090BC2A /* Ground.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4477D9F1BD508950090BC2A /* Ground.swift */; };
 		E448E2D21B4919EE000F4B3A /* VTNewActivityTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E448E2D11B4919EE000F4B3A /* VTNewActivityTableViewController.swift */; };
 		E44D598A1BDC6EFF00022CD8 /* soccer_ios.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = E44D59891BDC6EFF00022CD8 /* soccer_ios.sqlite */; };
-		E4504CAE1B8FE19B000BF078 /* iVersion.bundle in Resources */ = {isa = PBXBuildFile; fileRef = E4504CAB1B8FE19B000BF078 /* iVersion.bundle */; };
-		E4504CAF1B8FE19B000BF078 /* iVersion.m in Sources */ = {isa = PBXBuildFile; fileRef = E4504CAD1B8FE19B000BF078 /* iVersion.m */; };
 		E4504CB11B8FE975000BF078 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E4504CB01B8FE975000BF078 /* StoreKit.framework */; };
 		E454C8261B894D54008824AD /* libiconv.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E454C8251B894D54008824AD /* libiconv.dylib */; };
 		E458D3AA1B8E948400AF097C /* VTTutorialPageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E458D3A91B8E948400AF097C /* VTTutorialPageViewController.swift */; };
@@ -348,9 +346,6 @@
 		E4477D9F1BD508950090BC2A /* Ground.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Ground.swift; sourceTree = "<group>"; };
 		E448E2D11B4919EE000F4B3A /* VTNewActivityTableViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VTNewActivityTableViewController.swift; sourceTree = "<group>"; };
 		E44D59891BDC6EFF00022CD8 /* soccer_ios.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = soccer_ios.sqlite; sourceTree = "<group>"; };
-		E4504CAB1B8FE19B000BF078 /* iVersion.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = iVersion.bundle; sourceTree = "<group>"; };
-		E4504CAC1B8FE19B000BF078 /* iVersion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iVersion.h; sourceTree = "<group>"; };
-		E4504CAD1B8FE19B000BF078 /* iVersion.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iVersion.m; sourceTree = "<group>"; };
 		E4504CB01B8FE975000BF078 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		E454C8251B894D54008824AD /* libiconv.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libiconv.dylib; path = usr/lib/libiconv.dylib; sourceTree = SDKROOT; };
 		E458D3A91B8E948400AF097C /* VTTutorialPageViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VTTutorialPageViewController.swift; sourceTree = "<group>"; };
@@ -846,7 +841,6 @@
 				E4C4F4261BAFEC41001E6C22 /* RESideMenu */,
 				E4442B821BAE882E001E33CC /* SocketIOClientSwift */,
 				E484B8B51BABCD14004C8C4E /* JSQMessagesViewController */,
-				E4504CAA1B8FE19B000BF078 /* iVersion */,
 				E414B5F41B70F62200065C91 /* MBProgressHUD */,
 				E4F1C2AA1B4CA95A00D4B8C5 /* UzysAnimatedGifLoadMore */,
 				E40B63551AC977D80067793B /* Reachability */,
@@ -858,16 +852,6 @@
 				E467556E1AB027C7005D2E78 /* Keychain */,
 			);
 			path = libs;
-			sourceTree = "<group>";
-		};
-		E4504CAA1B8FE19B000BF078 /* iVersion */ = {
-			isa = PBXGroup;
-			children = (
-				E4504CAB1B8FE19B000BF078 /* iVersion.bundle */,
-				E4504CAC1B8FE19B000BF078 /* iVersion.h */,
-				E4504CAD1B8FE19B000BF078 /* iVersion.m */,
-			);
-			path = iVersion;
 			sourceTree = "<group>";
 		};
 		E458D3A61B8E93E700AF097C /* Tutorial Screens */ = {
@@ -1768,7 +1752,6 @@
 				E4B146DB1BB3C3DD001BACF7 /* TeamGeneralInfo.storyboard in Resources */,
 				E4D445561BD9AEB40086CCFA /* UMShareEditViewController.xib in Resources */,
 				E46755B11AB02973005D2E78 /* mapapi.bundle in Resources */,
-				E4504CAE1B8FE19B000BF078 /* iVersion.bundle in Resources */,
 				E4B146C61BB37732001BACF7 /* Entry.storyboard in Resources */,
 				E4D445581BD9AEB40086CCFA /* UMSLoginViewController.xib in Resources */,
 				E487DF271BDA399800CDD2E8 /* nearby_matches.storyboard in Resources */,
@@ -1963,7 +1946,6 @@
 				E4F6E78A1AB684700033B5C2 /* ActionSheetDistancePicker.m in Sources */,
 				E4D2499A1AB6D7770062DA0C /* JTCalendarWeekView.m in Sources */,
 				E4DE9FC61B69E4CD00EB6CC1 /* VTChangeCareerAgeViewController.swift in Sources */,
-				E4504CAF1B8FE19B000BF078 /* iVersion.m in Sources */,
 				E4C50B291AC4D9BE0038031C /* MGSwipeTableCell.m in Sources */,
 				E4442BA01BAE882E001E33CC /* SocketTypes.swift in Sources */,
 				E4442B9B1BAE882E001E33CC /* SocketIOClientStatus.swift in Sources */,

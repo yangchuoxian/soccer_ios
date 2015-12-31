@@ -8,7 +8,7 @@
 
 import UIKit
 
-class VTSystemSettingsTableViewController: UITableViewController, NSURLConnectionDelegate, NSURLConnectionDataDelegate, iVersionDelegate {
+class VTSystemSettingsTableViewController: UITableViewController, NSURLConnectionDelegate, NSURLConnectionDataDelegate {
     
     var HUD: MBProgressHUD?
     var button_logout: UIButton?
@@ -56,20 +56,12 @@ class VTSystemSettingsTableViewController: UITableViewController, NSURLConnectio
     
     override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
         self.tableView.deselectRowAtIndexPath(indexPath, animated: true)
-        if indexPath.section == 1 && indexPath.row == 2 {   // user asks for new version checking
-            iVersion.sharedInstance().delegate = self
-            iVersion.sharedInstance().checkForNewVersion()
-            self.HUD = Toolbox.setupCustomProcessingViewWithTitle(title: nil)
-        }
         if indexPath.section == 2 && indexPath.row == 2 {   // table cell of clean cache data is tapped
             let HUD = MBProgressHUD(view: self.navigationController?.view)
             self.view.addSubview(HUD)
             HUD.show(true)
             HUD.hide(true)
             Toolbox.showCustomAlertViewWithImage("checkmark", title: "缓存清理成功")
-        }
-        if indexPath.section == 2 && indexPath.row == 1 {   // user wants to review this app in app store
-            iVersion.sharedInstance().openAppPageInAppStore()
         }
         if indexPath.section == 3 && indexPath.row == 0 {   // logout cell tapped
             self.submitLogout()
@@ -112,28 +104,7 @@ class VTSystemSettingsTableViewController: UITableViewController, NSURLConnectio
         self.responseData = NSMutableData()
     }
     
-    /**
-     * delegate methods for iVersion, the lib to check for updates
-     */
-    func iVersionDidDetectNewVersion(version: String!, details versionDetails: String!) {
-        self.HUD?.hide(true)
-        self.HUD = nil
-    }
-    
-    func iVersionDidNotDetectNewVersion() {
-        self.HUD?.hide(true)
-        self.HUD = nil
-        Toolbox.showCustomAlertViewWithImage("checkmark", title: "当前已是最新版本")
-    }
-    
-    func iVersionVersionCheckDidFailWithError(error: NSError!) {
-        self.HUD?.hide(true)
-        self.HUD = nil
-        Toolbox.showCustomAlertViewWithImage("unhappy", title: "检查版本出错")
-    }
-    
     deinit {
-        iVersion.sharedInstance().delegate = nil
         self.HUD = nil
         if self.button_logout != nil {
             self.button_logout?.removeTarget(nil, action: nil, forControlEvents: .AllEvents)

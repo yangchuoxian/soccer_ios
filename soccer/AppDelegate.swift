@@ -25,8 +25,6 @@ import UIKit
                 self.handlePushNotification(userInfo!)
             }
         }
-        // set up iVersion by assigning app store id to it
-        iVersion.sharedInstance().appStoreID = AppStoreId
         // Override point for customization after application launch
         // initiate BaiduMapManager
         self.mapManager = BMKMapManager()

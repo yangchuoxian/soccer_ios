@@ -24,7 +24,6 @@
 #import "KeychainItemWrapper.h" // lib to store login credentials encrypted in keychain
 #import "UMSocial.h"    // you meng social sharing lib
 #import "UMSocialWechatHandler.h"   // you meng social sharing lib for wechat
-#import "iVersion.h"    // lib to check for app updates programmatically
 #import "RESideMenu.h" // lib for content/sidebar menu view controller
 
 // VT-TO-DO 蒲公英内测SDK，在发布正式版本时需要删除
