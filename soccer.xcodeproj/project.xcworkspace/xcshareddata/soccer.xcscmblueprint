@@ -10,7 +10,7 @@
   },
   "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "6F466F25-190E-4557-84F1-99F89F9A1A81",
   "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
-    "FBB725E933163C07DBBD83788645FEE5870B8A09" : "soccer_ios"
+    "FBB725E933163C07DBBD83788645FEE5870B8A09" : "soccer_ios\/"
   },
   "DVTSourceControlWorkspaceBlueprintNameKey" : "soccer",
   "DVTSourceControlWorkspaceBlueprintVersion" : 204,

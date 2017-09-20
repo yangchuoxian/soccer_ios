@@ -36,15 +36,15 @@ class VTMemberStatsTableViewController: UITableViewController, NSURLConnectionDa
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.tableView.tableFooterView = UIView(frame: CGRectZero)
+        self.tableView.tableFooterView = UIView(frame: CGRect.zero)
         
         if Singleton_CurrentUser.sharedInstance.userId == self.userObject?.userId {
             // if the selected team member is the current user himself/herself, he/she cannot score/review him/herself, thus the table cell of scores should be disabled
             for sectionIndex in 0...(self.tableView.numberOfSections - 1) {
-                for rowIndex in 0...(self.tableView.numberOfRowsInSection(sectionIndex)) {
-                    let tableCell = self.tableView.cellForRowAtIndexPath(NSIndexPath(forRow: rowIndex, inSection: sectionIndex))
-                    tableCell?.userInteractionEnabled = false
-                    tableCell?.selectionStyle = .None
+                for rowIndex in 0...(self.tableView.numberOfRows(inSection: sectionIndex)) {
+                    let tableCell = self.tableView.cellForRow(at: IndexPath(row: rowIndex, section: sectionIndex))
+                    tableCell?.isUserInteractionEnabled = false
+                    tableCell?.selectionStyle = .none
                 }
             }
         }
@@ -71,7 +71,7 @@ class VTMemberStatsTableViewController: UITableViewController, NSURLConnectionDa
         Toolbox.setLabelColorBasedOnAttributeValue(self.label_scoreOfExplosive)
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Appearance.customizeNavigationBar(self, title: "统计数据")
     }
@@ -81,31 +81,31 @@ class VTMemberStatsTableViewController: UITableViewController, NSURLConnectionDa
         // Dispose of any resources that can be recreated.
     }
     
-    override func tableView(tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+    override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let footerView = UIView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: DefaultTableSectionFooterHeight))
-        footerView.backgroundColor = UIColor.clearColor()
+        footerView.backgroundColor = UIColor.clear
         return footerView
     }
     
-    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        self.tableView.deselectRowAtIndexPath(indexPath, animated: true)
-        let label_attributeName = self.tableView.cellForRowAtIndexPath(indexPath)?.contentView.viewWithTag(2) as! UILabel
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        self.tableView.deselectRow(at: indexPath, animated: true)
+        let label_attributeName = self.tableView.cellForRow(at: indexPath)?.contentView.viewWithTag(2) as! UILabel
         let selectedAttribute = label_attributeName.text
 
         if selectedAttribute == PlayerAttributeNames.AverageAbility.rawValue {
-            self.currentReviewingAttributeIndex = PlayerAttributeIndexes.AverageAbility.rawValue
+            self.currentReviewingAttributeIndex = PlayerAttributeIndexes.averageAbility.rawValue
         } else if selectedAttribute == PlayerAttributeNames.Speed.rawValue {
-            self.currentReviewingAttributeIndex = PlayerAttributeIndexes.Speed.rawValue
+            self.currentReviewingAttributeIndex = PlayerAttributeIndexes.speed.rawValue
         } else if selectedAttribute == PlayerAttributeNames.JumpAbility.rawValue {
-            self.currentReviewingAttributeIndex = PlayerAttributeIndexes.JumpAbility.rawValue
+            self.currentReviewingAttributeIndex = PlayerAttributeIndexes.jumpAbility.rawValue
         } else if selectedAttribute == PlayerAttributeNames.ExplosiveAbility.rawValue {
-            self.currentReviewingAttributeIndex = PlayerAttributeIndexes.ExplosiveAbility.rawValue
+            self.currentReviewingAttributeIndex = PlayerAttributeIndexes.explosiveAbility.rawValue
         } else if selectedAttribute == PlayerAttributeNames.Conscious.rawValue {
-            self.currentReviewingAttributeIndex = PlayerAttributeIndexes.Conscious.rawValue
+            self.currentReviewingAttributeIndex = PlayerAttributeIndexes.conscious.rawValue
         } else if selectedAttribute == PlayerAttributeNames.Cooperation.rawValue {
-            self.currentReviewingAttributeIndex = PlayerAttributeIndexes.Cooperation.rawValue
+            self.currentReviewingAttributeIndex = PlayerAttributeIndexes.cooperation.rawValue
         } else if selectedAttribute == PlayerAttributeNames.Personality.rawValue {
-            self.currentReviewingAttributeIndex = PlayerAttributeIndexes.Personality.rawValue
+            self.currentReviewingAttributeIndex = PlayerAttributeIndexes.personality.rawValue
         }
         self.showScoreUserActionSheet()
     }
@@ -113,24 +113,24 @@ class VTMemberStatsTableViewController: UITableViewController, NSURLConnectionDa
     func showScoreUserActionSheet() {
         var actionSheetPickerTitle = ""
         switch self.currentReviewingAttributeIndex {
-        case PlayerAttributeIndexes.AverageAbility.rawValue:
+        case PlayerAttributeIndexes.averageAbility.rawValue:
             actionSheetPickerTitle = "球员综合能力评分"
             break
-        case PlayerAttributeIndexes.Speed.rawValue:
+        case PlayerAttributeIndexes.speed.rawValue:
             actionSheetPickerTitle = "球员速度评分"
             break
-        case PlayerAttributeIndexes.JumpAbility.rawValue:
+        case PlayerAttributeIndexes.jumpAbility.rawValue:
             actionSheetPickerTitle = "球员弹跳能力评分"
             break
-        case PlayerAttributeIndexes.ExplosiveAbility.rawValue:
+        case PlayerAttributeIndexes.explosiveAbility.rawValue:
             actionSheetPickerTitle = "球员爆发力评分"
             break
-        case PlayerAttributeIndexes.Conscious.rawValue:
+        case PlayerAttributeIndexes.conscious.rawValue:
             actionSheetPickerTitle = "球员意识评分"
             break
-        case PlayerAttributeIndexes.Cooperation.rawValue:
+        case PlayerAttributeIndexes.cooperation.rawValue:
             actionSheetPickerTitle = "球员配合评分"
-        case PlayerAttributeIndexes.Personality.rawValue:
+        case PlayerAttributeIndexes.personality.rawValue:
             actionSheetPickerTitle = "球员人品评分"
         default:
             break
@@ -140,8 +140,8 @@ class VTMemberStatsTableViewController: UITableViewController, NSURLConnectionDa
         for i in 1...10 {
             scoreOptionsList.append(String(i))
         }
-        ActionSheetStringPicker.showPickerWithTitle(
-            actionSheetPickerTitle,
+        ActionSheetStringPicker.show(
+            withTitle: actionSheetPickerTitle,
             rows: scoreOptionsList,
             initialSelection: 0,
             doneBlock: {
@@ -154,17 +154,17 @@ class VTMemberStatsTableViewController: UITableViewController, NSURLConnectionDa
                     self.HUD = Toolbox.setupCustomProcessingViewWithTitle(title: nil)
                 }
                 return
-            }, cancelBlock: {
+            }, cancel: {
                 picker in return
             }, origin: self.view
         )
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.HUD?.hide(true)
         self.HUD = nil
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络超时")
@@ -172,39 +172,39 @@ class VTMemberStatsTableViewController: UITableViewController, NSURLConnectionDa
         self.responseData = NSMutableData()
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.HUD?.hide(true)
         self.HUD = nil
-        let responseStr = NSString(data: self.responseData!, encoding: NSUTF8StringEncoding)
+        let responseStr = NSString(data: self.responseData! as Data, encoding: String.Encoding.utf8.rawValue)
         
         // succeeded http request to score user ability
         // there are 4 possible user abilities that the current user is scoring
-        let scoreJson = (try? NSJSONSerialization.JSONObjectWithData(self.responseData!, options: .MutableLeaves)) as? [NSObject: AnyObject]
+        let scoreJson = (try? JSONSerialization.jsonObject(with: self.responseData! as Data, options: .mutableLeaves)) as? [AnyHashable: Any]
         if scoreJson != nil {
             let newScore = scoreJson!["newScore"] as! Float
             let numOfScores = scoreJson!["numOfScores"] as! Int
-            if self.currentReviewingAttributeIndex == PlayerAttributeIndexes.AverageAbility.rawValue {
+            if self.currentReviewingAttributeIndex == PlayerAttributeIndexes.averageAbility.rawValue {
                 self.label_scoreOfAverageAbility.text = "\(newScore)"
                 self.label_numOfReviewsOnAverageAbility.text = "\(numOfScores)次"
-            } else if self.currentReviewingAttributeIndex == PlayerAttributeIndexes.Speed.rawValue {
+            } else if self.currentReviewingAttributeIndex == PlayerAttributeIndexes.speed.rawValue {
                 self.label_scoreOfSpeed.text = "\(newScore)"
                 self.label_numOfReviewsOnSpeed.text = "\(numOfScores)次"
-            } else if self.currentReviewingAttributeIndex == PlayerAttributeIndexes.JumpAbility.rawValue {
+            } else if self.currentReviewingAttributeIndex == PlayerAttributeIndexes.jumpAbility.rawValue {
                 self.label_scoreOfJump.text = "\(newScore)"
                 self.label_numOfReviewsOnJump.text = "\(numOfScores)次"
-            } else if self.currentReviewingAttributeIndex == PlayerAttributeIndexes.ExplosiveAbility.rawValue {
+            } else if self.currentReviewingAttributeIndex == PlayerAttributeIndexes.explosiveAbility.rawValue {
                 self.label_scoreOfExplosive.text = "\(newScore)"
                 self.label_numOfReviewsOnExplosive.text = "\(numOfScores)次"
-            } else if self.currentReviewingAttributeIndex == PlayerAttributeIndexes.Conscious.rawValue {
+            } else if self.currentReviewingAttributeIndex == PlayerAttributeIndexes.conscious.rawValue {
                 self.label_scoreOfConscious.text = "\(newScore)"
                 self.label_numOfReviewsOnConscious.text = "\(numOfScores)次"
-            } else if self.currentReviewingAttributeIndex == PlayerAttributeIndexes.Cooperation.rawValue {
+            } else if self.currentReviewingAttributeIndex == PlayerAttributeIndexes.cooperation.rawValue {
                 self.label_scoreOfCooperation.text = "\(newScore)"
                 self.label_numOfReviewsOnCooperation.text = "\(numOfScores)次"
-            } else if self.currentReviewingAttributeIndex == PlayerAttributeIndexes.Conscious.rawValue {
+            } else if self.currentReviewingAttributeIndex == PlayerAttributeIndexes.conscious.rawValue {
                 self.label_scoreOfConscious.text = "\(newScore)"
                 self.label_numOfReviewsOnConscious.text = "\(numOfScores)次"
-            } else if self.currentReviewingAttributeIndex == PlayerAttributeIndexes.Personality.rawValue {
+            } else if self.currentReviewingAttributeIndex == PlayerAttributeIndexes.personality.rawValue {
                 self.label_scoreOfPersonality.text = "\(newScore)"
                 self.label_numOfReviewsOnPersonality.text = "\(numOfScores)次"
             }

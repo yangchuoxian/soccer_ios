@@ -17,14 +17,14 @@ class VTSystemSettingsTableViewController: UITableViewController, NSURLConnectio
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        self.tableView.tableFooterView = UIView(frame: CGRectZero)
+        self.tableView.tableFooterView = UIView(frame: CGRect.zero)
         // the below sets the background color of table view footer and header
-        UITableViewHeaderFooterView.appearance().tintColor = UIColor.clearColor()
+        UITableViewHeaderFooterView.appearance().tintColor = UIColor.clear
         // listen to settingsInstructionComplete message and handles it
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "notifySettingsInstructionComplete:", name: "settingsInstructionComplete", object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTSystemSettingsTableViewController.notifySettingsInstructionComplete(_:)), name: NSNotification.Name(rawValue: "settingsInstructionComplete"), object: nil)
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Appearance.customizeNavigationBar(self, title: "设置")
     }
@@ -34,8 +34,8 @@ class VTSystemSettingsTableViewController: UITableViewController, NSURLConnectio
         // Dispose of any resources that can be recreated.
     }
     
-    func notifySettingsInstructionComplete(notification: NSNotification) {
-        let nameOfSettingsOption: String = notification.object?.objectForKey("settings") as! String
+    func notifySettingsInstructionComplete(_ notification: Notification) {
+        let nameOfSettingsOption: String = (notification.object as AnyObject).object(forKey: "settings") as! String
         if nameOfSettingsOption == "feedback" {
             Toolbox.showCustomAlertViewWithImage("checkmark", title: "提交意见成功")
         } else {
@@ -54,35 +54,35 @@ class VTSystemSettingsTableViewController: UITableViewController, NSURLConnectio
         connection = nil
     }
     
-    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        self.tableView.deselectRowAtIndexPath(indexPath, animated: true)
-        if indexPath.section == 2 && indexPath.row == 2 {   // table cell of clean cache data is tapped
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        self.tableView.deselectRow(at: indexPath, animated: true)
+        if (indexPath as NSIndexPath).section == 2 && (indexPath as NSIndexPath).row == 2 {   // table cell of clean cache data is tapped
             let HUD = MBProgressHUD(view: self.navigationController?.view)
-            self.view.addSubview(HUD)
-            HUD.show(true)
-            HUD.hide(true)
+            self.view.addSubview(HUD!)
+            HUD?.show(true)
+            HUD?.hide(true)
             Toolbox.showCustomAlertViewWithImage("checkmark", title: "缓存清理成功")
         }
-        if indexPath.section == 3 && indexPath.row == 0 {   // logout cell tapped
+        if (indexPath as NSIndexPath).section == 3 && (indexPath as NSIndexPath).row == 0 {   // logout cell tapped
             self.submitLogout()
         }
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "aboutUsSegue" {
-            let destinationViewController = segue.destinationViewController as! VTPostViewController
+            let destinationViewController = segue.destination as! VTPostViewController
             destinationViewController.postType = .AboutUs
         } else if segue.identifier == "FAQSegue" {
-            let destinationViewController = segue.destinationViewController as! VTPostViewController
+            let destinationViewController = segue.destination as! VTPostViewController
             destinationViewController.postType = .FAQ
         }
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.HUD?.hide(true)
         self.HUD = nil
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络超时")
@@ -90,11 +90,11 @@ class VTSystemSettingsTableViewController: UITableViewController, NSURLConnectio
         self.responseData = NSMutableData()
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.HUD?.hide(true)
         self.HUD = nil
         
-        let responseStr = NSString(data: self.responseData!, encoding: NSUTF8StringEncoding)
+        let responseStr = NSString(data: self.responseData! as Data, encoding: String.Encoding.utf8.rawValue)
         if responseStr == "logged out" {    // successfully logged out
             Singleton_CurrentUser.sharedInstance.logout()
         } else {
@@ -107,7 +107,7 @@ class VTSystemSettingsTableViewController: UITableViewController, NSURLConnectio
     deinit {
         self.HUD = nil
         if self.button_logout != nil {
-            self.button_logout?.removeTarget(nil, action: nil, forControlEvents: .AllEvents)
+            self.button_logout?.removeTarget(nil, action: nil, for: .allEvents)
             self.button_logout = nil
         }
         self.responseData = nil

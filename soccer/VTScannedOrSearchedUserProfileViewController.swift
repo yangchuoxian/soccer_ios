@@ -11,8 +11,8 @@ import UIKit
 class VTScannedOrSearchedUserProfileTableViewController: UITableViewController, UIActionSheetDelegate, NSURLConnectionDelegate, NSURLConnectionDataDelegate {
 
     enum ApplicationResponse {
-        case Accept
-        case Reject
+        case accept
+        case reject
     }
     
     var userObject: User?
@@ -46,10 +46,10 @@ class VTScannedOrSearchedUserProfileTableViewController: UITableViewController, 
         Toolbox.removeBottomShadowOfNavigationBar(self.navigationController!.navigationBar)
         
         // Set this in the root view controller so that the back button displays back instead of the root view controller name
-        self.navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .Plain, target: nil, action: nil)
+        self.navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
         
         // load user avatar asynchronously
-        Toolbox.loadAvatarImage(self.userObject!.userId, toImageView: self.imageView_avatar, avatarType: AvatarType.User)
+        Toolbox.loadAvatarImage(self.userObject!.userId, toImageView: self.imageView_avatar, avatarType: AvatarType.user)
         self.label_username.text = self.userObject!.username
         if Toolbox.isStringValueValid(self.userObject!.dateOfBirth) {
             self.label_dateOfBirth.text = self.userObject!.dateOfBirth
@@ -74,24 +74,24 @@ class VTScannedOrSearchedUserProfileTableViewController: UITableViewController, 
         }
         
         // if this user has already been invited, or if this user has already applied for membership, hide and disable the button to send invitation
-        if self.potentialMemberType == .Invited {
-            self.button_sendInvitation?.enabled = false
-            self.button_sendInvitation?.hidden = true
-        } else if self.potentialMemberType == .Applied {
-            self.button_sendInvitation?.enabled = false
-            self.button_sendInvitation?.hidden = true
+        if self.potentialMemberType == .invited {
+            self.button_sendInvitation?.isEnabled = false
+            self.button_sendInvitation?.isHidden = true
+        } else if self.potentialMemberType == .applied {
+            self.button_sendInvitation?.isEnabled = false
+            self.button_sendInvitation?.isHidden = true
             // this user has sent an application to join this team, the captain could either approve or reject the application
             // add right button in navigation bar programmatically
             self.navigationItem.rightBarButtonItem = UIBarButtonItem(
                 image: UIImage(named: "more"),
-                style: .Plain,
+                style: .plain,
                 target: self,
-                action: "showAcceptOrRejectApplicationActionSheet"
+                action: #selector(VTScannedOrSearchedUserProfileTableViewController.showAcceptOrRejectApplicationActionSheet)
             )
         }
     }
     
-    override func tableView(tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+    override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
         if section != 3 {
             return DefaultTableSectionFooterHeight
         } else {
@@ -99,7 +99,7 @@ class VTScannedOrSearchedUserProfileTableViewController: UITableViewController, 
             // 1. current user is a captain for a team
             // 2. the user has NOT been applied by this team
             // 3. the user has NOT been invited by this team
-            if Toolbox.isStringValueValid(Singleton_UserOwnedTeam.sharedInstance.teamId) && self.potentialMemberType != .Invited && self.potentialMemberType != .Applied {
+            if Toolbox.isStringValueValid(Singleton_UserOwnedTeam.sharedInstance.teamId) && self.potentialMemberType != .invited && self.potentialMemberType != .applied {
                 return TableSectionFooterHeightWithButton
             } else {
                 return DefaultTableSectionFooterHeight
@@ -107,19 +107,19 @@ class VTScannedOrSearchedUserProfileTableViewController: UITableViewController, 
         }
     }
     
-    override func tableView(tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+    override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         if section != 3 {
-            return UIView(frame: CGRectZero)
+            return UIView(frame: CGRect.zero)
         } else {
-            let footerView = UIView(frame: CGRectMake(0, 0, ScreenSize.width, TableSectionFooterHeightWithButton))
+            let footerView = UIView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: TableSectionFooterHeightWithButton))
             // current user can invite this user if the following 3 conditions met:
             // 1. current user is a captain for a team
             // 2. the user has NOT been applied by this team
             // 3. the user has NOT been invited by this team
-            if Toolbox.isStringValueValid(Singleton_UserOwnedTeam.sharedInstance.teamId) && self.potentialMemberType != .Invited && self.potentialMemberType != .Applied {
+            if Toolbox.isStringValueValid(Singleton_UserOwnedTeam.sharedInstance.teamId) && self.potentialMemberType != .invited && self.potentialMemberType != .applied {
                 // add send invitation button
                 self.button_sendInvitation = Appearance.setupTableFooterButtonWithTitle("发送邀请", backgroundColor: ColorSettledGreen)
-                self.button_sendInvitation?.addTarget(self, action: "showSendInvitationView", forControlEvents: .TouchUpInside)
+                self.button_sendInvitation?.addTarget(self, action: #selector(VTScannedOrSearchedUserProfileTableViewController.showSendInvitationView), for: .touchUpInside)
                 footerView.addSubview(self.button_sendInvitation!)
             }
             return footerView
@@ -127,7 +127,7 @@ class VTScannedOrSearchedUserProfileTableViewController: UITableViewController, 
     }
     
     func showSendInvitationView() {
-        self.performSegueWithIdentifier("sendInvitationSegue", sender: self)
+        self.performSegue(withIdentifier: "sendInvitationSegue", sender: self)
     }
     
     func showAcceptOrRejectApplicationActionSheet() {
@@ -136,39 +136,39 @@ class VTScannedOrSearchedUserProfileTableViewController: UITableViewController, 
         let cancelTitle = "取消"
         
         let actionSheet = UIActionSheet(title: nil, delegate: self, cancelButtonTitle: cancelTitle, destructiveButtonTitle: rejectApplication, otherButtonTitles: acceptApplication)
-        actionSheet.showInView(self.view)
+        actionSheet.show(in: self.view)
     }
     
-    func actionSheet(actionSheet: UIActionSheet, clickedButtonAtIndex buttonIndex: Int) {
+    func actionSheet(_ actionSheet: UIActionSheet, clickedButtonAt buttonIndex: Int) {
         if buttonIndex == 1 {   // user pressed cancel
             return
         }
         let dbManager = DBManager(databaseFilename: "soccer_ios.sqlite")
-        let selectedTeamId = NSUserDefaults.standardUserDefaults().stringForKey("teamIdSelectedInTeamsList")
-        let databaseResult = dbManager.loadDataFromDB(
-            "select messageId from messages where type=? and status=? and senderId=? and teamReceiverId=?",
+        let selectedTeamId = UserDefaults.standard.string(forKey: "teamIdSelectedInTeamsList")
+        let databaseResult = dbManager?.loadData(
+            fromDB: "select messageId from messages where type=? and status=? and senderId=? and teamReceiverId=?",
             parameters: [
-                MessageType.Application.rawValue,
-                MessageStatus.Unread.rawValue,
+                MessageType.application.rawValue,
+                MessageStatus.unread.rawValue,
                 self.userObject!.userId,
                 selectedTeamId!
             ]
         )
-        actionSheet.dismissWithClickedButtonIndex(buttonIndex, animated: true)
+        actionSheet.dismiss(withClickedButtonIndex: buttonIndex, animated: true)
         
         let correspondingApplicationMessageId = databaseResult[0] as? NSArray
         if correspondingApplicationMessageId != nil {
             self.applicationMessageId = "\(correspondingApplicationMessageId![0])"
         }
         
-        var resp: ApplicationResponse = .Accept
+        var resp: ApplicationResponse = .accept
         var postParamString = ""
         if buttonIndex == 0 {   // captain rejected the user's application
             postParamString = "messageId=\(self.applicationMessageId!)"
-            resp = .Reject
+            resp = .reject
         } else if buttonIndex == 2 {    // captain accepted the user's application
             postParamString = "messageId=\(self.applicationMessageId!)&isAccepted=true"
-            resp = .Accept
+            resp = .accept
         }
         let connection = Toolbox.asyncHttpPostToURL(URLHandleRequest, parameters: postParamString, delegate: self)
         if connection == nil {
@@ -181,18 +181,18 @@ class VTScannedOrSearchedUserProfileTableViewController: UITableViewController, 
 
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Appearance.customizeNavigationBar(self, title: "用户资料")
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "sendInvitationSegue" {
-            let destinationViewController = segue.destinationViewController as! VTSendInvitationViewController
+            let destinationViewController = segue.destination as! VTSendInvitationViewController
             destinationViewController.receiverUserObject = self.userObject
             destinationViewController.fromTeamId = Singleton_UserOwnedTeam.sharedInstance.teamId
         } else if segue.identifier == "statsSegue" {
-            let destinationViewController = segue.destinationViewController as! VTUserStatsTableViewController
+            let destinationViewController = segue.destination as! VTUserStatsTableViewController
             destinationViewController.userObject = self.userObject
         }
     }
@@ -202,11 +202,11 @@ class VTScannedOrSearchedUserProfileTableViewController: UITableViewController, 
         // Dispose of any resources that can be recreated.
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.HUD?.hide(true)
         self.HUD = nil
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "接收/拒绝申请失败")
@@ -216,34 +216,34 @@ class VTScannedOrSearchedUserProfileTableViewController: UITableViewController, 
         self.responseData = NSMutableData()
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.HUD?.hide(true)
         self.HUD = nil
         
-        let responseStr = NSString(data: self.responseData!, encoding: NSUTF8StringEncoding)
+        let responseStr = NSString(data: self.responseData! as Data, encoding: String.Encoding.utf8.rawValue)
         var status: Int?
         if responseStr == "OK" {    // accept/reject application succeeded
-            if self.currentApplicationResponse == .Accept {
-                status = MessageStatus.Accepted.rawValue
-            } else if self.currentApplicationResponse == .Reject {
-                status = MessageStatus.Rejected.rawValue
+            if self.currentApplicationResponse == .accept {
+                status = MessageStatus.accepted.rawValue
+            } else if self.currentApplicationResponse == .reject {
+                status = MessageStatus.rejected.rawValue
             }
             let dbManager = DBManager(databaseFilename: "soccer_ios.sqlite")
-            dbManager.modifyDataInDB("update messages set status=? where messageId=?", parameters: [status!, self.applicationMessageId!])
+            dbManager?.modifyData(inDB: "update messages set status=? where messageId=?", parameters: [status!, self.applicationMessageId!])
             // notify VTMainTabBarViewController that the number of total unread messages should decrease by dbManager.affectedRows
-            NSNotificationCenter.defaultCenter().postNotificationName(
-                "totalNumOfUnreadMessagesChanged",
+            NotificationCenter.default.post(
+                name: Notification.Name(rawValue: "totalNumOfUnreadMessagesChanged"),
                 object: [
                     "action": "-",
-                    "quantity": "\(Int(dbManager.affectedRows))"
+                    "quantity": "\(Int((dbManager?.affectedRows)!))"
                 ]
             )
             // notify VTGroupsOfMessagesTableViewController that the number of unread messages for specific message group should be updated
-            NSNotificationCenter.defaultCenter().postNotificationName(
-                "numOfUnreadMessagesInOneMessageGroupChanged",
-                object: "\(MessageGroupIndex.Request.rawValue))"
+            NotificationCenter.default.post(
+                name: Notification.Name(rawValue: "numOfUnreadMessagesInOneMessageGroupChanged"),
+                object: "\(MessageGroupIndex.request.rawValue))"
             )
-            self.performSegueWithIdentifier("unwindToMembersContainerSegue", sender: self)
+            self.performSegue(withIdentifier: "unwindToMembersContainerSegue", sender: self)
         } else {    // accept/reject application failed with error message
             Toolbox.showCustomAlertViewWithImage("unhappy", title: "接收/拒绝申请失败")
         }

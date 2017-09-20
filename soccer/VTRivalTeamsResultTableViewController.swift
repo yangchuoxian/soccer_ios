@@ -7,6 +7,26 @@
 //
 
 import UIKit
+fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l < r
+  case (nil, _?):
+    return true
+  default:
+    return false
+  }
+}
+
+fileprivate func <= <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l <= r
+  default:
+    return !(rhs < lhs)
+  }
+}
+
 
 class VTRivalTeamsResultTableViewController: UITableViewController, NSURLConnectionDelegate, NSURLConnectionDataDelegate {
     
@@ -29,37 +49,37 @@ class VTRivalTeamsResultTableViewController: UITableViewController, NSURLConnect
         super.viewDidLoad()
         
         // remove separators of cells for static table view
-        self.tableView.tableFooterView = UIView(frame: CGRectZero)
+        self.tableView.tableFooterView = UIView(frame: CGRect.zero)
         self.tableView.rowHeight = CustomTableRowHeight
         
         // retrieve current team id and location
-        self.teamId = NSUserDefaults.standardUserDefaults().objectForKey("teamIdSelectedInTeamsList") as! String
+        self.teamId = UserDefaults.standard.object(forKey: "teamIdSelectedInTeamsList") as! String
         
         // retrieve activity info
-        self.activityInfo = NSUserDefaults.standardUserDefaults().objectForKey("activityInfo") as! Dictionary<String, String>
+        self.activityInfo = UserDefaults.standard.object(forKey: "activityInfo") as! Dictionary<String, String>
 
         // Uncomment the following line to preserve selection between presentations
          self.clearsSelectionOnViewWillAppear = false
         
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "searchRivalsByName:", name: "launchSearchRivals", object: nil)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "getNearbyRivals", name: "getNearbyRivals", object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTRivalTeamsResultTableViewController.searchRivalsByName(_:)), name: NSNotification.Name(rawValue: "launchSearchRivals"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTRivalTeamsResultTableViewController.getNearbyRivals), name: NSNotification.Name(rawValue: "getNearbyRivals"), object: nil)
     }
     
     func insertRowAtBottom() {
         self.isLoadingNextPage = true
         let delayInSeconds: Int64 = 2
-        let popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * Int64(NSEC_PER_SEC))
-        dispatch_after(popTime, dispatch_get_main_queue(), {
+        let popTime = DispatchTime.now() + Double(delayInSeconds * Int64(NSEC_PER_SEC)) / Double(NSEC_PER_SEC)
+        DispatchQueue.main.asyncAfter(deadline: popTime, execute: {
             [unowned self] in
-            self.rowIndexOfLoadingMoreIndicator = self.tableView.numberOfRowsInSection(0)
+            self.rowIndexOfLoadingMoreIndicator = self.tableView.numberOfRows(inSection: 0)
             self.tableView.beginUpdates()
             self.rivalsList.append(NSDictionary())
-            self.tableView.insertRowsAtIndexPaths([NSIndexPath(forRow: self.rowIndexOfLoadingMoreIndicator!, inSection: 0)], withRowAnimation: .Automatic)
+            self.tableView.insertRows(at: [IndexPath(row: self.rowIndexOfLoadingMoreIndicator!, section: 0)], with: .automatic)
             self.tableView.endUpdates()
             
-            self.currentPage++
+            self.currentPage += 1
             var httpRequestUrl:String = ""
-            if self.rivalsListType == .SearchByName {
+            if self.rivalsListType == .searchByName {
                 httpRequestUrl = URLSearchRivalsForTeam + "?teamId=" + self.teamId + "&keyword=" + self.searchKeyword! + "&currentPage=\(Int(self.currentPage))"
                 httpRequestUrl = httpRequestUrl + "&minimumNumberOfAttendees=" + self.activityInfo["minimumNumberOfAttendees"]!
             } else {
@@ -74,7 +94,7 @@ class VTRivalTeamsResultTableViewController: UITableViewController, NSURLConnect
         })
     }
     
-    func initiateHttpRequest(urlWithParameters:String) -> Bool {
+    func initiateHttpRequest(_ urlWithParameters:String) -> Bool {
         var isSucceeded:Bool = false
         
         let connection:NSURLConnection? = Toolbox.asyncHttpGetFromURL(urlWithParameters, delegate: self)
@@ -87,7 +107,7 @@ class VTRivalTeamsResultTableViewController: UITableViewController, NSURLConnect
         return isSucceeded
     }
     
-    func searchRivalsByName(notification: NSNotification) {
+    func searchRivalsByName(_ notification: Notification) {
         // reset selected cell index since new rival list will be loaded
         self.selectedCellIndex = -1
         
@@ -126,25 +146,25 @@ class VTRivalTeamsResultTableViewController: UITableViewController, NSURLConnect
     }
 
     // MARK: - Table view data source
-    override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+    override func numberOfSections(in tableView: UITableView) -> Int {
         return 1
     }
 
-    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return self.rivalsList.count
     }
     
-    override func tableView(tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+    override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         return TableSectionHeaderHeight
     }
     
-    override func tableView(tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        let headerView = UIView(frame: CGRectMake(0, 0, ScreenSize.width, TableSectionHeaderHeight))
+    override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let headerView = UIView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: TableSectionHeaderHeight))
         headerView.tintColor = ColorBackgroundGray
         
         if self.rivalsList.count > 0 {
             var rivalResultsTypeString:String = ""
-            if self.rivalsListType == .SearchByName {
+            if self.rivalsListType == .searchByName {
                 rivalResultsTypeString = "搜索结果"
             } else {
                 rivalResultsTypeString = "附近的球队"
@@ -152,7 +172,7 @@ class VTRivalTeamsResultTableViewController: UITableViewController, NSURLConnect
             headerView.addSubview(Appearance.setupTableSectionHeaderTitle(rivalResultsTypeString))
         }
         if self.isLoadingFirstPage == true {
-            let activityIndicator:UIActivityIndicatorView = UIActivityIndicatorView(activityIndicatorStyle: .Gray)
+            let activityIndicator:UIActivityIndicatorView = UIActivityIndicatorView(activityIndicatorStyle: .gray)
             activityIndicator.frame.origin.x = ScreenSize.width / 2 - activityIndicator.frame.size.width / 2
             activityIndicator.frame.origin.y = TableSectionHeaderHeight / 2 - activityIndicator.frame.size.height / 2
             activityIndicator.startAnimating()
@@ -161,13 +181,13 @@ class VTRivalTeamsResultTableViewController: UITableViewController, NSURLConnect
         return headerView
     }
     
-    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        var cell = self.tableView.dequeueReusableCellWithIdentifier("rivalTeamCell") as UITableViewCell?
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        var cell = self.tableView.dequeueReusableCell(withIdentifier: "rivalTeamCell") as UITableViewCell?
         if cell == nil {
-            cell = UITableViewCell(style: .Default, reuseIdentifier: "rivalTeamCell")
+            cell = UITableViewCell(style: .default, reuseIdentifier: "rivalTeamCell")
         }
         
-        let teamDictionary:NSDictionary = self.rivalsList[indexPath.row]
+        let teamDictionary:NSDictionary = self.rivalsList[(indexPath as NSIndexPath).row]
         
         if teamDictionary.count == 0 {  // this means that this cell is the load more cell
             return cell!
@@ -177,33 +197,33 @@ class VTRivalTeamsResultTableViewController: UITableViewController, NSURLConnect
         let imageView_teamAvatar = cell?.contentView.viewWithTag(1) as! UIImageView
         imageView_teamAvatar.layer.cornerRadius = 2.0
         imageView_teamAvatar.layer.masksToBounds = true
-        Toolbox.loadAvatarImage(teamDictionary.objectForKey("id") as! String, toImageView: imageView_teamAvatar, avatarType: AvatarType.Team)
+        Toolbox.loadAvatarImage(teamDictionary.object(forKey: "id") as! String, toImageView: imageView_teamAvatar, avatarType: AvatarType.team)
         // set up label to display team name
         let label_teamName:UILabel = cell?.contentView.viewWithTag(2) as! UILabel
-        label_teamName.text = teamDictionary.objectForKey("name") as? String
+        label_teamName.text = teamDictionary.object(forKey: "name") as? String
         // set up label to display the number of members of the team
         let label_numberOfMembers:UILabel = cell?.contentView.viewWithTag(3) as! UILabel
-        let numberOfMembers = teamDictionary.objectForKey("numberOfMembers") as! Int
+        let numberOfMembers = teamDictionary.object(forKey: "numberOfMembers") as! Int
         label_numberOfMembers.text = "\(Int(numberOfMembers))人"
         // set up label to display match record of the tema
         let label_matchRecord:UILabel = cell?.contentView.viewWithTag(4) as! UILabel
-        let numOfWins = teamDictionary.objectForKey("wins") as! Int
-        let numOfLoses = teamDictionary.objectForKey("loses") as! Int
-        let numOfTies = teamDictionary.objectForKey("ties") as! Int
+        let numOfWins = teamDictionary.object(forKey: "wins") as! Int
+        let numOfLoses = teamDictionary.object(forKey: "loses") as! Int
+        let numOfTies = teamDictionary.object(forKey: "ties") as! Int
         label_matchRecord.text = "\(Int(numOfWins))胜\(Int(numOfLoses))负\(Int(numOfTies))平"
         // set up label to display location of the team
         let label_location:UILabel = cell?.contentView.viewWithTag(5) as! UILabel
-        label_location.text = teamDictionary.objectForKey("location") as? String
+        label_location.text = teamDictionary.object(forKey: "location") as? String
         // set up the imageView to indicate whether this team has been selected as the rival
         let imageView_signOfSelectedRival = cell?.contentView.viewWithTag(6) as! UIImageView
-        if indexPath.row == self.selectedCellIndex {
-            imageView_signOfSelectedRival.hidden = false
+        if (indexPath as NSIndexPath).row == self.selectedCellIndex {
+            imageView_signOfSelectedRival.isHidden = false
         } else {
-            imageView_signOfSelectedRival.hidden = true
+            imageView_signOfSelectedRival.isHidden = true
         }
         
-        if (indexPath.row != (self.rivalsList.count - 1)) {   // if the cell is not the last row of the section, add a separatorLine
-            let separatorLineView:UIView = UIView(frame: CGRectMake(15, 0, ScreenSize.width, 1))
+        if ((indexPath as NSIndexPath).row != (self.rivalsList.count - 1)) {   // if the cell is not the last row of the section, add a separatorLine
+            let separatorLineView:UIView = UIView(frame: CGRect(x: 15, y: 0, width: ScreenSize.width, height: 1))
             separatorLineView.backgroundColor = ColorBackgroundGray
             cell!.contentView.addSubview(separatorLineView)
         }
@@ -211,30 +231,30 @@ class VTRivalTeamsResultTableViewController: UITableViewController, NSURLConnect
         return cell!
     }
 
-    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         // clears the table cell selection effect
-        self.tableView.deselectRowAtIndexPath(indexPath, animated: true)
+        self.tableView.deselectRow(at: indexPath, animated: true)
         
-        let teamDictionary:NSDictionary = self.rivalsList[indexPath.row]
+        let teamDictionary:NSDictionary = self.rivalsList[(indexPath as NSIndexPath).row]
         // send notification that rivals has been selected
-        NSNotificationCenter.defaultCenter().postNotificationName("selectedRival", object: (teamDictionary.objectForKey("id") as! String))
+        NotificationCenter.default.post(name: Notification.Name(rawValue: "selectedRival"), object: (teamDictionary.object(forKey: "id") as! String))
         
         let originalSelectedCellIndex:Int = self.selectedCellIndex
-        self.selectedCellIndex = indexPath.row
+        self.selectedCellIndex = (indexPath as NSIndexPath).row
         
         self.tableView.beginUpdates()
-        self.tableView.reloadRowsAtIndexPaths([
-            NSIndexPath(forRow: originalSelectedCellIndex, inSection: 0),
-            NSIndexPath(forRow: self.selectedCellIndex, inSection: 0)
-            ], withRowAnimation: UITableViewRowAnimation.Automatic)
+        self.tableView.reloadRows(at: [
+            IndexPath(row: originalSelectedCellIndex, section: 0),
+            IndexPath(row: self.selectedCellIndex, section: 0)
+            ], with: UITableViewRowAnimation.automatic)
         self.tableView.endUpdates()
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络超时")
         if self.isLoadingFirstPage == true {
             self.isLoadingFirstPage = false
@@ -246,8 +266,8 @@ class VTRivalTeamsResultTableViewController: UITableViewController, NSURLConnect
             self.tableView.stopLoadMoreAnimation()
             
             // delete the row that's been added to hold the loading more activity indicator
-            self.rivalsList.removeAtIndex(self.rowIndexOfLoadingMoreIndicator!)
-            self.tableView.deleteRowsAtIndexPaths([NSIndexPath(forRow: self.rowIndexOfLoadingMoreIndicator!, inSection: 0)], withRowAnimation: .Automatic)
+            self.rivalsList.remove(at: self.rowIndexOfLoadingMoreIndicator!)
+            self.tableView.deleteRows(at: [IndexPath(row: self.rowIndexOfLoadingMoreIndicator!, section: 0)], with: .automatic)
 
             self.tableView.reloadData()
         }
@@ -256,7 +276,7 @@ class VTRivalTeamsResultTableViewController: UITableViewController, NSURLConnect
         self.responseData = NSMutableData()
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         if self.isLoadingFirstPage == true {
             self.isLoadingFirstPage = false
             // if this is the first page of pagination, the table data list needs to be cleared before appending received paginated data
@@ -268,17 +288,17 @@ class VTRivalTeamsResultTableViewController: UITableViewController, NSURLConnect
             self.tableView.stopLoadMoreAnimation()
             
             // loading has completed, delete the row that's been added to hold the loading more activity indicator
-            self.rivalsList.removeAtIndex(self.rowIndexOfLoadingMoreIndicator!)
-            self.tableView.deleteRowsAtIndexPaths([NSIndexPath(forRow: self.rowIndexOfLoadingMoreIndicator!, inSection: 0)], withRowAnimation: .Automatic)
+            self.rivalsList.remove(at: self.rowIndexOfLoadingMoreIndicator!)
+            self.tableView.deleteRows(at: [IndexPath(row: self.rowIndexOfLoadingMoreIndicator!, section: 0)], with: .automatic)
         }
         
-        let rivalsResultPaginatedInfo = (try? NSJSONSerialization.JSONObjectWithData(self.responseData!, options: .MutableLeaves)) as? [NSObject: AnyObject]
+        let rivalsResultPaginatedInfo = (try? JSONSerialization.jsonObject(with: self.responseData! as Data, options: .mutableLeaves)) as? [AnyHashable: Any]
         if rivalsResultPaginatedInfo != nil {   // http request succeeded
-            self.totalEntries = Int(rivalsResultPaginatedInfo!["total"]!.stringValue)
+            self.totalEntries = Int((rivalsResultPaginatedInfo!["total"]! as AnyObject).stringValue)
             if (rivalsResultPaginatedInfo!["resultType"] as! String) == "search" {
-                self.rivalsListType = .SearchByName
+                self.rivalsListType = .searchByName
             } else {
-                self.rivalsListType = .NearbyTeams
+                self.rivalsListType = .nearbyTeams
             }
             
             let paginatedRivals = rivalsResultPaginatedInfo!["models"] as! NSArray
@@ -301,7 +321,7 @@ class VTRivalTeamsResultTableViewController: UITableViewController, NSURLConnect
                 Toolbox.showCustomAlertViewWithImage("unhappy", title: "没有找到合适的球队")
             }
         } else {    // http request failed with error message
-            let errorMessage = NSString(data: self.responseData!, encoding: NSUTF8StringEncoding)!
+            let errorMessage = NSString(data: self.responseData! as Data, encoding: String.Encoding.utf8.rawValue)!
             Toolbox.showCustomAlertViewWithImage("unhappy", title: errorMessage as String)
         }
         self.tableView.reloadData()
@@ -315,12 +335,12 @@ class VTRivalTeamsResultTableViewController: UITableViewController, NSURLConnect
         self.rowIndexOfLoadingMoreIndicator = nil
         self.rivalsListType = nil
         if self.rivalsList.count > 0 {
-            self.rivalsList.removeAll(keepCapacity: false)
+            self.rivalsList.removeAll(keepingCapacity: false)
         }
         self.totalEntries = nil
         self.searchKeyword = nil
-        self.activityInfo.removeAll(keepCapacity: false)
+        self.activityInfo.removeAll(keepingCapacity: false)
         self.activityInfo = nil
-        NSNotificationCenter.defaultCenter().removeObserver(self)
+        NotificationCenter.default.removeObserver(self)
     }
 }

@@ -16,7 +16,7 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
     var filterdTableEntries = [Message]()
     var conversationGroups = [Message]()
     var notificationGroups = [Message]()    // list to hold all message groups with message type being invitation, activity request and challenge
-    var selectedTableCell: NSIndexPath?
+    var selectedTableCell: IndexPath?
     var shouldShowNetworkUnavailableHintView = false
     var responseData: NSMutableData? = NSMutableData()
     let tableCellIdentifier = "messagesListTableCell"
@@ -29,14 +29,14 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
         
         // add the UIRefreshControl to tableView
         self.refreshControl = Appearance.setupRefreshControl()
-        self.refreshControl!.addTarget(self, action: "refresh", forControlEvents: .ValueChanged)
+        self.refreshControl!.addTarget(self, action: #selector(VTGroupsOfMessagesTableViewController.refresh), for: .valueChanged)
         self.tableView.addSubview(self.refreshControl!)
         
         // This will remove extra separators from tableview
-        self.tableView.tableFooterView = UIView(frame: CGRectZero)
+        self.tableView.tableFooterView = UIView(frame: CGRect.zero)
         self.tableView.rowHeight = CustomTableRowHeight
         
-        self.tableView.separatorColor = UIColor.clearColor()
+        self.tableView.separatorColor = UIColor.clear
         
         if #available(iOS 8.0, *) {
             // if under ios version 8.0, no support for search controller at all
@@ -52,18 +52,18 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
             // search bar appearance
             self.searchController!.searchBar.barTintColor = ColorBackgroundGray
             self.searchController!.searchBar.tintColor = ColorOrange
-            self.searchController!.searchBar.layer.borderColor = ColorBackgroundGray.CGColor
+            self.searchController!.searchBar.layer.borderColor = ColorBackgroundGray.cgColor
             self.searchController!.searchBar.layer.borderWidth = 1
         }
         
         // listen to receivedNewMessageAndSavedInLocalDatabase notification and handles it by updating messagesList in tableView in current view controller
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "handleReceivedMessageOrSentMessage:", name: "receivedNewMessageAndSavedInLocalDatabase",  object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTGroupsOfMessagesTableViewController.handleReceivedMessageOrSentMessage(_:)), name: NSNotification.Name(rawValue: "receivedNewMessageAndSavedInLocalDatabase"),  object: nil)
         // listen to sentMessageAndSavedInLocalDatabase notification and handles it by updating messagesList in tableView in current view controller
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "handleReceivedMessageOrSentMessage:", name: "sentMessageAndSavedInLocalDatabase", object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTGroupsOfMessagesTableViewController.handleReceivedMessageOrSentMessage(_:)), name: NSNotification.Name(rawValue: "sentMessageAndSavedInLocalDatabase"), object: nil)
         // listen to numOfUnreadMessagesInOneMessageGroupChanged notification and update the number of unread messages of that particular message group(conversation)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "updateNumOfUnreadMessagesForSpecificMessageGroup:", name: "numOfUnreadMessagesInOneMessageGroupChanged", object:nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTGroupsOfMessagesTableViewController.updateNumOfUnreadMessagesForSpecificMessageGroup(_:)), name: NSNotification.Name(rawValue: "numOfUnreadMessagesInOneMessageGroupChanged"), object:nil)
         // listen to reachable/unreachablie message sent by Reachability
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "reachabilityDidChange:", name: kReachabilityChangedNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTGroupsOfMessagesTableViewController.reachabilityDidChange(_:)), name: NSNotification.Name.reachabilityChanged, object: nil)
         
         // load message list from local database
         self.getMessageGroupsDataFromLocalDatabase()
@@ -72,12 +72,12 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
         self.refresh()
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Appearance.customizeNavigationBar(self, title: "消息列表")
         if #available(iOS 8.0, *) {
             if self.searchController != nil {
-                (self.searchController as! UISearchController).active = false
+                (self.searchController as! UISearchController).isActive = false
             }
         }
     }
@@ -102,16 +102,16 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
     
     - returns: the latest message in this message group
     */
-    func getNotificationGroupInfoForGroupId(messageGroupId: Int) -> Message? {
+    func getNotificationGroupInfoForGroupId(_ messageGroupId: Int) -> Message? {
         let dbManager = DBManager(databaseFilename: "soccer_ios.sqlite")
         /**
         * GET LATEST  MESSAGE IF ANY
         */
-        let messagesInGroup = dbManager.loadDataFromDB(
-            "select * from messages where messageGroupId=? and recipientId=? group by messageGroupId",
+        let messagesInGroup = dbManager?.loadData(
+            fromDB: "select * from messages where messageGroupId=? and recipientId=? group by messageGroupId",
             parameters: [messageGroupId, Singleton_CurrentUser.sharedInstance.userId!]
         )
-        if messagesInGroup.count > 0 {   // messages exist
+        if (messagesInGroup?.count)! > 0 {   // messages exist
             let latestMessage = Message.formatDatabaseRecordToMessageFormat(messagesInGroup[0] as! [String])
             return latestMessage
         }
@@ -124,23 +124,23 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
     func getMessageGroupsDataFromLocalDatabase() {
         
         // Get latest request message if any
-        let latestRequest = self.getNotificationGroupInfoForGroupId(MessageGroupIndex.Request.rawValue)
+        let latestRequest = self.getNotificationGroupInfoForGroupId(MessageGroupIndex.request.rawValue)
         if latestRequest != nil {
             self.notificationGroups.append(latestRequest!)
         }
         // Get latest system notification if any
-        let latestSystemNotification = self.getNotificationGroupInfoForGroupId(MessageGroupIndex.SystemMessage.rawValue)
+        let latestSystemNotification = self.getNotificationGroupInfoForGroupId(MessageGroupIndex.systemMessage.rawValue)
         if latestSystemNotification != nil {
             self.notificationGroups.append(latestSystemNotification!)
         }
         
         // GET CONVERSATION MESSAGE GROUPS
         let dbManager = DBManager(databaseFilename: "soccer_ios.sqlite")
-        let conversations = dbManager.loadDataFromDB(
-            "select * from messages where messageGroupId not in (?, ?) group by messageGroupId order by createdAt desc",
+        let conversations = dbManager?.loadData(
+            fromDB: "select * from messages where messageGroupId not in (?, ?) group by messageGroupId order by createdAt desc",
             parameters: [
-                MessageGroupIndex.Request.rawValue,
-                MessageGroupIndex.SystemMessage.rawValue,
+                MessageGroupIndex.request.rawValue,
+                MessageGroupIndex.systemMessage.rawValue,
             ]
         )
         if conversations.count > 0 {
@@ -157,7 +157,7 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
     
     - parameter notification: reachability changed notification object
     */
-    func reachabilityDidChange(notification: NSNotification) {
+    func reachabilityDidChange(_ notification: Notification) {
         let reachability = notification.object as! Reachability
         if !reachability.isReachable() {
             self.tableView.beginUpdates()
@@ -166,7 +166,7 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
         } else {
             self.tableView.beginUpdates()
             for subview in self.tableView.subviews {
-                if subview.tag == TagValue.TableHeaderHint.rawValue {    // the subview is the network unavailable hint view
+                if subview.tag == TagValue.tableHeaderHint.rawValue {    // the subview is the network unavailable hint view
                     subview.removeFromSuperview()
                     break
                 }
@@ -181,34 +181,34 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
         // Dispose of any resources that can be recreated.
     }
     
-    func updateNumOfUnreadMessagesForSpecificMessageGroup(notification: NSNotification) {
-        let messageGroupId = notification.object!.integerValue
+    func updateNumOfUnreadMessagesForSpecificMessageGroup(_ notification: Notification) {
+        let messageGroupId = (notification.object! as AnyObject).intValue
         var listToBeUpdated: [Message]
         var sectionIndex: Int
-        if messageGroupId == MessageGroupIndex.Request.rawValue || messageGroupId == MessageGroupIndex.SystemMessage.rawValue {
+        if messageGroupId == MessageGroupIndex.request.rawValue || messageGroupId == MessageGroupIndex.systemMessage.rawValue {
             listToBeUpdated = self.notificationGroups
-            sectionIndex = MessageGroupTableSectionIndex.Notification.rawValue
+            sectionIndex = MessageGroupTableSectionIndex.notification.rawValue
         } else {
             listToBeUpdated = self.conversationGroups
-            sectionIndex = MessageGroupTableSectionIndex.Conversation.rawValue
+            sectionIndex = MessageGroupTableSectionIndex.conversation.rawValue
         }
         
         // find the message group in self.messagesList based on the passed in paramter messageGroupId
         let theMessageGroup = listToBeUpdated.filter{$0.messageGroupId == messageGroupId}
         
         if theMessageGroup.count > 0 {  // the corresponding message group FOUND in self.messagesList
-            let indexOfMessageGroupToBeUpdated = listToBeUpdated.indexOf(theMessageGroup[0])
+            let indexOfMessageGroupToBeUpdated = listToBeUpdated.index(of: theMessageGroup[0])
             let latestMessageInThisGroup = listToBeUpdated[indexOfMessageGroupToBeUpdated!]
             latestMessageInThisGroup.numOfUnreadMessagesInTheGroup = Message.getNumberOfUnreadMessagesForMessageGroup(messageGroupId)
             
             listToBeUpdated[indexOfMessageGroupToBeUpdated!] = latestMessageInThisGroup    // update related entry in self.notificationGroups or self.conversationGroups to update data showing in tableView
             // update table view data, just that specific row, NOT the whole table
-            let indexPath = NSIndexPath(forRow: indexOfMessageGroupToBeUpdated!, inSection: sectionIndex)
-            self.tableView.reloadRowsAtIndexPaths([indexPath], withRowAnimation: .None)
+            let indexPath = IndexPath(row: indexOfMessageGroupToBeUpdated!, section: sectionIndex)
+            self.tableView.reloadRows(at: [indexPath], with: .none)
         }
     }
    
-    func handleReceivedMessageOrSentMessage(notification: NSNotification) {
+    func handleReceivedMessageOrSentMessage(_ notification: Notification) {
         let message = notification.object as! Message
         self.showNewMessageInTableView(message)
     }
@@ -220,48 +220,48 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
     
     - parameter message: the new message
     */
-    func showNewMessageInTableView(message: Message) {
+    func showNewMessageInTableView(_ message: Message) {
         var listToBeUpdate: [Message]
         var sectionIndex: Int
         let messageGroupId = message.messageGroupId
-        if messageGroupId == MessageGroupIndex.Request.rawValue || messageGroupId == MessageGroupIndex.SystemMessage.rawValue {
+        if messageGroupId == MessageGroupIndex.request.rawValue || messageGroupId == MessageGroupIndex.systemMessage.rawValue {
             listToBeUpdate = self.notificationGroups
-            sectionIndex = MessageGroupTableSectionIndex.Notification.rawValue
+            sectionIndex = MessageGroupTableSectionIndex.notification.rawValue
         } else {
             listToBeUpdate = self.conversationGroups
-            sectionIndex = MessageGroupTableSectionIndex.Conversation.rawValue
+            sectionIndex = MessageGroupTableSectionIndex.conversation.rawValue
         }
         let messageGroupToBeUpdated = listToBeUpdate.filter{
             $0.messageGroupId == message.messageGroupId
         }
         if messageGroupToBeUpdated.count > 0 {  // the received message belongs to a message group existed locally(in app database)
-            let indexOfMessageGroupToBeUpdated = listToBeUpdate.indexOf(messageGroupToBeUpdated[0])
+            let indexOfMessageGroupToBeUpdated = listToBeUpdate.index(of: messageGroupToBeUpdated[0])
             // update related entry in self.notificationGroups or self.conversationGroups to update data showing in tableView
-            if sectionIndex == MessageGroupTableSectionIndex.Notification.rawValue {
+            if sectionIndex == MessageGroupTableSectionIndex.notification.rawValue {
                 self.notificationGroups[indexOfMessageGroupToBeUpdated!] = message
             } else {
                 self.conversationGroups[indexOfMessageGroupToBeUpdated!] = message
             }
             // update table view data, just that specific row, NOT the whole table
-            let indexPath = NSIndexPath(forRow: indexOfMessageGroupToBeUpdated!, inSection: sectionIndex)
-            self.tableView.reloadRowsAtIndexPaths([indexPath], withRowAnimation: .None)
+            let indexPath = IndexPath(row: indexOfMessageGroupToBeUpdated!, section: sectionIndex)
+            self.tableView.reloadRows(at: [indexPath], with: .none)
         } else {                    // the received message started a new message group
             // insert this message (group) in front of the first message group as a new message group to self.conversationGroups or self.notificationGroups to show in tableView
-            if sectionIndex == MessageGroupTableSectionIndex.Notification.rawValue {
-                self.notificationGroups.insert(message, atIndex: 0)
+            if sectionIndex == MessageGroupTableSectionIndex.notification.rawValue {
+                self.notificationGroups.insert(message, at: 0)
             } else {
-                self.conversationGroups.insert(message, atIndex: 0)
+                self.conversationGroups.insert(message, at: 0)
             }
             // insert a new row as the first row into tableView with animation
-            let indexPath = NSIndexPath(forRow: 0, inSection: sectionIndex)
-            self.tableView.insertRowsAtIndexPaths([indexPath], withRowAnimation: .Top)
+            let indexPath = IndexPath(row: 0, section: sectionIndex)
+            self.tableView.insertRows(at: [indexPath], with: .top)
         }
     }
     
     // MARK: - Table view data source
     
-    override func tableView(tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        if section == MessageGroupTableSectionIndex.Notification.rawValue {
+    override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        if section == MessageGroupTableSectionIndex.notification.rawValue {
             if self.shouldShowNetworkUnavailableHintView {
                 return TableSectionHeaderHeight
             } else {
@@ -271,8 +271,8 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
         return 0.0
     }
     
-    override func tableView(tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        if section == MessageGroupTableSectionIndex.Notification.rawValue {
+    override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+        if section == MessageGroupTableSectionIndex.notification.rawValue {
             if self.notificationGroups.count == 0 {
                 return 0.0
             } else {
@@ -282,8 +282,8 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
         return 0.0
     }
     
-    override func tableView(tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        if section == MessageGroupTableSectionIndex.Notification.rawValue {
+    override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        if section == MessageGroupTableSectionIndex.notification.rawValue {
             if self.shouldShowNetworkUnavailableHintView {
                 let headerView = UIView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: 0))
                 headerView.backgroundColor = ColorOrange
@@ -293,13 +293,13 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
                 headerView.addSubview(crossIcon)
                 
                 let hintTextLabel = UILabel(frame: CGRect(x: 30, y: 0, width: ScreenSize.width - 35, height: TableSectionHeaderHeight))
-                hintTextLabel.textColor = UIColor.whiteColor()
+                hintTextLabel.textColor = UIColor.white
                 hintTextLabel.text = "网络无法连接"
-                hintTextLabel.font = UIFont.systemFontOfSize(14.0)
-                hintTextLabel.textAlignment = .Center
+                hintTextLabel.font = UIFont.systemFont(ofSize: 14.0)
+                hintTextLabel.textAlignment = .center
                 
                 headerView.addSubview(hintTextLabel)
-                headerView.tag = TagValue.TableHeaderHint.rawValue
+                headerView.tag = TagValue.tableHeaderHint.rawValue
                 
                 return headerView
             } else {
@@ -309,34 +309,34 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
         return nil
     }
     
-    override func tableView(tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
-        if section == MessageGroupTableSectionIndex.Notification.rawValue {
+    override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+        if section == MessageGroupTableSectionIndex.notification.rawValue {
             let footerView = UIView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: 0))
-            footerView.backgroundColor = UIColor.clearColor()
+            footerView.backgroundColor = UIColor.clear
             
             return footerView
         }
         return nil
     }
     
-    override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+    override func numberOfSections(in tableView: UITableView) -> Int {
         // Display a message and an image when the table is empty
-        let emptyTableBackgroundView = UIView(frame: CGRectMake(0, self.tableView.frame.origin.y, self.tableView.frame.size.width, self.tableView.frame.size.height))
-        emptyTableBackgroundView.tag = TagValue.EmptyTableBackgroundView.rawValue
+        let emptyTableBackgroundView = UIView(frame: CGRect(x: 0, y: self.tableView.frame.origin.y, width: self.tableView.frame.size.width, height: self.tableView.frame.size.height))
+        emptyTableBackgroundView.tag = TagValue.emptyTableBackgroundView.rawValue
         let image = UIImageView(image: UIImage(named: "empty"))
-        image.frame = CGRectMake(
-            ScreenSize.width / 2 - 55,
-            ScreenSize.height / 2 - 110,
-            110,
-            110
+        image.frame = CGRect(
+            x: ScreenSize.width / 2 - 55,
+            y: ScreenSize.height / 2 - 110,
+            width: 110,
+            height: 110
         )
         
-        let messageLabel = UILabel(frame: CGRectMake(ScreenSize.width / 2 - 55, ScreenSize.height / 2, self.tableView.bounds.size.width, 50))
+        let messageLabel = UILabel(frame: CGRect(x: ScreenSize.width / 2 - 55, y: ScreenSize.height / 2, width: self.tableView.bounds.size.width, height: 50))
         
         messageLabel.text = "暂时没有新消息"
         messageLabel.textColor = EmptyImageColor
         messageLabel.numberOfLines = 0
-        messageLabel.textAlignment = .Center
+        messageLabel.textAlignment = .center
         messageLabel.sizeToFit()
         
         emptyTableBackgroundView.addSubview(image)
@@ -344,19 +344,19 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
         if self.conversationGroups.count > 0 || self.notificationGroups.count > 0 {
             self.tableView.backgroundView = nil
             for subView in self.tableView.subviews {
-                if subView.tag == TagValue.EmptyTableBackgroundView.rawValue {    // the subview is the emptyTableBackgroundView
+                if subView.tag == TagValue.emptyTableBackgroundView.rawValue {    // the subview is the emptyTableBackgroundView
                     subView.removeFromSuperview()
                 }
             }
         } else {
             self.tableView.addSubview(emptyTableBackgroundView)
-            self.tableView.sendSubviewToBack(emptyTableBackgroundView)
+            self.tableView.sendSubview(toBack: emptyTableBackgroundView)
         }
         
         // Return the number of sections
         if #available(iOS 8.0, *) {
             if self.searchController != nil {
-                if (self.searchController as! UISearchController).active {  // search controller showing
+                if (self.searchController as! UISearchController).isActive {  // search controller showing
                     return 1
                 }
             }
@@ -364,42 +364,42 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
         return 2
     }
     
-    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if #available(iOS 8.0, *) {
             if self.searchController != nil {
-                if (self.searchController as! UISearchController).active {  // search controller showing
+                if (self.searchController as! UISearchController).isActive {  // search controller showing
                     return self.filterdTableEntries.count
                 }
             }
         }
-        if section == MessageGroupTableSectionIndex.Notification.rawValue { // notification list section
+        if section == MessageGroupTableSectionIndex.notification.rawValue { // notification list section
             return self.notificationGroups.count
         } else {            // conversation list section
             return self.conversationGroups.count
         }
     }
     
-    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        var cell = self.tableView.dequeueReusableCellWithIdentifier(self.tableCellIdentifier) as? MGSwipeTableCell
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        var cell = self.tableView.dequeueReusableCell(withIdentifier: self.tableCellIdentifier) as? MGSwipeTableCell
         if cell == nil {
-            cell = MGSwipeTableCell(style: .Default, reuseIdentifier: self.tableCellIdentifier)
+            cell = MGSwipeTableCell(style: .default, reuseIdentifier: self.tableCellIdentifier)
         }
         var messageInCurrentRow: Message
-        if indexPath.section == MessageGroupTableSectionIndex.Notification.rawValue {
-            messageInCurrentRow = self.notificationGroups[indexPath.row]
+        if (indexPath as NSIndexPath).section == MessageGroupTableSectionIndex.notification.rawValue {
+            messageInCurrentRow = self.notificationGroups[(indexPath as NSIndexPath).row]
         } else {
-            messageInCurrentRow = self.conversationGroups[indexPath.row]
+            messageInCurrentRow = self.conversationGroups[(indexPath as NSIndexPath).row]
         }
         if #available(iOS 8.0, *) {
             if self.searchController != nil {
-                if (self.searchController as! UISearchController).active {
-                    messageInCurrentRow = self.filterdTableEntries[indexPath.row]
+                if (self.searchController as! UISearchController).isActive {
+                    messageInCurrentRow = self.filterdTableEntries[(indexPath as NSIndexPath).row]
                 }
             }
         }
         // displaying message group for conversations, i.e. messages with one-to-one message type
-        if messageInCurrentRow.messageGroupId != MessageGroupIndex.Request.rawValue &&
-            messageInCurrentRow.messageGroupId != MessageGroupIndex.SystemMessage.rawValue {
+        if messageInCurrentRow.messageGroupId != MessageGroupIndex.request.rawValue &&
+            messageInCurrentRow.messageGroupId != MessageGroupIndex.systemMessage.rawValue {
             // set up message sender's avatar
             let avatar = cell?.contentView.viewWithTag(1) as! UIImageView
             avatar.layer.cornerRadius = 2.0
@@ -419,7 +419,7 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
                 label_username.text = messageInCurrentRow.senderName
             }
             // load current user avatar
-            Toolbox.loadAvatarImage(userIdToGetAvatarAndUsername, toImageView:avatar, avatarType: AvatarType.User)
+            Toolbox.loadAvatarImage(userIdToGetAvatarAndUsername, toImageView:avatar, avatarType: AvatarType.user)
             
             // set up message content
             let label_messageContent = cell?.contentView.viewWithTag(3) as! UILabel
@@ -431,11 +431,11 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
             let label_messageGroupName = cell!.contentView.viewWithTag(2) as! UILabel
             
             switch messageInCurrentRow.messageGroupId {
-            case MessageGroupIndex.Request.rawValue:
+            case MessageGroupIndex.request.rawValue:
                 messageGroupIcon.image = UIImage(named: "person_add")
                 label_messageGroupName.text = "请求通知"
                 break
-            case MessageGroupIndex.SystemMessage.rawValue:
+            case MessageGroupIndex.systemMessage.rawValue:
                 messageGroupIcon.image = UIImage(named: "system_message")
                 label_messageGroupName.text = "系统消息"
                 break
@@ -451,9 +451,9 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
         label_numOfUnreads.layer.cornerRadius = 12.0
         label_numOfUnreads.clipsToBounds = true
         if messageInCurrentRow.numOfUnreadMessagesInTheGroup == 0 {
-            label_numOfUnreads.hidden = true
+            label_numOfUnreads.isHidden = true
         } else {
-            label_numOfUnreads.hidden = false
+            label_numOfUnreads.isHidden = false
             if messageInCurrentRow.numOfUnreadMessagesInTheGroup < 10 {
                 label_numOfUnreads.text = String(messageInCurrentRow.numOfUnreadMessagesInTheGroup)
             } else {
@@ -463,7 +463,7 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
         cell!.delegate = self
         
         // configure left buttons
-        if messageInCurrentRow.messageGroupId != MessageGroupIndex.Request.rawValue {
+        if messageInCurrentRow.messageGroupId != MessageGroupIndex.request.rawValue {
             // for invitations, challenges or activity requests that require user to respond, user cannot mark the whole group as read
             if messageInCurrentRow.numOfUnreadMessagesInTheGroup > 0 {    // has unread message(s) in this message group
                 cell!.leftButtons = [MGSwipeButton(title: "标记为已读", backgroundColor: ColorDarkerBlue)]
@@ -475,10 +475,10 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
         }
         
         // configure right buttons
-        cell!.rightButtons = [MGSwipeButton(title: "删除", backgroundColor: UIColor.redColor())]
+        cell!.rightButtons = [MGSwipeButton(title: "删除", backgroundColor: UIColor.red)]
         
-        if indexPath.row != 0 {   // if the cell is not the first row of its section, add a separatorLine
-            let separatorLineView = UIView(frame: CGRectMake(15, 0, ScreenSize.width, 1))
+        if (indexPath as NSIndexPath).row != 0 {   // if the cell is not the first row of its section, add a separatorLine
+            let separatorLineView = UIView(frame: CGRect(x: 15, y: 0, width: ScreenSize.width, height: 1))
             separatorLineView.backgroundColor = ColorBackgroundGray
             
             cell!.contentView.addSubview(separatorLineView)
@@ -488,10 +488,10 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
     }
     
     @available(iOS 8.0, *)
-    func updateSearchResultsForSearchController(searchController: UISearchController) {
-        self.filterdTableEntries.removeAll(keepCapacity: false)
+    func updateSearchResults(for searchController: UISearchController) {
+        self.filterdTableEntries.removeAll(keepingCapacity: false)
         self.filterdTableEntries = self.conversationGroups.filter{
-            $0.senderName.rangeOfString(self.searchController!.searchBar.text!) != nil
+            $0.senderName.range(of: self.searchController!.searchBar.text!) != nil
         }
         self.tableView.reloadData()
     }
@@ -504,17 +504,17 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
     - parameter tableView: current table view
     - parameter indexPath: selected table cell indexPath
     */
-    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        self.tableView.deselectRowAtIndexPath(indexPath, animated: true)
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        self.tableView.deselectRow(at: indexPath, animated: true)
         self.selectedTableCell = indexPath
-        if indexPath.section == MessageGroupTableSectionIndex.Conversation.rawValue {
-            self.performSegueWithIdentifier("messagesSegue", sender: self)
+        if (indexPath as NSIndexPath).section == MessageGroupTableSectionIndex.conversation.rawValue {
+            self.performSegue(withIdentifier: "messagesSegue", sender: self)
         } else {
-            let messageInCurrentRow = self.notificationGroups[indexPath.row]
-            if messageInCurrentRow.messageGroupId == MessageGroupIndex.SystemMessage.rawValue {
-                self.performSegueWithIdentifier("systemMessagesSegue", sender: self)
-            } else if messageInCurrentRow.messageGroupId == MessageGroupIndex.Request.rawValue {
-                self.performSegueWithIdentifier("requestsSegue", sender: self)
+            let messageInCurrentRow = self.notificationGroups[(indexPath as NSIndexPath).row]
+            if messageInCurrentRow.messageGroupId == MessageGroupIndex.systemMessage.rawValue {
+                self.performSegue(withIdentifier: "systemMessagesSegue", sender: self)
+            } else if messageInCurrentRow.messageGroupId == MessageGroupIndex.request.rawValue {
+                self.performSegue(withIdentifier: "requestsSegue", sender: self)
             }
         }
     }
@@ -530,25 +530,25 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
     
     - returns: boolean
     */
-    func swipeTableCell(cell: MGSwipeTableCell!, tappedButtonAtIndex index: Int, direction: MGSwipeDirection, fromExpansion: Bool) -> Bool {
-        let indexPath = self.tableView.indexPathForCell(cell)
+    func swipeTableCell(_ cell: MGSwipeTableCell!, tappedButtonAt index: Int, direction: MGSwipeDirection, fromExpansion: Bool) -> Bool {
+        let indexPath = self.tableView.indexPath(for: cell)
         let dbManager = DBManager(databaseFilename: "soccer_ios.sqlite")
         
         var listToBeUpdate: [Message]
-        if indexPath!.section == MessageGroupTableSectionIndex.Notification.rawValue {
+        if (indexPath! as NSIndexPath).section == MessageGroupTableSectionIndex.notification.rawValue {
             listToBeUpdate = self.notificationGroups
         } else {
             listToBeUpdate = self.conversationGroups
         }
-        let messageToBeChanged = listToBeUpdate[indexPath!.row]
+        let messageToBeChanged = listToBeUpdate[(indexPath! as NSIndexPath).row]
         
-        if direction == .LeftToRight {   // swipe left to right, left button: mark as read tapped
+        if direction == .leftToRight {   // swipe left to right, left button: mark as read tapped
             // get messageId of all unread messages in this message group
-            let messageIdsResult = dbManager.loadDataFromDB(
-                "select messageId from messages where messageGroupId=? and status=?",
+            let messageIdsResult = dbManager?.loadData(
+                fromDB: "select messageId from messages where messageGroupId=? and status=?",
                 parameters: [
                     messageToBeChanged.messageGroupId,
-                    MessageStatus.Unread.rawValue
+                    MessageStatus.unread.rawValue
                 ]
             )
             var messageIds = [String]()
@@ -558,20 +558,20 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
                     messageIds.append(messageId![0] as! String)
                 }
             }
-            Message.changeMessagesStatus(messageIds, status: MessageStatus.Read.rawValue)
+            Message.changeMessagesStatus(messageIds, status: MessageStatus.read.rawValue)
             messageToBeChanged.numOfUnreadMessagesInTheGroup = 0
             // update table view data, just that specific row, NOT the whole table
-            self.tableView.reloadRowsAtIndexPaths([indexPath!], withRowAnimation: .None)
+            self.tableView.reloadRows(at: [indexPath!], with: .none)
         } else {                // swipe right to left, right button: delete tapped
             // delete all messages in the same message group in database
-            dbManager.modifyDataInDB(
-                "delete from messages where messageGroupId=?",
+            dbManager?.modifyData(
+                inDB: "delete from messages where messageGroupId=?",
                 parameters: [messageToBeChanged.messageGroupId]
             )
-            if dbManager.affectedRows != 0 {  // database execution succeeded
+            if dbManager?.affectedRows != 0 {  // database execution succeeded
                 // notify VTMainTabBarViewController that some unread messages have been deleted and total number of unread messages should be updated
-                NSNotificationCenter.defaultCenter().postNotificationName(
-                    "totalNumOfUnreadMessagesChanged",
+                NotificationCenter.default.post(
+                    name: Notification.Name(rawValue: "totalNumOfUnreadMessagesChanged"),
                     object: [
                         "action": "-",
                         "quantity": String(messageToBeChanged.numOfUnreadMessagesInTheGroup)
@@ -579,21 +579,21 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
                 )
             }
             // remove the message group in self.conversationGroups or self.notificationGroups and reload tableView
-            if indexPath!.section == MessageGroupTableSectionIndex.Notification.rawValue {
-                self.notificationGroups.removeAtIndex(indexPath!.row)
+            if (indexPath! as NSIndexPath).section == MessageGroupTableSectionIndex.notification.rawValue {
+                self.notificationGroups.remove(at: (indexPath! as NSIndexPath).row)
             } else {
-                self.conversationGroups.removeAtIndex(indexPath!.row)
+                self.conversationGroups.remove(at: (indexPath! as NSIndexPath).row)
             }
-            self.tableView.deleteRowsAtIndexPaths([indexPath!], withRowAnimation: .Top)
+            self.tableView.deleteRows(at: [indexPath!], with: .top)
         }
         return true
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.refreshControl?.endRefreshing()
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络超时")
         // clear responseData
@@ -601,12 +601,12 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
         self.responseData = NSMutableData()
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         if self.refreshControl != nil {
             self.refreshControl?.endRefreshing()
         }
         // http response for getting unread messages from server
-        let receivedUnreadMessages = (try? NSJSONSerialization.JSONObjectWithData(self.responseData!, options: .MutableLeaves)) as? [AnyObject]
+        let receivedUnreadMessages = (try? JSONSerialization.jsonObject(with: self.responseData! as Data, options: .mutableLeaves)) as? [AnyObject]
         if receivedUnreadMessages != nil {
             if receivedUnreadMessages!.count > 0 {
                 let numOfReceivedUnreadMessages = receivedUnreadMessages!.count
@@ -624,35 +624,35 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
         self.responseData = NSMutableData()
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         var messageInSelectedTableCell: Message
         if segue.identifier == "messagesSegue" {
-            messageInSelectedTableCell = self.conversationGroups[self.selectedTableCell!.row]
+            messageInSelectedTableCell = self.conversationGroups[(self.selectedTableCell! as NSIndexPath).row]
             
-            let conversationViewController = segue.destinationViewController as! VTConversationCollectionViewController
+            let conversationViewController = segue.destination as! VTConversationCollectionViewController
             conversationViewController.messageGroupId = messageInSelectedTableCell.messageGroupId
         } else if segue.identifier == "requestsSegue" {
-            messageInSelectedTableCell = self.notificationGroups[self.selectedTableCell!.row]
+            messageInSelectedTableCell = self.notificationGroups[(self.selectedTableCell! as NSIndexPath).row]
             
-            let requestViewController = segue.destinationViewController as! VTRequestGroupViewController
+            let requestViewController = segue.destination as! VTRequestGroupViewController
             requestViewController.messageGroupId = messageInSelectedTableCell.messageGroupId
         } else if segue.identifier == "systemMessagesSegue" {
-            messageInSelectedTableCell = self.notificationGroups[self.selectedTableCell!.row]
+            messageInSelectedTableCell = self.notificationGroups[(self.selectedTableCell! as NSIndexPath).row]
             
-            let systemMessageViewController = segue.destinationViewController as! VTSystemMessageGroupViewController
+            let systemMessageViewController = segue.destination as! VTSystemMessageGroupViewController
             systemMessageViewController.messageGroupId = messageInSelectedTableCell.messageGroupId
         }
     }
     
     deinit {
         if self.conversationGroups.count > 0 {
-            self.conversationGroups.removeAll(keepCapacity: false)
+            self.conversationGroups.removeAll(keepingCapacity: false)
         }
         if self.notificationGroups.count > 0 {
-            self.notificationGroups.removeAll(keepCapacity: false)
+            self.notificationGroups.removeAll(keepingCapacity: false)
         }
         if self.filterdTableEntries.count > 0 {
-            self.filterdTableEntries.removeAll(keepCapacity: false)
+            self.filterdTableEntries.removeAll(keepingCapacity: false)
         }
         self.responseData = nil
         self.selectedTableCell = nil
@@ -663,7 +663,7 @@ class VTGroupsOfMessagesTableViewController: UITableViewController, MGSwipeTable
             }
         }
         
-        NSNotificationCenter.defaultCenter().removeObserver(self)
+        NotificationCenter.default.removeObserver(self)
     }
     
 }

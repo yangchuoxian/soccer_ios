@@ -14,13 +14,13 @@ import UIKit
     var window: UIWindow?
     var username: String?
     
-    func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject : AnyObject]?) -> Bool {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         // clear push notification badge when opened app
         Toolbox.clearLocalAndRemoteNotificationCount()
         // the following tracks to see if there are any push notifications, if push notifications arrived at a time when the app is NOT RUNNING AT ALL, NOT EVEN IN BACKGROUND OR SUSPENDED, this is where the received push notification gets handled, for other app status, the received push notifications are handled in didReceiveRemoteNotification: fetchCompletionHandler()
-        if launchOptions?[UIApplicationLaunchOptionsRemoteNotificationKey] != nil {
+        if launchOptions?[UIApplicationLaunchOptionsKey.remoteNotification] != nil {
             // there are remote notification launch options ONLY WHEN user tapped ONE of the push notification to launch the app
-            let userInfo = launchOptions?[UIApplicationLaunchOptionsRemoteNotificationKey] as? [NSObject: AnyObject]
+            let userInfo = launchOptions?[UIApplicationLaunchOptionsKey.remoteNotification] as? [AnyHashable: Any]
             if userInfo != nil {
                 self.handlePushNotification(userInfo!)
             }
@@ -43,22 +43,22 @@ import UIKit
         // Start Monitoring the mobile device reachability status,
         // if the device switches between connected and disconnected from online
         // a notification will be sent
-        reachability.startNotifier()
+        reachability?.startNotifier()
         // listen to reachable/unreachablie message sent by Reachability
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "reachabilityDidChange:", name: kReachabilityChangedNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(AppDelegate.reachabilityDidChange(_:)), name: NSNotification.Name.reachabilityChanged, object: nil)
         
         // Set up push notification
         if #available(iOS 8.0, *) {
-            let types: UIUserNotificationType = [UIUserNotificationType.Sound, UIUserNotificationType.Badge, UIUserNotificationType.Alert]
-            let notificationSettings = UIUserNotificationSettings(forTypes: types, categories: nil)
+            let types: UIUserNotificationType = [UIUserNotificationType.sound, UIUserNotificationType.badge, UIUserNotificationType.alert]
+            let notificationSettings = UIUserNotificationSettings(types: types, categories: nil)
             application.registerUserNotificationSettings(notificationSettings)
         } else {
-            let types: UIRemoteNotificationType = [UIRemoteNotificationType.Badge, UIRemoteNotificationType.Sound, UIRemoteNotificationType.Alert]
-            application.registerForRemoteNotificationTypes(types)
+            let types: UIRemoteNotificationType = [UIRemoteNotificationType.badge, UIRemoteNotificationType.sound, UIRemoteNotificationType.alert]
+            application.registerForRemoteNotifications(matching: types)
         }
         
         // check to see if it is necessary to show tutorial screen pages by checking saved version number in userDefaults
-        let savedVersion = NSUserDefaults.standardUserDefaults().stringForKey("version")
+        let savedVersion = UserDefaults.standard.string(forKey: "version")
         if Toolbox.isStringValueValid(savedVersion) && savedVersion == AppVersion {   // this app has been launched before and so far has NOT been updated to a newer version
             // check if username and password is saved in keychain, if so, login automatically
             let userCredential = Toolbox.getUserCredential()
@@ -68,7 +68,7 @@ import UIKit
                 let getParametersString = Toolbox.addDeviceIDAndDeviceTypeToHttpRequestParameters("?id=\(currentUserId!)")
                 let userInfoResponseData = Toolbox.syncHttpGetFromURL("\(URLGetUserInfo)\(getParametersString)&isAutoLogin=true")
                 if userInfoResponseData != nil {
-                    let userJSON = (try? NSJSONSerialization.JSONObjectWithData(userInfoResponseData!, options: .MutableLeaves)) as? [NSObject: AnyObject]
+                    let userJSON = (try? JSONSerialization.jsonObject(with: userInfoResponseData!, options: .mutableLeaves)) as? [AnyHashable: Any]
                     if userJSON != nil {    // get user info succeeded
                         Singleton_CurrentUser.sharedInstance.processUserLogin(userJSON!)
                         return true
@@ -79,7 +79,7 @@ import UIKit
             Toolbox.switchToLoginViewController()
         } else {    // either this is the first time app is launched, or the app has updated to a newer version, either way, we should prompt the user with welcome/tutorial screen
             // NOTE: the startup view controller is already set to tutorial page view controller
-            NSUserDefaults.standardUserDefaults().setObject(AppVersion, forKey: "version")
+            UserDefaults.standard.set(AppVersion, forKey: "version")
         }
         return true
     }
@@ -88,18 +88,18 @@ import UIKit
      * iOS8 can receive silent notificaions without asking for permission. Call  - (void)registerForRemoteNotifications. After this application:didRegisterForRemoteNotificationsWithDeviceToken: will be called
      */
     @available(iOS 8.0, *)
-    func application(application: UIApplication, didRegisterUserNotificationSettings notificationSettings: UIUserNotificationSettings) {
+    func application(_ application: UIApplication, didRegister notificationSettings: UIUserNotificationSettings) {
         application.registerForRemoteNotifications()
     }
     
-    func application(application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: NSData) {
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         // save deviceToken in userDefaults, when user submit login info or registering new user, this device token will be submitted as well
-        let tempDeviceToken  = deviceToken.description.stringByTrimmingCharactersInSet(NSCharacterSet(charactersInString: "<>"))
-        let deviceTokenString  = tempDeviceToken.stringByReplacingOccurrencesOfString(" ", withString: "")
-        NSUserDefaults.standardUserDefaults().setObject(deviceTokenString, forKey: "deviceToken")
+        let tempDeviceToken  = deviceToken.description.trimmingCharacters(in: CharacterSet(charactersIn: "<>"))
+        let deviceTokenString  = tempDeviceToken.replacingOccurrences(of: " ", with: "")
+        UserDefaults.standard.set(deviceTokenString, forKey: "deviceToken")
     }
     
-    func application(application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: NSError) {
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
         // print out error message if any
         print(error)
     }
@@ -107,19 +107,19 @@ import UIKit
     /**
      * This method gets called when push notification received while the app is running on the foreground or on the background
      */
-    func application(application: UIApplication, didReceiveRemoteNotification userInfo: [NSObject : AnyObject], fetchCompletionHandler completionHandler: (UIBackgroundFetchResult) -> Void) {
-        if application.applicationState == .Inactive {
-            completionHandler(.NewData)
-        } else if application.applicationState == .Background {
-            completionHandler(.NewData)
+    func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable: Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+        if application.applicationState == .inactive {
+            completionHandler(.newData)
+        } else if application.applicationState == .background {
+            completionHandler(.newData)
         } else {
-            completionHandler(.NewData)
+            completionHandler(.newData)
         }
         
         self.handlePushNotification(userInfo)
     }
     
-    func reachabilityDidChange(notification: NSNotification) {
+    func reachabilityDidChange(_ notification: Notification) {
         let reachability = notification.object as! Reachability
         if reachability.isReachable() {
             // connect to server socket.io and subscribe to message event
@@ -127,27 +127,27 @@ import UIKit
         }
     }
     
-    func applicationWillResignActive(application: UIApplication) {
+    func applicationWillResignActive(_ application: UIApplication) {
         // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
         // Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
         let socketManager = Singleton_SocketManager.sharedInstance
-        if socketManager.socket.status == .Connected {
+        if socketManager.socket.status == .connected {
             socketManager.socket.close()
             socketManager.intentionallyDisconnected = true
         }
     }
     
-    func applicationDidEnterBackground(application: UIApplication) {
+    func applicationDidEnterBackground(_ application: UIApplication) {
         // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.   
         let socketManager = Singleton_SocketManager.sharedInstance
-        if socketManager.socket.status == .Connected {
+        if socketManager.socket.status == .connected {
             socketManager.socket.close()
             socketManager.intentionallyDisconnected = true
         }
     }
     
-    func applicationWillEnterForeground(application: UIApplication) {
+    func applicationWillEnterForeground(_ application: UIApplication) {
         // clear push notification badge when opened app
         Toolbox.clearLocalAndRemoteNotificationCount()
 
@@ -160,18 +160,18 @@ import UIKit
         }
     }
     
-    func applicationDidBecomeActive(application: UIApplication) {
+    func applicationDidBecomeActive(_ application: UIApplication) {
         // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
     }
     
-    func applicationWillTerminate(application: UIApplication) {
+    func applicationWillTerminate(_ application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
         // http response for automatic login
         // if login succeeded, response from server should be user info JSON data, so retrieve username from this JSON data to see if login is successful
-        let userInfo = (try? NSJSONSerialization.JSONObjectWithData(data, options: .MutableLeaves)) as? [NSObject: AnyObject]
+        let userInfo = (try? JSONSerialization.jsonObject(with: data, options: .mutableLeaves)) as? [AnyHashable: Any]
         if userInfo != nil {    // get user info succeeded
             // save user info to singleton currentUser instance
             Singleton_CurrentUser.sharedInstance.getUserInfoFrom(userInfo!)
@@ -180,7 +180,7 @@ import UIKit
         }
     }
     
-    func handlePushNotification(userInfo: [NSObject: AnyObject]) {
+    func handlePushNotification(_ userInfo: [AnyHashable: Any]) {
         let pushNotificationEventType = userInfo["event"] as? String
         if pushNotificationEventType == "logout" {  // user has logged in from another device, log the user out from this device
             Singleton_CurrentUser.sharedInstance.forcedLogout()
@@ -193,12 +193,12 @@ import UIKit
         }
     }
     
-    func application(application: UIApplication, handleOpenURL url: NSURL) -> Bool {
-        return UMSocialSnsService.handleOpenURL(url)
+    func application(_ application: UIApplication, handleOpen url: URL) -> Bool {
+        return UMSocialSnsService.handleOpen(url)
     }
     
-    func application(application: UIApplication, openURL url: NSURL, sourceApplication: String?, annotation: AnyObject) -> Bool {
-        return UMSocialSnsService.handleOpenURL(url)
+    func application(_ application: UIApplication, open url: URL, sourceApplication: String?, annotation: Any) -> Bool {
+        return UMSocialSnsService.handleOpen(url)
     }
     
 }

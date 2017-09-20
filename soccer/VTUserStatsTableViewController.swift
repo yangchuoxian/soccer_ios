@@ -33,7 +33,7 @@ class VTUserStatsTableViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.tableView.tableFooterView = UIView(frame: CGRectZero)
+        self.tableView.tableFooterView = UIView(frame: CGRect.zero)
         
         // set up data showing up
         self.label_scoreOfConscious.text = self.userObject!.conscious
@@ -65,7 +65,7 @@ class VTUserStatsTableViewController: UITableViewController {
         Toolbox.setLabelColorBasedOnAttributeValue(self.label_scoreOfExplosive)
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Appearance.customizeNavigationBar(self, title: "统计数据")
     }
@@ -75,9 +75,9 @@ class VTUserStatsTableViewController: UITableViewController {
         // Dispose of any resources that can be recreated.
     }
     
-    override func tableView(tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+    override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let footerView = UIView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: DefaultTableSectionFooterHeight))
-        footerView.backgroundColor = UIColor.clearColor()
+        footerView.backgroundColor = UIColor.clear
         return footerView
     }
     

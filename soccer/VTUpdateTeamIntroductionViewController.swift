@@ -7,6 +7,26 @@
 //
 
 import UIKit
+fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l < r
+  case (nil, _?):
+    return true
+  default:
+    return false
+  }
+}
+
+fileprivate func > <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l > r
+  default:
+    return rhs < lhs
+  }
+}
+
 
 class VTUpdateTeamIntroductionViewController: UIViewController, NSURLConnectionDelegate, NSURLConnectionDataDelegate, UITextViewDelegate {
     
@@ -26,24 +46,24 @@ class VTUpdateTeamIntroductionViewController: UIViewController, NSURLConnectionD
         // makes sure the text of textView stays at the top inside the textView
         self.automaticallyAdjustsScrollViewInsets = false
         
-        self.teamId = NSUserDefaults.standardUserDefaults().objectForKey("teamIdSelectedInTeamsList") as? String
+        self.teamId = UserDefaults.standard.object(forKey: "teamIdSelectedInTeamsList") as? String
         self.textView_introduction.text = self.introduction
         self.textView_introduction.delegate = self
         // Get the placeholder label, if the introduction is not empty, we should hide the placeholder label
-        let placeHolderLabel = self.textView_introduction.viewWithTag(TagValue.TextViewPlaceholder.rawValue)
+        let placeHolderLabel = self.textView_introduction.viewWithTag(TagValue.textViewPlaceholder.rawValue)
         if self.introduction?.characters.count > 0 {
-            placeHolderLabel?.hidden = true
+            placeHolderLabel?.isHidden = true
         }
 
     }
     
-    func textViewDidChange(textView: UITextView) {
+    func textViewDidChange(_ textView: UITextView) {
         // Get the placeholder label
-        let placeHolderLabel = textView.viewWithTag(TagValue.TextViewPlaceholder.rawValue)
-        if !textView.hasText() {
-            placeHolderLabel?.hidden = false
+        let placeHolderLabel = textView.viewWithTag(TagValue.textViewPlaceholder.rawValue)
+        if !textView.hasText {
+            placeHolderLabel?.isHidden = false
         } else {
-            placeHolderLabel?.hidden = true
+            placeHolderLabel?.isHidden = true
         }
         
         let enteredIntroductionLength = Toolbox.trim(self.textView_introduction.text).characters.count
@@ -58,12 +78,12 @@ class VTUpdateTeamIntroductionViewController: UIViewController, NSURLConnectionD
         super.didReceiveMemoryWarning()
     }
     
-    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         // resign the keyboard when tapped somewhere else other than the text field or the keyboard itself
         self.textView_introduction.resignFirstResponder()
     }
     
-    @IBAction func updateTeamIntroduction(sender: AnyObject) {
+    @IBAction func updateTeamIntroduction(_ sender: AnyObject) {
         self.introduction = Toolbox.trim(self.textView_introduction.text)
         if !Toolbox.isStringValueValid(self.introduction) {
             Toolbox.showCustomAlertViewWithImage("unhappy", title: "请输入球队简介")
@@ -83,11 +103,11 @@ class VTUpdateTeamIntroductionViewController: UIViewController, NSURLConnectionD
         connection = nil
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.HUD?.hide(true)
         self.HUD = nil
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络超时")
@@ -95,19 +115,19 @@ class VTUpdateTeamIntroductionViewController: UIViewController, NSURLConnectionD
         self.responseData = NSMutableData()
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.HUD?.hide(true)
         self.HUD = nil
-        let responseStr:NSString = NSString(data: self.responseData!, encoding: NSUTF8StringEncoding)!
+        let responseStr:NSString = NSString(data: self.responseData! as Data, encoding: String.Encoding.utf8.rawValue)!
         
         if responseStr == "OK" {    // team introduction updated successfully
             // update the team introduction in local database
             let dbManager:DBManager = DBManager(databaseFilename: "soccer_ios.sqlite")
-            let correspondingTeams = dbManager.loadDataFromDB(
-                "select * from teams where teamId=?",
+            let correspondingTeams = dbManager.loadData(
+                fromDB: "select * from teams where teamId=?",
                 parameters: [self.teamId!]
             )
-            if correspondingTeams.count > 0 {  // team with such team id found in local database
+            if correspondingTeams?.count > 0 {  // team with such team id found in local database
                 let team = Team.formatDatabaseRecordToTeamFormat(correspondingTeams[0] as! [AnyObject])
                 // update team introduction in dictionary and then save it in local database
                 team.introduction = self.introduction!
@@ -115,7 +135,7 @@ class VTUpdateTeamIntroductionViewController: UIViewController, NSURLConnectionD
                 team.saveOrUpdateTeamInDatabase()
                 
                 // unwind navigation controller to the previous view controller
-                self.navigationController?.popViewControllerAnimated(true)
+                self.navigationController?.popViewController(animated: true)
             } else {    // team with the team id NOT found in local database
                 Toolbox.showCustomAlertViewWithImage("unhappy", title: "本地球队不存在")
             }

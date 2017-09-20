@@ -19,11 +19,11 @@ class VTChangeEmailViewController: UIViewController {
         Appearance.customizeTextField(self.input_email, iconName: "at")
         self.input_email.text = Singleton_CurrentUser.sharedInstance.email
         // listen to userInfoUpdated message and handles it by unwinding the navigation controller to the previous view controller
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "updateUserInfo:", name: "userInfoUpdated", object: nil)
-        self.input_email.addTarget(self, action: "validateUserInput", forControlEvents: .EditingChanged)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTChangeEmailViewController.updateUserInfo(_:)), name: NSNotification.Name(rawValue: "userInfoUpdated"), object: nil)
+        self.input_email.addTarget(self, action: #selector(VTChangeEmailViewController.validateUserInput), for: .editingChanged)
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Appearance.customizeNavigationBar(self, title: "设置邮箱")
     }
@@ -38,17 +38,17 @@ class VTChangeEmailViewController: UIViewController {
         }
     }
     
-    func updateUserInfo(notification: NSNotification) {
+    func updateUserInfo(_ notification: Notification) {
         // unwind navigation controller to the previous view controller
-        self.navigationController?.popViewControllerAnimated(true)
+        self.navigationController?.popViewController(animated: true)
     }
     
-    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         // resign the keyboard when tapped somewhere else other than the text field or the keyboard itself
         self.input_email.resignFirstResponder()
     }
     
-    @IBAction func updateEmail(sender: AnyObject) {
+    @IBAction func updateEmail(_ sender: AnyObject) {
         let newEmail = Toolbox.trim(self.input_email.text!)
         Singleton_CurrentUser.sharedInstance.updateUserInfo("email", infoValue: newEmail)
     }

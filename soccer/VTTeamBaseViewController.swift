@@ -16,26 +16,26 @@ class VTTeamBaseViewController: RESideMenu, RESideMenuDelegate {
     
     override func awakeFromNib() {
         // Do any additional setup after loading the view.
-        self.menuPreferredStatusBarStyle = .LightContent
-        self.contentViewShadowColor = UIColor.blackColor()
-        self.contentViewShadowOffset = CGSizeMake(0, 0)
+        self.menuPreferredStatusBarStyle = .lightContent
+        self.contentViewShadowColor = UIColor.black
+        self.contentViewShadowOffset = CGSize(width: 0, height: 0)
         self.contentViewShadowOpacity = 0.6
         self.contentViewShadowRadius = 12
         self.contentViewShadowEnabled = true
         
         let tabTeamStoryboard = UIStoryboard(name: StoryboardNames.TabTeam.rawValue, bundle: nil)
         let teamGeneralInfoStoryboard = UIStoryboard(name: StoryboardNames.TeamGeneralInfo.rawValue, bundle: nil)
-        self.contentViewController = teamGeneralInfoStoryboard.instantiateViewControllerWithIdentifier("teamGeneralInfoNavigationController")
-        self.leftMenuViewController = tabTeamStoryboard.instantiateViewControllerWithIdentifier("teamDetailSidebarMenuController")
+        self.contentViewController = teamGeneralInfoStoryboard.instantiateViewController(withIdentifier: "teamGeneralInfoNavigationController")
+        self.leftMenuViewController = tabTeamStoryboard.instantiateViewController(withIdentifier: "teamDetailSidebarMenuController")
         self.delegate = self
     }
     
-    override func viewDidAppear(animated: Bool) {
+    override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         self.backgroundImage = UIImage(named: "sidebarBackground")
     }
     
-    override func viewWillDisappear(animated: Bool) {
+    override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         self.backgroundImage = nil
     }

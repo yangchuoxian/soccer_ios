@@ -11,8 +11,8 @@ import UIKit
 class VTMembersContainerViewController: UIViewController, UIActionSheetDelegate, NSURLConnectionDelegate, NSURLConnectionDataDelegate, LocationServiceDelegate {
     
     enum HttpRequest {
-        case GetScannedUserInfo
-        case GetNearbyUsersForTeam
+        case getScannedUserInfo
+        case getNearbyUsersForTeam
     }
     
     @IBOutlet weak var view_addNewMemberButtonContainer: UIView!
@@ -36,39 +36,39 @@ class VTMembersContainerViewController: UIViewController, UIActionSheetDelegate,
         self.navigationController!.navigationBar.topItem!.title = ""
         
         // add right button in navigation bar programmatically
-        self.navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(named: "menu"), style: .Bordered, target: self, action: "presentLeftMenuViewController:")
-        self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Stop, target: self, action: "goBackToTeamsTableView")
+        self.navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(named: "menu"), style: .bordered, target: self, action: #selector(UIViewController.presentLeftMenuViewController(_:)))
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .stop, target: self, action: #selector(VTMembersContainerViewController.goBackToTeamsTableView))
 
-        self.teamId = NSUserDefaults.standardUserDefaults().stringForKey("teamIdSelectedInTeamsList")
+        self.teamId = UserDefaults.standard.string(forKey: "teamIdSelectedInTeamsList")
         //retrieve captain user id of current selected team
         self.captainUserIdOfCurrentSelectedTeam = Team.retrieveCaptainIdFromLocalDatabaseWithTeamId(self.teamId!)
         if Singleton_CurrentUser.sharedInstance.userId == self.captainUserIdOfCurrentSelectedTeam {
             self.membersTableBottomConstraint.constant = 60
-            self.view_addNewMemberButtonContainer.hidden = false
+            self.view_addNewMemberButtonContainer.isHidden = false
         } else {
             self.membersTableBottomConstraint.constant = 0
-            self.view_addNewMemberButtonContainer.hidden = true
+            self.view_addNewMemberButtonContainer.isHidden = true
         }
         // listen to teamCaptainChangedOnServer
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "teamCaptainChanged:", name: "teamCaptainChangedOnServer", object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTMembersContainerViewController.teamCaptainChanged(_:)), name: NSNotification.Name(rawValue: "teamCaptainChangedOnServer"), object: nil)
     }
     
     func goBackToTeamsTableView() {
-        self.performSegueWithIdentifier("unwindToTeamListSegue", sender: self)
+        self.performSegue(withIdentifier: "unwindToTeamListSegue", sender: self)
     }
     
-    func teamCaptainChanged(notification: NSNotification) {
+    func teamCaptainChanged(_ notification: Notification) {
         self.captainUserIdOfCurrentSelectedTeam = notification.object as? String
         if self.captainUserIdOfCurrentSelectedTeam == Singleton_CurrentUser.sharedInstance.userId {
             self.membersTableBottomConstraint.constant = 60
-            self.view_addNewMemberButtonContainer.hidden = false
+            self.view_addNewMemberButtonContainer.isHidden = false
         } else {
             self.membersTableBottomConstraint.constant = 0
-            self.view_addNewMemberButtonContainer.hidden = true
+            self.view_addNewMemberButtonContainer.isHidden = true
         }
     }
     
-    override func viewDidAppear(animated: Bool) {
+    override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
         Appearance.customizeNavigationBar(self, title: "球队成员")
@@ -82,14 +82,14 @@ class VTMembersContainerViewController: UIViewController, UIActionSheetDelegate,
                 // inform the user that the connection failed
                 Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络连接失败")
             } else {
-                self.indexOfCurrentHttpRequest = .GetScannedUserInfo
+                self.indexOfCurrentHttpRequest = .getScannedUserInfo
                 self.QRCodeScannedValue = nil
                 self.HUD = Toolbox.setupCustomProcessingViewWithTitle(title: nil)
             }
         }
     }
     
-    override func viewDidDisappear(animated: Bool) {
+    override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         
         if self.locationService != nil {
@@ -102,7 +102,7 @@ class VTMembersContainerViewController: UIViewController, UIActionSheetDelegate,
         }
     }
     
-    @IBAction func showRecruitOptions(sender: AnyObject) {
+    @IBAction func showRecruitOptions(_ sender: AnyObject) {
         let searchNearbyUsers = "查找附近球员"
         let scanQRCodeOfUser = "扫描球员二维码"
         let cancelTitle = "取消"
@@ -113,18 +113,18 @@ class VTMembersContainerViewController: UIViewController, UIActionSheetDelegate,
             destructiveButtonTitle: nil,
             otherButtonTitles: searchNearbyUsers, scanQRCodeOfUser
         )
-        actionSheet.showInView(self.view)
+        actionSheet.show(in: self.view)
     }
     
-    func actionSheet(actionSheet: UIActionSheet, clickedButtonAtIndex buttonIndex: Int) {
-        actionSheet.dismissWithClickedButtonIndex(0, animated: true)
+    func actionSheet(_ actionSheet: UIActionSheet, clickedButtonAt buttonIndex: Int) {
+        actionSheet.dismiss(withClickedButtonIndex: 0, animated: true)
         if buttonIndex == 1 {     // search nearby users
             self.locationService = LocationService()
             self.locationService?.delegate = self
             self.locationService?.launchLocationService()
         } else if buttonIndex == 2 {  // scan user QR code
             // navigate to QR code scanning view controller
-            self.performSegueWithIdentifier("QRCodeScanSegue", sender: self)
+            self.performSegue(withIdentifier: "QRCodeScanSegue", sender: self)
         }
     }
     
@@ -142,7 +142,7 @@ class VTMembersContainerViewController: UIViewController, UIActionSheetDelegate,
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "定位失败")
     }
     
-    func didFinishFindingLocationAndAddress(locationInfo: [NSObject : AnyObject]) {
+    func didFinishFindingLocationAndAddress(_ locationInfo: [AnyHashable: Any]) {
         let userLocation = locationInfo["locationObject"] as? BMKUserLocation
         self.currentUserCoordinate = userLocation?.location.coordinate
         self.HUD?.labelText = "搜索附近球员中..."
@@ -154,22 +154,22 @@ class VTMembersContainerViewController: UIViewController, UIActionSheetDelegate,
         
     }
     
-    func submitRequestToSearchNearbyUsersWithCoordinate(coordinate: CLLocationCoordinate2D) {
+    func submitRequestToSearchNearbyUsersWithCoordinate(_ coordinate: CLLocationCoordinate2D) {
         // submit request to search nearby users after getting current user location coordinate
         let connection = Toolbox.asyncHttpGetFromURL(URLGetNearbyUsersForTeam + "?latitude=\(self.currentUserCoordinate!.latitude)&longitude=\(self.currentUserCoordinate!.longitude)&page=1&teamId=" + self.teamId!, delegate: self)
         if connection == nil {
             // inform the user that the connection failed
             Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络连接失败")
         } else {
-            self.indexOfCurrentHttpRequest = .GetNearbyUsersForTeam
+            self.indexOfCurrentHttpRequest = .getNearbyUsersForTeam
         }
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.HUD?.hide(true)
         self.HUD = nil
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络超时")
@@ -177,38 +177,38 @@ class VTMembersContainerViewController: UIViewController, UIActionSheetDelegate,
         self.responseData = NSMutableData()
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.HUD?.hide(true)
         self.HUD = nil
-        if self.indexOfCurrentHttpRequest == .GetScannedUserInfo {
-            let userInfoJSON = (try? NSJSONSerialization.JSONObjectWithData(self.responseData!, options: .MutableLeaves)) as? [NSObject: AnyObject]
+        if self.indexOfCurrentHttpRequest == .getScannedUserInfo {
+            let userInfoJSON = (try? JSONSerialization.jsonObject(with: self.responseData! as Data, options: .mutableLeaves)) as? [AnyHashable: Any]
             if userInfoJSON != nil {    // get scanned user info succeeded
                 // the scanned user has to be a stranger, neither a team member or a invited user or an applied user
-                self.scannedUser = User(data: userInfoJSON!)
-                self.performSegueWithIdentifier("scannedStrangerProfileSegue", sender: self)
+                self.scannedUser = User(data: userInfoJSON! as [NSObject : AnyObject])
+                self.performSegue(withIdentifier: "scannedStrangerProfileSegue", sender: self)
             } else {    // failed with error message
-                let responseStr = NSString(data: self.responseData!, encoding:NSUTF8StringEncoding)
+                let responseStr = NSString(data: self.responseData! as Data, encoding:String.Encoding.utf8.rawValue)
                 Toolbox.showCustomAlertViewWithImage("unhappy", title: responseStr as! String)
             }
-        } else if self.indexOfCurrentHttpRequest == .GetNearbyUsersForTeam {
-            let nearbyUsersPaginatedInfo = (try? NSJSONSerialization.JSONObjectWithData(self.responseData!, options: .MutableLeaves)) as? [NSObject: AnyObject]
+        } else if self.indexOfCurrentHttpRequest == .getNearbyUsersForTeam {
+            let nearbyUsersPaginatedInfo = (try? JSONSerialization.jsonObject(with: self.responseData! as Data, options: .mutableLeaves)) as? [AnyHashable: Any]
             if nearbyUsersPaginatedInfo != nil {    // http request succeeded
                 let paginatedNearbyUsers = nearbyUsersPaginatedInfo!["models"] as! [AnyObject]
-                self.totalNearbyUsers = nearbyUsersPaginatedInfo!["total"]!.integerValue
+                self.totalNearbyUsers = (nearbyUsersPaginatedInfo!["total"]! as AnyObject).intValue
                 if paginatedNearbyUsers.count == 0 {
                     Toolbox.showCustomAlertViewWithImage("unhappy", title: "没有找到附近球员")
                 } else {
                     // dealloc self.nearbyUsers first before alloc'ing it again
                     if self.nearbyUsers.count > 0 {
-                        self.nearbyUsers.removeAll(keepCapacity: false)
+                        self.nearbyUsers.removeAll(keepingCapacity: false)
                     }
                     // initialize each user dictionary received in array and add it to self.nearbyUsers
                     var nearbyUserObject: User
                     for nearbyUserDictionary in paginatedNearbyUsers {
-                        nearbyUserObject = User(data: nearbyUserDictionary as! [NSObject : AnyObject])
+                        nearbyUserObject = User(data: nearbyUserDictionary as! [AnyHashable: Any] as [NSObject : AnyObject])
                         self.nearbyUsers.append(nearbyUserObject)
                     }
-                    self.performSegueWithIdentifier("showNearbyUsersSegue", sender: self)
+                    self.performSegue(withIdentifier: "showNearbyUsersSegue", sender: self)
                 }
             }
         }
@@ -216,27 +216,27 @@ class VTMembersContainerViewController: UIViewController, UIActionSheetDelegate,
         self.responseData = NSMutableData()
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "showNearbyUsersSegue" {
-            let destinationViewController = segue.destinationViewController as! VTNearbyUsersTableViewController
+            let destinationViewController = segue.destination as! VTNearbyUsersTableViewController
             destinationViewController.totalNearbyUsers = self.totalNearbyUsers!
             destinationViewController.usersList = self.nearbyUsers
             destinationViewController.currentUserCoordinate = self.currentUserCoordinate!
-            destinationViewController.sortedType = .SortByDistance
+            destinationViewController.sortedType = .sortByDistance
         } else if segue.identifier == "scannedStrangerProfileSegue" {
-            let destinationViewController = segue.destinationViewController as! VTScannedOrSearchedUserProfileTableViewController
+            let destinationViewController = segue.destination as! VTScannedOrSearchedUserProfileTableViewController
             destinationViewController.userObject = self.scannedUser
         }
     }
     
-    @IBAction func unwindToMembersContainerView(segue: UIStoryboardSegue) {
+    @IBAction func unwindToMembersContainerView(_ segue: UIStoryboardSegue) {
     }
     
     deinit {
         self.HUD = nil
         self.indexOfCurrentHttpRequest = nil
         self.locationService = nil
-        self.nearbyUsers.removeAll(keepCapacity: false)
+        self.nearbyUsers.removeAll(keepingCapacity: false)
         self.totalNearbyUsers = nil
         self.currentUserCoordinate = nil
         self.captainUserIdOfCurrentSelectedTeam = nil

@@ -27,10 +27,10 @@ class VTRequestView: UIView {
     init(message: Message, topOffset: CGFloat) {
         super.init(frame: CGRect(x: 0, y: topOffset, width: ScreenSize.width, height: UndecidedVariable))
         
-        self.label_createdTimeAndRequestType = UILabel(frame: CGRectMake(0, 0, ScreenSize.width, SingleLineLabelHeight))
-        self.label_createdTimeAndRequestType?.textColor = UIColor.lightGrayColor()
-        self.label_createdTimeAndRequestType?.font = UIFont.systemFontOfSize(14.0)
-        self.label_createdTimeAndRequestType?.textAlignment = .Center
+        self.label_createdTimeAndRequestType = UILabel(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: SingleLineLabelHeight))
+        self.label_createdTimeAndRequestType?.textColor = UIColor.lightGray
+        self.label_createdTimeAndRequestType?.font = UIFont.systemFont(ofSize: 14.0)
+        self.label_createdTimeAndRequestType?.textAlignment = .center
         
         self.addSubview(self.label_createdTimeAndRequestType!)
         
@@ -45,8 +45,8 @@ class VTRequestView: UIView {
             )
         )
         self.label_messageContent?.text = message.content
-        self.label_messageContent?.textColor = UIColor.lightGrayColor()
-        self.label_messageContent?.font = UIFont.systemFontOfSize(15.0)
+        self.label_messageContent?.textColor = UIColor.lightGray
+        self.label_messageContent?.font = UIFont.systemFont(ofSize: 15.0)
         self.label_messageContent?.adjustsFontSizeToFitWidth = false
         self.label_messageContent?.numberOfLines = 0
         self.label_messageContent?.sizeToFit()
@@ -72,34 +72,34 @@ class VTRequestView: UIView {
                 height: cardViewHeight
             )
         )
-        self.cardView!.backgroundColor = UIColor.whiteColor()
+        self.cardView!.backgroundColor = UIColor.white
         
         // team avatar
         self.avatarImageView = UIImageView(frame: CGRect(x: GeneralPadding, y: GeneralPadding, width: AvatarSize, height: AvatarSize))
         
-        if message.type != MessageType.Application.rawValue {
+        if message.type != MessageType.application.rawValue {
             // of 4 types of requests in this messageGroup, invitation, challenged and activity request are sent from team
-            Toolbox.loadAvatarImage(message.fromTeam, toImageView: self.avatarImageView!, avatarType: AvatarType.Team)
+            Toolbox.loadAvatarImage(message.fromTeam, toImageView: self.avatarImageView!, avatarType: AvatarType.team)
         } else {
             // yet application is sent by user
-            Toolbox.loadAvatarImage(message.from, toImageView: self.avatarImageView!, avatarType: AvatarType.User)
+            Toolbox.loadAvatarImage(message.from, toImageView: self.avatarImageView!, avatarType: AvatarType.user)
         }
         self.avatarImageView?.layer.cornerRadius = AvatarSize / 2
         self.avatarImageView?.layer.borderWidth = 2.0
-        self.avatarImageView?.layer.borderColor = UIColor.whiteColor().CGColor
+        self.avatarImageView?.layer.borderColor = UIColor.white.cgColor
         self.avatarImageView?.clipsToBounds = true
         
         self.messageType = message.type
-        if self.messageType != MessageType.Application.rawValue {   // message is invitation, activity request or challenge, sent by team
+        if self.messageType != MessageType.application.rawValue {   // message is invitation, activity request or challenge, sent by team
             self.fromModelId = message.fromTeam
         } else {    // message is an application, sent by user
             self.fromModelId = message.from
         }
         
         // set up avatar tap gesture, when tapped, team info view controller should show up
-        let singleTap = UITapGestureRecognizer(target: self, action: "avatarTapped")
+        let singleTap = UITapGestureRecognizer(target: self, action: #selector(VTRequestView.avatarTapped))
         singleTap.numberOfTapsRequired = 1
-        self.avatarImageView?.userInteractionEnabled = true
+        self.avatarImageView?.isUserInteractionEnabled = true
         self.avatarImageView?.addGestureRecognizer(singleTap)
         
         self.cardView?.addSubview(self.avatarImageView!)
@@ -114,8 +114,8 @@ class VTRequestView: UIView {
             )
         )
         self.label_teamName?.text = message.senderName
-        self.self.label_teamName?.textColor = UIColor.darkGrayColor()
-        self.self.label_teamName?.font = UIFont.systemFontOfSize(20.0)
+        self.self.label_teamName?.textColor = UIColor.darkGray
+        self.self.label_teamName?.font = UIFont.systemFont(ofSize: 20.0)
         
         self.cardView?.addSubview(self.label_teamName!)
         
@@ -130,19 +130,19 @@ class VTRequestView: UIView {
         )
         let timeText = Toolbox.formatTimeString(message.createdAt, shouldGetHourAndMinute: true)
         switch (message.type) {
-        case MessageType.ActivityRequest.rawValue:
+        case MessageType.activityRequest.rawValue:
             self.icon_messageType!.image = UIImage(named: "calendar")
             self.label_createdTimeAndRequestType?.text = timeText + " 活动通知"
             break
-        case MessageType.Application.rawValue:
+        case MessageType.application.rawValue:
             self.icon_messageType!.image = UIImage(named: "person_add")
             self.label_createdTimeAndRequestType?.text = timeText + " 入队申请"
             break
-        case MessageType.Invitation.rawValue:
+        case MessageType.invitation.rawValue:
             self.icon_messageType!.image = UIImage(named: "handshake")
             self.label_createdTimeAndRequestType?.text = timeText + " 组队邀请"
             break
-        case MessageType.Challenge.rawValue:
+        case MessageType.challenge.rawValue:
             self.icon_messageType!.image = UIImage(named: "trophy")
             self.label_createdTimeAndRequestType?.text = timeText + " 挑战书"
             break
@@ -161,9 +161,9 @@ class VTRequestView: UIView {
         )
         self.cardView!.addSubview(self.label_messageContent!)
         
-        if message.status == MessageStatus.Unread.rawValue {
+        if message.status == MessageStatus.unread.rawValue {
             // accept button
-            self.button_accept = UIButton(type: .System)
+            self.button_accept = UIButton(type: .system)
             
             self.button_accept?.frame = CGRect(
                 x: 0,
@@ -171,22 +171,22 @@ class VTRequestView: UIView {
                 width: self.cardView!.frame.size.width / 2,
                 height: ButtonHeight
             )
-            self.button_accept?.tintColor = UIColor.whiteColor()
-            self.button_accept?.setTitle("接受", forState: .Normal)
+            self.button_accept?.tintColor = UIColor.white
+            self.button_accept?.setTitle("接受", for: UIControlState())
             self.button_accept?.backgroundColor = ColorSettledGreen
             
             self.cardView?.addSubview(self.button_accept!)
             
             // refuse button
-            self.button_refuse = UIButton(type: .System)
+            self.button_refuse = UIButton(type: .system)
             self.button_refuse?.frame = CGRect(
                 x: self.cardView!.frame.size.width / 2 + 1,
                 y: cardViewHeight - ButtonHeight,
                 width: self.cardView!.frame.size.width / 2 - 1,
                 height: ButtonHeight
             )
-            self.button_refuse?.tintColor = UIColor.whiteColor()
-            self.button_refuse?.setTitle("拒绝", forState: .Normal)
+            self.button_refuse?.tintColor = UIColor.white
+            self.button_refuse?.setTitle("拒绝", for: UIControlState())
             self.button_refuse?.backgroundColor = ColorOrange
             
             self.cardView?.addSubview(self.button_refuse!)
@@ -199,16 +199,16 @@ class VTRequestView: UIView {
                     height: ButtonHeight
                 )
             )
-            if message.status == MessageStatus.Accepted.rawValue {
+            if message.status == MessageStatus.accepted.rawValue {
                 self.messageStatusBar?.backgroundColor = ColorSettledGreen
                 self.messageStatusBar?.text = "已接受"
             } else {
                 self.messageStatusBar?.backgroundColor = ColorYellow
                 self.messageStatusBar?.text = "已拒绝"
             }
-            self.messageStatusBar?.textColor = UIColor.whiteColor()
-            self.messageStatusBar?.font = UIFont.systemFontOfSize(15.0)
-            self.messageStatusBar?.textAlignment = .Center
+            self.messageStatusBar?.textColor = UIColor.white
+            self.messageStatusBar?.font = UIFont.systemFont(ofSize: 15.0)
+            self.messageStatusBar?.textAlignment = .center
             
             self.cardView?.addSubview(self.messageStatusBar!)
         }
@@ -220,8 +220,8 @@ class VTRequestView: UIView {
     }
     
     func avatarTapped() {
-        NSNotificationCenter.defaultCenter().postNotificationName(
-            "avatarTappedInRequestCardView",
+        NotificationCenter.default.post(
+            name: Notification.Name(rawValue: "avatarTappedInRequestCardView"),
             object: [
                 "modelId": self.fromModelId!,
                 "messageType": self.messageType!
@@ -229,7 +229,7 @@ class VTRequestView: UIView {
         )
     }
     
-    func updateAppearanceForMessageStatusChange(statusString: String, backgroundColor: UIColor) {
+    func updateAppearanceForMessageStatusChange(_ statusString: String, backgroundColor: UIColor) {
         self.button_accept?.removeFromSuperview()
         self.button_accept = nil
         
@@ -247,9 +247,9 @@ class VTRequestView: UIView {
         
         self.messageStatusBar?.backgroundColor = backgroundColor
         self.messageStatusBar?.text = statusString
-        self.messageStatusBar?.textColor = UIColor.whiteColor()
-        self.messageStatusBar?.font = UIFont.systemFontOfSize(15.0)
-        self.messageStatusBar?.textAlignment = .Center
+        self.messageStatusBar?.textColor = UIColor.white
+        self.messageStatusBar?.font = UIFont.systemFont(ofSize: 15.0)
+        self.messageStatusBar?.textAlignment = .center
         
         self.cardView!.addSubview(self.messageStatusBar!)
     }
@@ -270,11 +270,11 @@ class VTRequestView: UIView {
         
         self.label_teamName = nil
         if self.button_accept != nil {
-            self.button_accept?.removeTarget(nil, action: nil, forControlEvents: .AllEvents)
+            self.button_accept?.removeTarget(nil, action: nil, for: .allEvents)
             self.button_accept = nil
         }
         if self.button_refuse != nil {
-            self.button_refuse?.removeTarget(nil, action: nil, forControlEvents: .AllEvents)
+            self.button_refuse?.removeTarget(nil, action: nil, for: .allEvents)
             self.button_refuse = nil
         }
         

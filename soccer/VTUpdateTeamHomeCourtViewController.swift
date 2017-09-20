@@ -33,9 +33,9 @@ class VTUpdateTeamHomeCourtViewController: UIViewController, NSURLConnectionDele
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.teamId = NSUserDefaults.standardUserDefaults().objectForKey("teamIdSelectedInTeamsList") as? String
+        self.teamId = UserDefaults.standard.object(forKey: "teamIdSelectedInTeamsList") as? String
 
-        self.button_submit.hidden = true
+        self.button_submit.isHidden = true
 
         // setup drop shadow for search bar view
         Appearance.dropShadowForView(self.view_searchBar)
@@ -48,12 +48,12 @@ class VTUpdateTeamHomeCourtViewController: UIViewController, NSURLConnectionDele
         self.input_homeCourtAddress.delegate = self
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(true)
         Appearance.customizeNavigationBar(self, title: "球队主场")
         
-        self.mapView = BMKMapView(frame: CGRectMake(0, 0, ScreenSize.width, ScreenSize.height))
-        self.mapView?.zoomLevel = BaiduMapZoomLevel.Default.rawValue
+        self.mapView = BMKMapView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: ScreenSize.height))
+        self.mapView?.zoomLevel = BaiduMapZoomLevel.default.rawValue
         if Toolbox.isStringValueValid(self.latitude) && Toolbox.isStringValueValid(self.longitude) {
             let teamCoordinate = CLLocationCoordinate2D(latitude: Double(self.latitude!)!, longitude: Double(self.longitude!)!)
             self.mapView?.centerCoordinate = teamCoordinate
@@ -68,17 +68,17 @@ class VTUpdateTeamHomeCourtViewController: UIViewController, NSURLConnectionDele
             }
         }
         self.view.addSubview(self.mapView!)
-        self.view.bringSubviewToFront(self.view_searchBar)
-        self.view.bringSubviewToFront(self.button_locateUser)
-        self.view.bringSubviewToFront(self.button_zoomIn)
-        self.view.bringSubviewToFront(self.button_zoomOut)
-        self.view.bringSubviewToFront(self.button_submit)
+        self.view.bringSubview(toFront: self.view_searchBar)
+        self.view.bringSubview(toFront: self.button_locateUser)
+        self.view.bringSubview(toFront: self.button_zoomIn)
+        self.view.bringSubview(toFront: self.button_zoomOut)
+        self.view.bringSubview(toFront: self.button_submit)
         
         self.mapView?.viewWillAppear()
         self.mapView?.delegate = self
     }
     
-    override func viewWillDisappear(animated: Bool) {
+    override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(true)
         self.mapView?.viewWillDisappear()
         self.mapView?.delegate = nil
@@ -101,17 +101,17 @@ class VTUpdateTeamHomeCourtViewController: UIViewController, NSURLConnectionDele
         }
     }
     
-    func mapView(mapView: BMKMapView!, onClickedMapBlank coordinate: CLLocationCoordinate2D) {
+    func mapView(_ mapView: BMKMapView!, onClickedMapBlank coordinate: CLLocationCoordinate2D) {
         self.input_homeCourtAddress.resignFirstResponder()
     }
     
-    func textFieldShouldReturn(textField: UITextField) -> Bool {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         self.input_homeCourtAddress.resignFirstResponder()
         self.launchPOISearchBasedOnUserInputKeyword(self)
         return true
     }
     
-    @IBAction func updateHomeCourt(sender: AnyObject) {
+    @IBAction func updateHomeCourt(_ sender: AnyObject) {
         let newHomeCourt = self.input_homeCourtAddress.text!
         var connection = Toolbox.asyncHttpPostToURL(
             URLChangeTeamHomeCourt,
@@ -127,7 +127,7 @@ class VTUpdateTeamHomeCourtViewController: UIViewController, NSURLConnectionDele
         connection = nil
     }
     
-    @IBAction func launchPOISearchBasedOnUserInputKeyword(sender: AnyObject) {
+    @IBAction func launchPOISearchBasedOnUserInputKeyword(_ sender: AnyObject) {
         let searchKeyword = self.input_homeCourtAddress.text
         if searchKeyword?.characters.count == 0 || searchKeyword == nil {
             return
@@ -146,7 +146,7 @@ class VTUpdateTeamHomeCourtViewController: UIViewController, NSURLConnectionDele
     
     - parameter poiResult: the poi search result, contains poiList
     */
-    func didFinishSearchingPOIResult(poiResult: BMKPoiResult) {
+    func didFinishSearchingPOIResult(_ poiResult: BMKPoiResult) {
         self.HUD?.hide(true)
         self.HUD = nil
         let poiInfoList = poiResult.poiInfoList
@@ -158,8 +158,8 @@ class VTUpdateTeamHomeCourtViewController: UIViewController, NSURLConnectionDele
         } else {
             self.mapView?.removeAnnotations(self.poiAnnotations)
             self.poiAnnotations?.removeAll()
-            self.mapView?.centerCoordinate = poiInfoList[0].pt
-            for element in poiInfoList {
+            self.mapView?.centerCoordinate = (poiInfoList![0] as AnyObject).pt
+            for element in poiInfoList! {
                 if let poiInfo = element as? BMKPoiInfo {
                     let poiAnnotation = BMKPointAnnotation()
                     poiAnnotation.title = poiInfo.address
@@ -178,15 +178,15 @@ class VTUpdateTeamHomeCourtViewController: UIViewController, NSURLConnectionDele
     - parameter mapView: the map view
     - parameter view:    the annotation view
     */
-    func mapView(mapView: BMKMapView!, didSelectAnnotationView view: BMKAnnotationView!) {
+    func mapView(_ mapView: BMKMapView!, didSelect view: BMKAnnotationView!) {
         self.selectedHomeCourtAddress = view.annotation.title!()
         self.selectedCoordinates = view.annotation.coordinate
         
         // show the submit button with animation
-        self.button_submit.enabled = true
+        self.button_submit.isEnabled = true
         self.button_submit.alpha = 0.0
-        self.button_submit.hidden = false
-        UIView.animateWithDuration(0.2, animations: {
+        self.button_submit.isHidden = false
+        UIView.animate(withDuration: 0.2, animations: {
             self.button_submit.alpha = 1.0
         })
     }
@@ -197,13 +197,13 @@ class VTUpdateTeamHomeCourtViewController: UIViewController, NSURLConnectionDele
     - parameter mapView: the map view
     - parameter view:    the annotation view
     */
-    func mapView(mapView: BMKMapView!, didDeselectAnnotationView view: BMKAnnotationView!) {
+    func mapView(_ mapView: BMKMapView!, didDeselect view: BMKAnnotationView!) {
         self.selectedHomeCourtAddress = nil
         self.selectedCoordinates = nil
         
         // hide the submit button with animation
-        self.button_submit.enabled = false
-        self.button_submit.hidden = true
+        self.button_submit.isEnabled = false
+        self.button_submit.isHidden = true
     }
     
     /**
@@ -214,14 +214,14 @@ class VTUpdateTeamHomeCourtViewController: UIViewController, NSURLConnectionDele
     
     - returns: the generated annotation view
     */
-    func mapView(mapView: BMKMapView!, viewForAnnotation annotation: BMKAnnotation!) -> BMKAnnotationView! {
-        if annotation.isKindOfClass(BMKPointAnnotation) {
+    func mapView(_ mapView: BMKMapView!, viewFor annotation: BMKAnnotation!) -> BMKAnnotationView! {
+        if annotation.isKind(of: BMKPointAnnotation.self) {
             let newAnnotationView = BMKPinAnnotationView(annotation: annotation, reuseIdentifier: "POIAnnotation")
-            newAnnotationView.animatesDrop = true
-            newAnnotationView.canShowCallout = true
+            newAnnotationView?.animatesDrop = true
+            newAnnotationView?.canShowCallout = true
             if annotation.subtitle?() == "当前位置" {
-                newAnnotationView.image = UIImage(named: "user_location")
-                newAnnotationView.animatesDrop = false
+                newAnnotationView?.image = UIImage(named: "user_location")
+                newAnnotationView?.animatesDrop = false
             }
             return newAnnotationView
         }
@@ -237,7 +237,7 @@ class VTUpdateTeamHomeCourtViewController: UIViewController, NSURLConnectionDele
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "查询地址失败")
     }
     
-    @IBAction func locateUser(sender: AnyObject) {
+    @IBAction func locateUser(_ sender: AnyObject) {
         if self.locationService == nil {
             self.locationService = LocationService()
             self.locationService?.delegate = self
@@ -250,7 +250,7 @@ class VTUpdateTeamHomeCourtViewController: UIViewController, NSURLConnectionDele
         self.HUD = Toolbox.setupCustomProcessingViewWithTitle(title: "正在定位中...")
     }
     
-    func didGetUserCoordinates(coordinate: CLLocationCoordinate2D) {
+    func didGetUserCoordinates(_ coordinate: CLLocationCoordinate2D) {
         self.HUD?.hide(true)
         self.HUD = nil
         self.mapView?.centerCoordinate = coordinate
@@ -271,39 +271,39 @@ class VTUpdateTeamHomeCourtViewController: UIViewController, NSURLConnectionDele
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "定位失败")
     }
     
-    @IBAction func zoomInMap(sender: AnyObject) {
+    @IBAction func zoomInMap(_ sender: AnyObject) {
         var currentZoomLevel = self.mapView!.zoomLevel
-        if currentZoomLevel < BaiduMapZoomLevel.Max.rawValue {
+        if currentZoomLevel < BaiduMapZoomLevel.max.rawValue {
             currentZoomLevel = currentZoomLevel + 1
             self.mapView?.zoomLevel = currentZoomLevel
         }
-        if self.button_zoomOut.enabled == false {
+        if self.button_zoomOut.isEnabled == false {
             Toolbox.toggleButton(self.button_zoomOut, enabled: true)
         }
-        if currentZoomLevel == BaiduMapZoomLevel.Max.rawValue {
+        if currentZoomLevel == BaiduMapZoomLevel.max.rawValue {
             Toolbox.toggleButton(self.button_zoomIn, enabled: false)
         }
     }
     
-    @IBAction func zoomOutMap(sender: AnyObject) {
+    @IBAction func zoomOutMap(_ sender: AnyObject) {
         var currentZoomLevel = self.mapView!.zoomLevel
-        if currentZoomLevel > BaiduMapZoomLevel.Min.rawValue {
+        if currentZoomLevel > BaiduMapZoomLevel.min.rawValue {
             currentZoomLevel = currentZoomLevel - 1
             self.mapView?.zoomLevel = currentZoomLevel - 1
         }
-        if self.button_zoomIn.enabled == false {
+        if self.button_zoomIn.isEnabled == false {
             Toolbox.toggleButton(self.button_zoomIn, enabled: true)
         }
-        if currentZoomLevel == BaiduMapZoomLevel.Min.rawValue {
+        if currentZoomLevel == BaiduMapZoomLevel.min.rawValue {
             Toolbox.toggleButton(self.button_zoomOut, enabled: false)
         }
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.HUD?.hide(true)
         self.HUD = nil
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络超时")
@@ -311,18 +311,18 @@ class VTUpdateTeamHomeCourtViewController: UIViewController, NSURLConnectionDele
         self.responseData = NSMutableData()
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.HUD?.hide(true)
         self.HUD = nil
-        let responseStr:NSString? = NSString(data: self.responseData!, encoding: NSUTF8StringEncoding)
+        let responseStr:NSString? = NSString(data: self.responseData! as Data, encoding: String.Encoding.utf8.rawValue)
         
         if responseStr == "OK" {    // team home court updated successfully
             // update the team name in local database
             let dbManager = DBManager(databaseFilename: "soccer_ios.sqlite")
-            let correspondingTeams:NSArray = dbManager.loadDataFromDB(
-                "select * from teams where teamId=?",
+            let correspondingTeams:NSArray = dbManager!.loadData(
+                fromDB: "select * from teams where teamId=?",
                 parameters: [self.teamId!]
-            )
+            ) as NSArray
             if correspondingTeams.count > 0 {   // team with such team id found in local database
                 let team = Team.formatDatabaseRecordToTeamFormat(correspondingTeams[0] as! [AnyObject])
                 // update team home court in dictionary and then save it in local database
@@ -333,7 +333,7 @@ class VTUpdateTeamHomeCourtViewController: UIViewController, NSURLConnectionDele
                 team.saveOrUpdateTeamInDatabase()
                 
                 // unwind navigation controller to the previous view controller
-                self.navigationController?.popViewControllerAnimated(true)
+                self.navigationController?.popViewController(animated: true)
             } else {    // team with the team id NOT found in local database
                 Toolbox.showCustomAlertViewWithImage("unhappy", title: "本地球队不存在")
             }

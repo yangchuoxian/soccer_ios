@@ -10,7 +10,7 @@ import UIKit
 
 class VTNewActivityTableViewController: UITableViewController, UIAlertViewDelegate {
     
-    var activityDate: NSDate?
+    var activityDate: Date?
     var dateString: String?
     var timeString: String?
     var selectedActivityType: ActivityType?
@@ -33,19 +33,19 @@ class VTNewActivityTableViewController: UITableViewController, UIAlertViewDelega
     override func viewDidLoad() {
         super.viewDidLoad()
         // remove separators of cells for static table view
-        self.tableView.tableFooterView = UIView(frame: CGRectZero)
+        self.tableView.tableFooterView = UIView(frame: CGRect.zero)
         
         if self.activityDate != nil {
             self.label_date.text = self.activityDate!.getDateString()
             self.dateString = self.activityDate!.getDateString()
         }
         
-        self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Stop, target: self, action: "cancelPublishingNewActivity")
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .stop, target: self, action: #selector(VTNewActivityTableViewController.cancelPublishingNewActivity))
         
         // activity type defaults to exercise
         // otherwise activity type should be match since current user as team captain is trying to initiate a match to a nearby team
         if self.isNewActivityMatchInitiatedFromDiscoverTab == false {
-            self.selectedActivityType = .Exercise
+            self.selectedActivityType = .exercise
         } else {    // the activity is predefined as a match
             self.imageView_typeExerciseSelectedSign.alpha = 0
             self.imageView_typeMatchSelectedSign.alpha = 1
@@ -54,13 +54,13 @@ class VTNewActivityTableViewController: UITableViewController, UIAlertViewDelega
     
     func cancelPublishingNewActivity() {
         if self.isNewActivityMatchInitiatedFromDiscoverTab == true {
-            self.performSegueWithIdentifier("unwindToTeamBriefIntroSegue", sender: self)
+            self.performSegue(withIdentifier: "unwindToTeamBriefIntroSegue", sender: self)
         } else {
-            self.performSegueWithIdentifier("unwindToTeamCalendarSegue", sender: self)
+            self.performSegue(withIdentifier: "unwindToTeamCalendarSegue", sender: self)
         }
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         if self.isNewActivityMatchInitiatedFromDiscoverTab == true {
             Appearance.customizeNavigationBar(self, title: "赛事信息")
@@ -75,60 +75,60 @@ class VTNewActivityTableViewController: UITableViewController, UIAlertViewDelega
     }
 
     // MARK: - Table view data source
-    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        self.tableView.deselectRowAtIndexPath(indexPath, animated: true)
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        self.tableView.deselectRow(at: indexPath, animated: true)
         
-        if indexPath.section == 0 {
-            if indexPath.row == 0 { // setting up activity date
-                let currentTime = NSDate()
+        if (indexPath as NSIndexPath).section == 0 {
+            if (indexPath as NSIndexPath).row == 0 { // setting up activity date
+                let currentTime = Date()
                 // set up action sheet picker so user can select the activity date
                 var actionSheetDatePicker: ActionSheetDatePicker
                 if self.activityDate != nil {
-                    actionSheetDatePicker = ActionSheetDatePicker(title: "选择日期", datePickerMode: .Date, selectedDate: self.activityDate!, minimumDate: currentTime, maximumDate: nil, target: self, action: "dateSelected:", origin: self.tableCell_date)
+                    actionSheetDatePicker = ActionSheetDatePicker(title: "选择日期", datePickerMode: .date, selectedDate: self.activityDate!, minimumDate: currentTime, maximumDate: nil, target: self, action: #selector(VTNewActivityTableViewController.dateSelected(_:)), origin: self.tableCell_date)
                 } else {
-                    actionSheetDatePicker = ActionSheetDatePicker(title: "选择日期", datePickerMode: .Date, selectedDate: currentTime, minimumDate: currentTime, maximumDate: nil, target: self, action: "dateSelected:", origin: self.tableCell_date)
+                    actionSheetDatePicker = ActionSheetDatePicker(title: "选择日期", datePickerMode: .date, selectedDate: currentTime, minimumDate: currentTime, maximumDate: nil, target: self, action: #selector(VTNewActivityTableViewController.dateSelected(_:)), origin: self.tableCell_date)
                 }
                 // show cancel button of action sheet picker
                 actionSheetDatePicker.hideCancel = false
-                actionSheetDatePicker.showActionSheetPicker()
-            } else if indexPath.row == 1 {  // setting up activity time
-                let currentTime:NSDate = NSDate()
+                actionSheetDatePicker.show()
+            } else if (indexPath as NSIndexPath).row == 1 {  // setting up activity time
+                let currentTime:Date = Date()
                 // if the activityDate is TODAY, the minimum time should be now, meaning that you CANNOT publish a new activity at a past time today;
                 // if the activityDate is anoy other date that is later than today, then there should be no such limit
-                var minimumTime: NSDate? = nil
+                var minimumTime: Date? = nil
                 if self.dateString != nil {
-                    if NSDate(dateString: self.dateString!).isTheSameDayAs(currentTime) {
+                    if Date(dateString: self.dateString!).isTheSameDayAs(currentTime) {
                         minimumTime = currentTime
                     }
                 }
                 
                 // set up action sheet picker so user can select the activity time
-                let actionSheetTimePicker = ActionSheetDatePicker(title: "选择时间", datePickerMode: .Time, selectedDate: currentTime, minimumDate: minimumTime, maximumDate: nil, target: self, action: "timeSelected:", origin: self.tableCell_time)
+                let actionSheetTimePicker = ActionSheetDatePicker(title: "选择时间", datePickerMode: .time, selectedDate: currentTime, minimumDate: minimumTime, maximumDate: nil, target: self, action: #selector(VTNewActivityTableViewController.timeSelected(_:)), origin: self.tableCell_time)
                 // show cancel button of action sheet picker
-                actionSheetTimePicker.hideCancel = false
-                actionSheetTimePicker.showActionSheetPicker()
+                actionSheetTimePicker?.hideCancel = false
+                actionSheetTimePicker?.show()
             }
-        } else if indexPath.section == 1 {
-            if indexPath.row == 0 { // activity type exercise selected
+        } else if (indexPath as NSIndexPath).section == 1 {
+            if (indexPath as NSIndexPath).row == 0 { // activity type exercise selected
                 if self.isNewActivityMatchInitiatedFromDiscoverTab {
                     // the new activity is a match initiated from discover tab, thus one cannot set it as an exercise
                     return
                 }
-                self.selectedActivityType = .Exercise
-                UIView.animateWithDuration(0.1, delay: 0.1, options: .CurveEaseInOut, animations: {
+                self.selectedActivityType = .exercise
+                UIView.animate(withDuration: 0.1, delay: 0.1, options: UIViewAnimationOptions(), animations: {
                     self.imageView_typeExerciseSelectedSign.alpha = 1
                     self.imageView_typeMatchSelectedSign.alpha = 0
                     }, completion: nil
                 )
             } else {    // activity type match selected
-                self.selectedActivityType = .Match
-                UIView.animateWithDuration(0.1, delay: 0.1, options: .CurveEaseInOut, animations: {
+                self.selectedActivityType = .match
+                UIView.animate(withDuration: 0.1, delay: 0.1, options: UIViewAnimationOptions(), animations: {
                     self.imageView_typeExerciseSelectedSign.alpha = 0
                     self.imageView_typeMatchSelectedSign.alpha = 1
                     }, completion: nil
                 )
             }
-        } else if indexPath.section == 2 {  // setting up minimum number of people to attend the activity
+        } else if (indexPath as NSIndexPath).section == 2 {  // setting up minimum number of people to attend the activity
             let numberOfMembers = Singleton_UserOwnedTeam.sharedInstance.numberOfMembers
             if numberOfMembers == 0 {
                 Toolbox.showCustomAlertViewWithImage("unhappy", title: "该球队没有成员")
@@ -138,7 +138,7 @@ class VTNewActivityTableViewController: UITableViewController, UIAlertViewDelega
             for index in 1...numberOfMembers {
                 options_numberOfAttendees.append("\(Int(index))")
             }
-            ActionSheetStringPicker.showPickerWithTitle("选择最少参加人数",
+            ActionSheetStringPicker.show(withTitle: "选择最少参加人数",
                 rows: options_numberOfAttendees,
                 initialSelection: 0,
                 doneBlock: {
@@ -147,7 +147,7 @@ class VTNewActivityTableViewController: UITableViewController, UIAlertViewDelega
                     self.label_minimumNumberOfAttendees.text = "\(Int(self.minimumNumberOfAttendees!))"
                     return
                 },
-                cancelBlock: {
+                cancel: {
                     picker in return
                 },
                 origin: self.view
@@ -155,19 +155,19 @@ class VTNewActivityTableViewController: UITableViewController, UIAlertViewDelega
         }
     }
     
-    override func tableView(tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+    override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         var footerView:UIView!
         if section == 2 { // add button to the footer for third table section only
             // get screen size
-            footerView = UIView(frame: CGRectMake(0, 0, ScreenSize.width, TableSectionFooterHeightWithButton))
+            footerView = UIView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: TableSectionFooterHeightWithButton))
             
             self.button_nextStep = Appearance.setupTableFooterButtonWithTitle("下一步", backgroundColor: ColorSettledGreen)
             
-            self.button_nextStep?.addTarget(self, action: "nextStep", forControlEvents: .TouchUpInside)
+            self.button_nextStep?.addTarget(self, action: #selector(VTNewActivityTableViewController.nextStep), for: .touchUpInside)
             footerView.addSubview(self.button_nextStep!)
             
         } else {
-            footerView = UIView(frame: CGRectMake(0, 0, ScreenSize.width, DefaultTableSectionFooterHeight))
+            footerView = UIView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: DefaultTableSectionFooterHeight))
         }
         
         footerView.tintColor = ColorBackgroundGray
@@ -175,7 +175,7 @@ class VTNewActivityTableViewController: UITableViewController, UIAlertViewDelega
         return footerView
     }
     
-    override func tableView(tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+    override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
         if section == 2 {   // footer height is 80 for the third section only
             return TableSectionFooterHeightWithButton
         } else {
@@ -200,7 +200,7 @@ class VTNewActivityTableViewController: UITableViewController, UIAlertViewDelega
         // if the user has not designate minimum number of attendees for match when submitting this new activity, system provides a hint saying that minimum number of attendees should be designated.
         // NOTE: minimumNumberOfAttendees is ONLY needed if the activity is of type MATCH
         if self.minimumNumberOfAttendees == nil {
-            if self.selectedActivityType == .Match {
+            if self.selectedActivityType == .match {
                 Toolbox.showCustomAlertViewWithImage("unhappy", title: "请确定最少参赛人数")
                 return
             }
@@ -209,36 +209,36 @@ class VTNewActivityTableViewController: UITableViewController, UIAlertViewDelega
         var activityInfo:[String: AnyObject]
         // difference of activity info between exercise and match is that minimumNumberOfAttendees is not mandatory for exercise
         var minimumNumberOfAttendees = 0
-        if self.selectedActivityType! == .Match {
+        if self.selectedActivityType! == .match {
             minimumNumberOfAttendees = self.minimumNumberOfAttendees!
         }
         activityInfo = [
-            "datetime": "\(self.dateString!) \(self.timeString!)",
-            "type": "\(Int(self.selectedActivityType!.rawValue))",
-            "minimumNumberOfAttendees": "\(minimumNumberOfAttendees)"
+            "datetime": "\(self.dateString!) \(self.timeString!)" as AnyObject,
+            "type": "\(Int(self.selectedActivityType!.rawValue))" as AnyObject,
+            "minimumNumberOfAttendees": "\(minimumNumberOfAttendees)" as AnyObject
         ]
         // decide whether this activity is initiated from team calendar view, or it is a match initiated from discover tab view
         if self.isNewActivityMatchInitiatedFromDiscoverTab == true {
-            activityInfo["idOfTeamB"] = self.rivalTeamId
+            activityInfo["idOfTeamB"] = self.rivalTeamId as AnyObject?
         }
         // save new activity info for later use
-        NSUserDefaults.standardUserDefaults().setObject(activityInfo, forKey: "activityInfo")
-        self.performSegueWithIdentifier("establishActivityAddress", sender: self)
+        UserDefaults.standard.set(activityInfo, forKey: "activityInfo")
+        self.performSegue(withIdentifier: "establishActivityAddress", sender: self)
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "establishActivityAddress" {
-            let destinationViewController = segue.destinationViewController as! VTNewActivityAddressViewController
+            let destinationViewController = segue.destination as! VTNewActivityAddressViewController
             destinationViewController.isNewActivityMatchInitiatedFromDiscoverTab = self.isNewActivityMatchInitiatedFromDiscoverTab
         }
     }
     
-    func dateSelected(selectedDate: NSDate) {
+    func dateSelected(_ selectedDate: Date) {
         self.dateString = selectedDate.getDateString()
         self.label_date.text = self.dateString
     }
     
-    func timeSelected(selectedTime: NSDate) {
+    func timeSelected(_ selectedTime: Date) {
         self.timeString = selectedTime.getTimeString()
         self.label_time.text = self.timeString
     }

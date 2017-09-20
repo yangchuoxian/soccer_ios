@@ -50,10 +50,10 @@ class Singleton_CurrentUser: NSObject, NSURLConnectionDelegate, NSURLConnectionD
     
     var responseData: NSMutableData? = NSMutableData()
     
-    func getUserInfoFrom(userInfo: [NSObject: AnyObject]) {
+    func getUserInfoFrom(_ userInfo: [AnyHashable: Any]) {
         self.userId = userInfo["id"] as? String
         // remmeber current user id in userDefaults
-        NSUserDefaults.standardUserDefaults().setObject(self.userId, forKey: "currentUserId")
+        UserDefaults.standard.set(self.userId, forKey: "currentUserId")
         self.username = userInfo["username"] as? String
         if let email = userInfo["email"] as? String {
             self.email = email
@@ -227,17 +227,17 @@ class Singleton_CurrentUser: NSObject, NSURLConnectionDelegate, NSURLConnectionD
         self.numToReviewOnPersonality = nil
     }
     
-    func updateUserInfo(infoName: String, infoValue: AnyObject) {
+    func updateUserInfo(_ infoName: String, infoValue: AnyObject) {
         var postParamsString: String
         if infoName == "location" {
             // when updating user location, other than the user location address, the frontend also needs to submit the latitude and longitude of user current location,
             // the server will need the coordinate to calculate geohash string to get nearby users
             let locationInfo = infoValue as! NSDictionary
-            postParamsString = infoName + "=" + (locationInfo.objectForKey("location") as! String)
-            postParamsString += "&latitude=" + (locationInfo.objectForKey("latitude") as! String)
-            postParamsString += "&longitude=" + (locationInfo.objectForKey("longitude") as! String)
+            postParamsString = infoName + "=" + (locationInfo.object(forKey: "location") as! String)
+            postParamsString += "&latitude=" + (locationInfo.object(forKey: "latitude") as! String)
+            postParamsString += "&longitude=" + (locationInfo.object(forKey: "longitude") as! String)
             postParamsString += "&id=" + self.userId!
-            self.updatedUserInfoValue = locationInfo.objectForKey("location") as? String
+            self.updatedUserInfoValue = locationInfo.object(forKey: "location") as? String
         } else {
             postParamsString = infoName + "=" + (infoValue as! String) + "&id=" + self.userId!
             self.updatedUserInfoValue = infoValue as? String
@@ -251,7 +251,7 @@ class Singleton_CurrentUser: NSObject, NSURLConnectionDelegate, NSURLConnectionD
         }
     }
     
-    func updateUserPassword(oldPassword: String, newPassword: String, confirmPassword: String) {
+    func updateUserPassword(_ oldPassword: String, newPassword: String, confirmPassword: String) {
         // get current view controller
         let postParamsString = "oldPassword=" + oldPassword + "&newPassword=" + newPassword + "&confirmPassword=" + confirmPassword + "&id=" + self.userId!
         let connection = Toolbox.asyncHttpPostToURL(URLChangePassword, parameters: postParamsString, delegate: self)
@@ -265,11 +265,11 @@ class Singleton_CurrentUser: NSObject, NSURLConnectionDelegate, NSURLConnectionD
         }
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.HUD?.hide(true)
         self.HUD = nil
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络超时")
@@ -277,11 +277,11 @@ class Singleton_CurrentUser: NSObject, NSURLConnectionDelegate, NSURLConnectionD
         self.responseData = NSMutableData()
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.HUD?.hide(true)
         self.HUD = nil
         
-        let responseStr = NSString(data: self.responseData!, encoding: NSUTF8StringEncoding)
+        let responseStr = NSString(data: self.responseData! as Data, encoding: String.Encoding.utf8.rawValue)
         if responseStr == "OK" {    // user info successfully updated
             if self.currentUpdatingInfoName == "username" {
                 self.username = self.updatedUserInfoValue
@@ -310,14 +310,14 @@ class Singleton_CurrentUser: NSObject, NSURLConnectionDelegate, NSURLConnectionD
             } else if self.currentUpdatingInfoName == "password" {
                 self.password = self.updatedUserInfoValue
                 // send message to notify that password is updated
-                NSNotificationCenter.defaultCenter().postNotificationName(
-                    "settingsInstructionComplete",
+                NotificationCenter.default.post(
+                    name: Notification.Name(rawValue: "settingsInstructionComplete"),
                     object: ["settings": "changePassword"]
                 )
             }
             // send message to notify that user info is updated
-            NSNotificationCenter.defaultCenter().postNotificationName(
-                "userInfoUpdated",
+            NotificationCenter.default.post(
+                name: Notification.Name(rawValue: "userInfoUpdated"),
                 object: ["userInfoIndex": self.currentUpdatingInfoName!]
             )
         } else {                                    // user info update failed
@@ -331,19 +331,19 @@ class Singleton_CurrentUser: NSObject, NSURLConnectionDelegate, NSURLConnectionD
     func logout() {
         // disconnect socket
         let socketManager = Singleton_SocketManager.sharedInstance
-        if socketManager.socket.status == .Connected {
+        if socketManager.socket.status == .connected {
             socketManager.socket.close()
             socketManager.intentionallyDisconnected = true
         }
         // remove the login credentials saved in keychain
         let keychainItem = KeychainItemWrapper(identifier: "SoccerAppLogin", accessGroup: nil)
-        keychainItem.resetKeychainItem()
+        keychainItem?.resetKeychainItem()
         // reset existing currentUser instance value
         self.resetCurrentUserInfo()
         // change rootViewController to loginViewController
         let storyboard = UIStoryboard(name: StoryboardNames.Account.rawValue, bundle: nil)
-        let rootViewController = storyboard.instantiateViewControllerWithIdentifier("accountNavigationViewController") 
-        UIApplication.sharedApplication().keyWindow?.rootViewController = rootViewController
+        let rootViewController = storyboard.instantiateViewController(withIdentifier: "accountNavigationViewController") 
+        UIApplication.shared.keyWindow?.rootViewController = rootViewController
     }
     
     func forcedLogout() {
@@ -351,7 +351,7 @@ class Singleton_CurrentUser: NSObject, NSURLConnectionDelegate, NSURLConnectionD
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "用户已在另一台设备登录")
     }
 
-    func processUserLogin(userJSON: [NSObject: AnyObject]) {
+    func processUserLogin(_ userJSON: [AnyHashable: Any]) {
         // save user info to singleton currentUser instance
         Singleton_CurrentUser.sharedInstance.getUserInfoFrom(userJSON)
         // store username and password in keychain
@@ -366,15 +366,15 @@ class Singleton_CurrentUser: NSObject, NSURLConnectionDelegate, NSURLConnectionD
             )
         }
         // remember the user with id as last login user in userDefaults, so as to show his/her avatar in loginViewController
-        NSUserDefaults.standardUserDefaults().setObject(self.userId!, forKey: "lastLoginUserId")
+        UserDefaults.standard.set(self.userId!, forKey: "lastLoginUserId")
         
         // change rootViewController to mainTabBarViewController
         let storyboard = UIStoryboard(name: StoryboardNames.MainTab.rawValue, bundle: nil)
         let rootViewController = storyboard.instantiateInitialViewController() as! UITabBarController
-        if UIApplication.sharedApplication().keyWindow != nil {
-            UIApplication.sharedApplication().keyWindow!.rootViewController = rootViewController
+        if UIApplication.shared.keyWindow != nil {
+            UIApplication.shared.keyWindow!.rootViewController = rootViewController
         } else {
-            UIApplication.sharedApplication().delegate?.window??.rootViewController = rootViewController
+            UIApplication.shared.delegate?.window??.rootViewController = rootViewController
         }
         
     }

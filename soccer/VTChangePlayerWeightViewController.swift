@@ -7,6 +7,26 @@
 //
 
 import UIKit
+fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l < r
+  case (nil, _?):
+    return true
+  default:
+    return false
+  }
+}
+
+fileprivate func > <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l > r
+  default:
+    return rhs < lhs
+  }
+}
+
 
 class VTChangePlayerWeightViewController: UIViewController {
     
@@ -21,11 +41,11 @@ class VTChangePlayerWeightViewController: UIViewController {
         // add unit label as rightView of textField input_weight
         Appearance.addRightViewToTextField(self.input_weight, withText: "kg")
         // listen to userInfoUpdated message and handles it by unwinding the navigation controller to the previous view controller 
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "updateUserInfo:", name: "userInfoUpdated", object: nil)
-        self.input_weight.addTarget(self, action: "validateUserInput", forControlEvents: .EditingChanged)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTChangePlayerWeightViewController.updateUserInfo(_:)), name: NSNotification.Name(rawValue: "userInfoUpdated"), object: nil)
+        self.input_weight.addTarget(self, action: #selector(VTChangePlayerWeightViewController.validateUserInput), for: .editingChanged)
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Appearance.customizeNavigationBar(self, title: "修改体重")
     }
@@ -39,11 +59,11 @@ class VTChangePlayerWeightViewController: UIViewController {
         }
     }
     
-    func updateUserInfo(notification: NSNotification) {
-        self.navigationController?.popViewControllerAnimated(true)
+    func updateUserInfo(_ notification: Notification) {
+        self.navigationController?.popViewController(animated: true)
     }
     
-    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         self.input_weight.resignFirstResponder()
     }
 
@@ -52,7 +72,7 @@ class VTChangePlayerWeightViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
-    @IBAction func updateWeight(sender: AnyObject) {
+    @IBAction func updateWeight(_ sender: AnyObject) {
         let newWeight = Toolbox.trim(self.input_weight.text!)
         if !Toolbox.isStringValueValid(newWeight) {
             Toolbox.showCustomAlertViewWithImage("unhappy", title: "请输入体重")
@@ -66,7 +86,7 @@ class VTChangePlayerWeightViewController: UIViewController {
     }
     
     deinit {
-        NSNotificationCenter.defaultCenter().removeObserver(self)
+        NotificationCenter.default.removeObserver(self)
     }
     
 }

@@ -6,46 +6,46 @@
 //  Copyright (c) 2015年 VisionTech. All rights reserved.
 //
 
-extension NSDate {
+extension Date {
     /**
      * NSDate customized initializer to intialize NSDate object from string with format "2015-07-17"
      */
-    convenience init(dateString: String) {
-        let dateStringFormatter = NSDateFormatter()
+    init(dateString: String) {
+        let dateStringFormatter = DateFormatter()
         dateStringFormatter.dateFormat = "yyyy-MM-dd"
-        let d = dateStringFormatter.dateFromString(dateString)!
-        self.init(timeInterval:0, sinceDate: d)
+        let d = dateStringFormatter.date(from: dateString)!
+        (self as NSDate).init(timeInterval:0, since: d)
     }
     
     /**
      * NSDate customized initializer to intialize NSDate object from string with format "2015-07-29T03:32:00.000Z"
      */
-    convenience init(dateTimeString: String) {
-        let dateTimeStringFormatter = NSDateFormatter()
+    init(dateTimeString: String) {
+        let dateTimeStringFormatter = DateFormatter()
         dateTimeStringFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSz"
-        let d = dateTimeStringFormatter.dateFromString(dateTimeString)!
-        self.init(timeInterval: 0, sinceDate: d)
+        let d = dateTimeStringFormatter.date(from: dateTimeString)!
+        (self as NSDate).init(timeInterval: 0, since: d)
     }
     
-    func getDateComponents() -> NSDateComponents {
-        return NSCalendar.currentCalendar().components([NSCalendarUnit.Year, NSCalendarUnit.Month, NSCalendarUnit.Day, NSCalendarUnit.Weekday, NSCalendarUnit.Hour, NSCalendarUnit.Minute], fromDate: self)
+    func getDateComponents() -> DateComponents {
+        return (Calendar.current as NSCalendar).components([NSCalendar.Unit.year, NSCalendar.Unit.month, NSCalendar.Unit.day, NSCalendar.Unit.weekday, NSCalendar.Unit.hour, NSCalendar.Unit.minute], from: self)
     }
     
-    func isTheSameDayAs(secondDate:NSDate) -> Bool {
-        let dateOneComponents:NSDateComponents = self.getDateComponents()
-        let dateTwoComponents:NSDateComponents = secondDate.getDateComponents()
+    func isTheSameDayAs(_ secondDate:Date) -> Bool {
+        let dateOneComponents:DateComponents = self.getDateComponents()
+        let dateTwoComponents:DateComponents = secondDate.getDateComponents()
         return (dateOneComponents.day == dateTwoComponents.day && dateOneComponents.month == dateTwoComponents.month && dateOneComponents.year == dateTwoComponents.year)
     }
     
     func getDateString() -> String {
-        let dateFormatter = NSDateFormatter()
+        let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
-        return dateFormatter.stringFromDate(self)
+        return dateFormatter.string(from: self)
     }
     
     func getTimeString() -> String {
-        let dateFormatter = NSDateFormatter()
+        let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "HH:mm"
-        return dateFormatter.stringFromDate(self)
+        return dateFormatter.string(from: self)
     }
 }

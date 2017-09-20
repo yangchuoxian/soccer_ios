@@ -19,9 +19,9 @@ class VTRegisterThroughPhoneViewController: UIViewController, UIActionSheetDeleg
     @IBOutlet weak var button_getVerificationCode: UIButton!
     
     enum httpRequest {
-        case UploadAvatar
-        case GetVerificationCode
-        case SubmitNewUser
+        case uploadAvatar
+        case getVerificationCode
+        case submitNewUser
     }
     
     var picker: UIImagePickerController?
@@ -30,7 +30,7 @@ class VTRegisterThroughPhoneViewController: UIViewController, UIActionSheetDeleg
     var currentActiveTextFieldIndex: Int?
     var indexOfCurrentHttpRequest: httpRequest?
     var responseData: NSMutableData? = NSMutableData()
-    var countdownTimer: NSTimer?
+    var countdownTimer: Timer?
     var secondsBeforeResendingSMS: Int?
     
     override func viewDidLoad() {
@@ -43,10 +43,10 @@ class VTRegisterThroughPhoneViewController: UIViewController, UIActionSheetDeleg
         
         self.button_register.layer.cornerRadius = 2.0
         // add tap gesture event to image_avatar, when image_avatar is tapped, user will be provided with options to whether select image or shoot a photo as avatar to upload
-        let singleTap: UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: "avatarImageTapped")
+        let singleTap: UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(VTRegisterThroughPhoneViewController.avatarImageTapped))
         singleTap.numberOfTapsRequired = 1
         
-        self.image_avatar.userInteractionEnabled = true
+        self.image_avatar.isUserInteractionEnabled = true
         self.image_avatar.addGestureRecognizer(singleTap)
         // assign tag value for different textField so that the system knows which textField is active/being edited
         self.input_phone.tag = 1
@@ -58,14 +58,14 @@ class VTRegisterThroughPhoneViewController: UIViewController, UIActionSheetDeleg
         self.input_verificationCode.delegate = self
         
         // add tap gesture for scrollView to hide keyboard
-        let gestureRecognizer: UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: "hideKeyboard:")
+        let gestureRecognizer: UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(VTRegisterThroughPhoneViewController.hideKeyboard(_:)))
         self.scrollView.addGestureRecognizer(gestureRecognizer)
-        self.input_phone.addTarget(self, action: "validateUserInput", forControlEvents: .EditingChanged)
-        self.input_password.addTarget(self, action: "validateUserInput", forControlEvents: .EditingChanged)
-        self.input_verificationCode.addTarget(self, action: "validateUserInput", forControlEvents: .EditingChanged)
+        self.input_phone.addTarget(self, action: #selector(VTRegisterThroughPhoneViewController.validateUserInput), for: .editingChanged)
+        self.input_password.addTarget(self, action: #selector(VTRegisterThroughPhoneViewController.validateUserInput), for: .editingChanged)
+        self.input_verificationCode.addTarget(self, action: #selector(VTRegisterThroughPhoneViewController.validateUserInput), for: .editingChanged)
     }
     
-    override func viewDidDisappear(animated: Bool) {
+    override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(true)
         // release the timer
         if self.countdownTimer != nil {
@@ -80,11 +80,11 @@ class VTRegisterThroughPhoneViewController: UIViewController, UIActionSheetDeleg
         let enteredVerificationCode = Toolbox.trim(self.input_verificationCode.text!)
         
         if enteredPhoneNumber.characters.count == 11 && self.countdownTimer == nil {
-            self.button_getVerificationCode.enabled = true
-            self.button_getVerificationCode.setTitleColor(ColorDefaultBlue, forState: .Normal)
+            self.button_getVerificationCode.isEnabled = true
+            self.button_getVerificationCode.setTitleColor(ColorDefaultBlue, for: UIControlState())
         } else {
-            self.button_getVerificationCode.enabled = false
-            self.button_getVerificationCode.setTitleColor(UIColor.lightGrayColor(), forState: .Normal)
+            self.button_getVerificationCode.isEnabled = false
+            self.button_getVerificationCode.setTitleColor(UIColor.lightGray, for: UIControlState())
         }
         
         if enteredPhoneNumber.characters.count == 11 &&
@@ -101,14 +101,14 @@ class VTRegisterThroughPhoneViewController: UIViewController, UIActionSheetDeleg
         // Dispose of any resources that can be recreated.
     }
     
-    func hideKeyboard(sender: AnyObject) {
+    func hideKeyboard(_ sender: AnyObject) {
         // hide keyboard
         self.input_phone.resignFirstResponder()
         self.input_password.resignFirstResponder()
         self.input_verificationCode.resignFirstResponder()
     }
     
-    func actionSheet(actionSheet: UIActionSheet, clickedButtonAtIndex buttonIndex: Int) {
+    func actionSheet(_ actionSheet: UIActionSheet, clickedButtonAt buttonIndex: Int) {
         if buttonIndex == 1 {   // choose image from gallery
             // release self.picker memory first
             if self.picker != nil {
@@ -119,9 +119,9 @@ class VTRegisterThroughPhoneViewController: UIViewController, UIActionSheetDeleg
             self.picker = UIImagePickerController()
             self.picker?.delegate = self
             self.picker?.allowsEditing = true
-            self.picker?.sourceType = .PhotoLibrary
+            self.picker?.sourceType = .photoLibrary
             
-            self.presentViewController(self.picker!, animated: true, completion: nil)
+            self.present(self.picker!, animated: true, completion: nil)
         } else if buttonIndex == 2 {    // take a photo
             if self.picker != nil {
                 self.picker?.delegate = nil
@@ -131,9 +131,9 @@ class VTRegisterThroughPhoneViewController: UIViewController, UIActionSheetDeleg
             self.picker = UIImagePickerController()
             self.picker?.delegate = self
             self.picker?.allowsEditing = true
-            self.picker?.sourceType = .Camera
+            self.picker?.sourceType = .camera
             
-            self.presentViewController(self.picker!, animated: true, completion: nil)
+            self.present(self.picker!, animated: true, completion: nil)
         }
     }
 
@@ -142,17 +142,17 @@ class VTRegisterThroughPhoneViewController: UIViewController, UIActionSheetDeleg
         let takePhoto: String = "拍照"
         let cancelTitle: String = "取消"
         let actionSheet: UIActionSheet = UIActionSheet(title: nil, delegate: self, cancelButtonTitle: cancelTitle, destructiveButtonTitle: nil, otherButtonTitles: selectPhoto, takePhoto)
-        actionSheet.showInView(self.view)
+        actionSheet.show(in: self.view)
     }
     
-    func textFieldDidBeginEditing(textField: UITextField) {
+    func textFieldDidBeginEditing(_ textField: UITextField) {
         self.currentActiveTextFieldIndex = textField.tag
     }
     
     // called when the UIKeyboardDidShowNotification is sent
-    func keyboardWasShown(notification: NSNotification) {
-        let info: NSDictionary = notification.userInfo!
-        let keyboardSize: CGSize = info.objectForKey(UIKeyboardFrameBeginUserInfoKey)!.CGRectValue.size
+    func keyboardWasShown(_ notification: Notification) {
+        let info: NSDictionary = (notification as NSNotification).userInfo! as NSDictionary
+        let keyboardSize: CGSize = (info.object(forKey: UIKeyboardFrameBeginUserInfoKey)! as AnyObject).cgRectValue.size
         let contentInsets: UIEdgeInsets = UIEdgeInsetsMake(0, 0, keyboardSize.height, 0)
         self.scrollView.contentInset = contentInsets
         self.scrollView.scrollIndicatorInsets = contentInsets
@@ -174,19 +174,19 @@ class VTRegisterThroughPhoneViewController: UIViewController, UIActionSheetDeleg
             activeField = nil
             break
         }
-        if !CGRectContainsPoint(tempRect, activeField!.frame.origin) {
+        if !tempRect.contains(activeField!.frame.origin) {
             self.scrollView.scrollRectToVisible(activeField!.frame, animated: true)
         }
     }
     
     // called when the UIKeyboardWillHideNotification is sent
-    func keyboardWillBeHidden(notification: NSNotification) {
+    func keyboardWillBeHidden(_ notification: Notification) {
         let contentInsets = UIEdgeInsets(top: ToolbarHeight + NavigationbarHeight, left: 0, bottom: 0, right: 0)
         self.scrollView.contentInset = contentInsets
         self.scrollView.scrollIndicatorInsets = contentInsets
     }
     
-    func textFieldShouldReturn(textField: UITextField) -> Bool {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         if textField == self.input_phone {
             self.input_phone.resignFirstResponder()
             self.input_verificationCode.becomeFirstResponder()
@@ -196,9 +196,9 @@ class VTRegisterThroughPhoneViewController: UIViewController, UIActionSheetDeleg
             self.input_password.becomeFirstResponder()
             return true
         } else if textField == self.input_password {
-            if self.button_register.enabled {
+            if self.button_register.isEnabled {
                 self.input_password.resignFirstResponder()
-                self.button_register.sendActionsForControlEvents(.TouchUpInside)
+                self.button_register.sendActions(for: .touchUpInside)
                 return true
             }
             return false
@@ -206,23 +206,23 @@ class VTRegisterThroughPhoneViewController: UIViewController, UIActionSheetDeleg
         return false
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         self.navigationController?.setNavigationBarHidden(false, animated: animated)
         Appearance.customizeNavigationBar(self, title: "用户注册")
         // register for keyboard notifications
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "keyboardWasShown:", name: UIKeyboardWillShowNotification, object: nil)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "keyboardWillBeHidden:", name: UIKeyboardWillHideNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTRegisterThroughPhoneViewController.keyboardWasShown(_:)), name: NSNotification.Name.UIKeyboardWillShow, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTRegisterThroughPhoneViewController.keyboardWillBeHidden(_:)), name: NSNotification.Name.UIKeyboardWillHide, object: nil)
     }
     
-    override func viewWillDisappear(animated: Bool) {
+    override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        NSNotificationCenter.defaultCenter().removeObserver(self, name: UIKeyboardWillShowNotification, object: nil)
-        NSNotificationCenter.defaultCenter().removeObserver(self, name: UIKeyboardWillHideNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIKeyboardWillShow, object: nil)
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIKeyboardWillHide, object: nil)
     }
     
-    func imagePickerControllerDidCancel(picker: UIImagePickerController) {
-        picker.dismissViewControllerAnimated(true, completion: nil)
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        picker.dismiss(animated: true, completion: nil)
         
         if self.picker != nil {
             self.picker?.delegate = nil
@@ -230,10 +230,10 @@ class VTRegisterThroughPhoneViewController: UIViewController, UIActionSheetDeleg
         self.picker = nil
     }
     
-    func imagePickerController(picker: UIImagePickerController, didFinishPickingImage image: UIImage!, editingInfo: [NSObject : AnyObject]!) {
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingImage image: UIImage!, editingInfo: [AnyHashable: Any]!) {
         self.image_avatar.image = image
         self.uploadAvatar(image)
-        picker.dismissViewControllerAnimated(true, completion: nil)
+        picker.dismiss(animated: true, completion: nil)
         
         if self.picker != nil {
             self.picker?.delegate = nil
@@ -241,14 +241,14 @@ class VTRegisterThroughPhoneViewController: UIViewController, UIActionSheetDeleg
         self.picker = nil
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "serviceAgreementSegue" {
-            let destinationViewController = segue.destinationViewController as! VTPostViewController
+            let destinationViewController = segue.destination as! VTPostViewController
             destinationViewController.postType = .ServiceAgreement
         }
     }
     
-    func uploadAvatar(image: UIImage) {
+    func uploadAvatar(_ image: UIImage) {
         var connection: NSURLConnection?
         if Toolbox.isStringValueValid(self.userId) {    // self.userId defined, meaning user avatar is already uploaded, temporary user already generated in server database
             let postParamsDictionary = ["modelId": self.userId!]
@@ -259,7 +259,7 @@ class VTRegisterThroughPhoneViewController: UIViewController, UIActionSheetDeleg
         if connection == nil {
             Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络连接失败")
         } else {
-            self.indexOfCurrentHttpRequest = .UploadAvatar
+            self.indexOfCurrentHttpRequest = .uploadAvatar
             self.HUD = MBProgressHUD(view: self.navigationController?.view)
             self.navigationController?.view.addSubview(self.HUD!)
             self.HUD?.show(true)
@@ -267,18 +267,18 @@ class VTRegisterThroughPhoneViewController: UIViewController, UIActionSheetDeleg
         connection = nil
     }
     
-    @IBAction func sendVerificationCode(sender: AnyObject) {
+    @IBAction func sendVerificationCode(_ sender: AnyObject) {
         let phone = Toolbox.trim(self.input_phone.text!)
         let connection = Toolbox.asyncHttpGetFromURL(URLGetVerificationCode + "?phone=\(phone)", delegate: self)
         if connection == nil {
             Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络连接失败")
         } else {
-            self.indexOfCurrentHttpRequest = .GetVerificationCode
+            self.indexOfCurrentHttpRequest = .getVerificationCode
             self.HUD = Toolbox.setupCustomProcessingViewWithTitle(title: nil)
         }
     }
     
-    @IBAction func submitRegistration(sender: AnyObject) {
+    @IBAction func submitRegistration(_ sender: AnyObject) {
         let phone = Toolbox.trim(self.input_phone.text!)
         let password = Toolbox.trim(self.input_password.text!)
         let verificationCode = Toolbox.trim(self.input_verificationCode.text!)
@@ -293,39 +293,39 @@ class VTRegisterThroughPhoneViewController: UIViewController, UIActionSheetDeleg
         if connection == nil {
             Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络连接失败")
         } else {
-            self.indexOfCurrentHttpRequest = .SubmitNewUser
+            self.indexOfCurrentHttpRequest = .submitNewUser
             self.HUD = Toolbox.setupCustomProcessingViewWithTitle(title: nil)
         }
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.HUD!.hide(true)
         self.HUD = nil
         
-        let responseStr = NSString(data: self.responseData!, encoding: NSUTF8StringEncoding)
-        if self.indexOfCurrentHttpRequest == .UploadAvatar {    // upload avatar http request
+        let responseStr = NSString(data: self.responseData! as Data, encoding: String.Encoding.utf8.rawValue)
+        if self.indexOfCurrentHttpRequest == .uploadAvatar {    // upload avatar http request
             // retrieve user id from json data
-            let jsonArray = (try? NSJSONSerialization.JSONObjectWithData(self.responseData!, options: .MutableLeaves)) as? [NSObject: AnyObject]
+            let jsonArray = (try? JSONSerialization.jsonObject(with: self.responseData! as Data, options: .mutableLeaves)) as? [AnyHashable: Any]
             self.userId = jsonArray!["modelId"] as? String
-            Toolbox.saveAvatarImageLocally(self.image_avatar.image!, modelId: self.userId!)
-        } else if self.indexOfCurrentHttpRequest == .GetVerificationCode {  // asks server to send verification code to cell phone
+            _ = Toolbox.saveAvatarImageLocally(self.image_avatar.image!, modelId: self.userId!)
+        } else if self.indexOfCurrentHttpRequest == .getVerificationCode {  // asks server to send verification code to cell phone
             if responseStr == "OK" {    // send verification succeeded
                 // disable button to send SMS, in the mean while, set up a timer so that user can only tap the button to send SMS again after 1 minutes
-                self.button_getVerificationCode.enabled = false
-                self.button_getVerificationCode.setTitleColor(UIColor.lightGrayColor(), forState: .Normal)
+                self.button_getVerificationCode.isEnabled = false
+                self.button_getVerificationCode.setTitleColor(UIColor.lightGray, for: UIControlState())
                 self.secondsBeforeResendingSMS = 60
-                self.button_getVerificationCode.setTitle("验证码已发送(\(self.secondsBeforeResendingSMS!))", forState: .Normal)
-                self.countdownTimer = NSTimer.scheduledTimerWithTimeInterval(1.0, target: self, selector: "resendSMSCountdown", userInfo: nil, repeats: true)
+                self.button_getVerificationCode.setTitle("验证码已发送(\(self.secondsBeforeResendingSMS!))", for: UIControlState())
+                self.countdownTimer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(VTRegisterThroughPhoneViewController.resendSMSCountdown), userInfo: nil, repeats: true)
             } else {    // send verification failed with error message
                 Toolbox.showCustomAlertViewWithImage("unhappy", title: responseStr as! String)
             }
         } else {    // submit new user http request
             // if registration succeeded, response from server should be user info JSON data, so retrieve username from this JSON data to see if registration is successful
-            let userJSON = (try? NSJSONSerialization.JSONObjectWithData(self.responseData!, options: .MutableLeaves)) as? [NSObject: AnyObject]
+            let userJSON = (try? JSONSerialization.jsonObject(with: self.responseData! as Data, options: .mutableLeaves)) as? [AnyHashable: Any]
             
             let respondedUsername = userJSON?["username"] as? String
             if respondedUsername != nil {   // submit new user succeeded
@@ -342,18 +342,18 @@ class VTRegisterThroughPhoneViewController: UIViewController, UIActionSheetDeleg
     func resendSMSCountdown() {
         self.secondsBeforeResendingSMS = self.secondsBeforeResendingSMS! - 1
         if self.secondsBeforeResendingSMS == 0 {    // time off, should enable button to send SMS to allow resend
-            self.button_getVerificationCode.enabled = true
-            self.button_getVerificationCode.setTitleColor(ColorDefaultBlue, forState: .Normal)
-            self.button_getVerificationCode.setTitle("获取验证码", forState: .Normal)
+            self.button_getVerificationCode.isEnabled = true
+            self.button_getVerificationCode.setTitleColor(ColorDefaultBlue, for: UIControlState())
+            self.button_getVerificationCode.setTitle("获取验证码", for: UIControlState())
             // release timer
             self.countdownTimer?.invalidate()
             self.countdownTimer = nil
         } else {
-            self.button_getVerificationCode.setTitle("验证码已发送(\(self.secondsBeforeResendingSMS!))", forState: .Normal)
+            self.button_getVerificationCode.setTitle("验证码已发送(\(self.secondsBeforeResendingSMS!))", for: UIControlState())
         }
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.HUD!.hide(true)
         self.HUD = nil
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "加载失败")

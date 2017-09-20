@@ -31,42 +31,42 @@ class VTNewTeamLocationTableViewController: UITableViewController, NSURLConnecti
         Appearance.customizeNavigationBar(self, title: "选择所在地")
         
         let dbManager = DBManager(databaseFilename: "soccer_ios.sqlite")
-        let provinceRecords = dbManager.loadDataFromDB(
-            "select name from provinces",
+        let provinceRecords = dbManager?.loadData(
+            fromDB: "select name from provinces",
             parameters:nil
         )
-        for anyObject in provinceRecords {
+        for anyObject in provinceRecords! {
             let provinceRecord = anyObject as? NSArray
             if provinceRecord != nil {
                 self.provinceNames.append(provinceRecord![0] as! String)
             }
         }
         // Set this in every view controller so that the back button displays back instead of the root view controller name
-        self.navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .Plain, target: nil, action: nil)
+        self.navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
         
         // add right button in navigation bar programmatically
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(
-            barButtonSystemItem: .Stop,
+            barButtonSystemItem: .stop,
             target: self,
-            action: "cancelNewTeamCreation"
+            action: #selector(VTNewTeamLocationTableViewController.cancelNewTeamCreation)
         )
     }
     
     func cancelNewTeamCreation() {
     // close modal view and all its related navigation controller to go back to teams list table view
-    self.performSegueWithIdentifier("cancelNewTeamCreationFromTeamLocationViewControllerSegue", sender: self)
+    self.performSegue(withIdentifier: "cancelNewTeamCreationFromTeamLocationViewControllerSegue", sender: self)
     }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
     }
     
-    override func viewDidAppear(animated: Bool) {
+    override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         if Toolbox.isStringValueValid(self.completeLocation) {    // user has manually select the team city
             // update the complete location
-            let potentialLocationSectionRow = NSIndexPath(forRow: 0, inSection: 0)
-            self.tableView.reloadRowsAtIndexPaths([potentialLocationSectionRow], withRowAnimation: .Fade)
+            let potentialLocationSectionRow = IndexPath(row: 0, section: 0)
+            self.tableView.reloadRows(at: [potentialLocationSectionRow], with: .fade)
             Toolbox.toggleButton(self.button_submitNewTeam!, enabled: true)
             
             self.isLocationHandPickedByUser = true
@@ -79,7 +79,7 @@ class VTNewTeamLocationTableViewController: UITableViewController, NSURLConnecti
         }
     }
     
-    override func viewDidDisappear(animated: Bool) {
+    override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         
         if self.locationService != nil {
@@ -103,7 +103,7 @@ class VTNewTeamLocationTableViewController: UITableViewController, NSURLConnecti
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "定位失败")
     }
     
-    func didFinishFindingLocationAndAddress(locationInfo: [NSObject : AnyObject]) {
+    func didFinishFindingLocationAndAddress(_ locationInfo: [AnyHashable: Any]) {
         let geoResult = locationInfo["geoCodeResult"] as? BMKReverseGeoCodeResult
         
         self.HUD?.hide(true)
@@ -116,16 +116,16 @@ class VTNewTeamLocationTableViewController: UITableViewController, NSURLConnecti
                     let locatedProvinceName = Toolbox.removeSuffixOfProvinceAndCity(geoResult!.addressDetail.province)
                     self.completeLocation = locatedProvinceName
                     // update the complete location
-                    let potentialLocationSectionRow = NSIndexPath(forRow: 0, inSection: 0)
-                    self.tableView.reloadRowsAtIndexPaths([potentialLocationSectionRow], withRowAnimation: .Fade)
+                    let potentialLocationSectionRow = IndexPath(row: 0, section: 0)
+                    self.tableView.reloadRows(at: [potentialLocationSectionRow], with: .fade)
                 } else {
                     let locatedProvinceName = Toolbox.removeSuffixOfProvinceAndCity(geoResult!.addressDetail.province)
                     let locatedCityName = Toolbox.removeSuffixOfProvinceAndCity(geoResult!.addressDetail.city)
                     
                     self.completeLocation = "" + locatedProvinceName + "" + locatedCityName
                     // update the complete location
-                    let potentialLocationSectionRow = NSIndexPath(forRow: 0, inSection: 0)
-                    self.tableView.reloadRowsAtIndexPaths([potentialLocationSectionRow], withRowAnimation: .Fade)
+                    let potentialLocationSectionRow = IndexPath(row: 0, section: 0)
+                    self.tableView.reloadRows(at: [potentialLocationSectionRow], with: .fade)
                 }
                 Toolbox.toggleButton(self.button_submitNewTeam!, enabled: true)
                 // retrieve user current location coordinate
@@ -144,13 +144,13 @@ class VTNewTeamLocationTableViewController: UITableViewController, NSURLConnecti
         }
     }
     
-    func didFinishFindingGeoCodeResult(geoCodeInfo: [NSObject : AnyObject]) {
+    func didFinishFindingGeoCodeResult(_ geoCodeInfo: [AnyHashable: Any]) {
         // hide spinner to indicate geoSearch is done
         self.HUD?.hide(true)
         self.HUD = nil
         
         let result = geoCodeInfo["geoCodeResult"] as? BMKGeoCodeResult
-        if geoCodeInfo["error"]?.integerValue == 0 {
+        if (geoCodeInfo["error"] as AnyObject).intValue == 0 {
             let postDataDictionary = [
                 "name": self.teamName!,
                 "location": self.completeLocation!,
@@ -172,35 +172,35 @@ class VTNewTeamLocationTableViewController: UITableViewController, NSURLConnecti
 
     // MARK: - Table view data source
     
-    override func tableView(tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+    override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         return TableSectionHeaderHeight
     }
     
-    override func tableView(tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+    override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
         if section == 0 {     // for the first section, there's a create new team button that needs to be added to its footer
             return TableSectionFooterHeightWithButton
         }
         return 0
     }
     
-    override func tableView(tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        let headerView = UIView(frame: CGRectMake(0, 0, ScreenSize.width, TableSectionHeaderHeight))
+    override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let headerView = UIView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: TableSectionHeaderHeight))
         if section == 1 {
             headerView.addSubview(Appearance.setupTableSectionHeaderTitle(" 选择省份"))
         }
         return headerView
     }
     
-    override func tableView(tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+    override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         if section == 0 {     // add button to the footer for third table section only
-            let footerView = UIView(frame: CGRectMake(0, 0, ScreenSize.width, TableSectionFooterHeightWithButton))
+            let footerView = UIView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: TableSectionFooterHeightWithButton))
             
             // initialize button_recruiteNewMember and set up its appearance
             self.button_submitNewTeam = Appearance.setupTableFooterButtonWithTitle("创建球队", backgroundColor: ColorSettledGreen)
             self.button_submitNewTeam!.addTarget(
                 self,
-                action: "submitNewTeam",
-                forControlEvents: .TouchUpInside
+                action: #selector(VTNewTeamLocationTableViewController.submitNewTeam),
+                for: .touchUpInside
             )
             footerView.addSubview(self.button_submitNewTeam!)
             if !Toolbox.isStringValueValid(self.completeLocation) {
@@ -212,11 +212,11 @@ class VTNewTeamLocationTableViewController: UITableViewController, NSURLConnecti
         return nil
     }
 
-    override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+    override func numberOfSections(in tableView: UITableView) -> Int {
         return 2
     }
 
-    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if section == 0 {
             return 1
         } else if section == 1 {
@@ -225,53 +225,53 @@ class VTNewTeamLocationTableViewController: UITableViewController, NSURLConnecti
         return 0
     }
     
-    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         var tableCellIdenfitier: String
-        if indexPath.section == 0 {
+        if (indexPath as NSIndexPath).section == 0 {
             tableCellIdenfitier = self.locationTableCellIdenfitier
         } else {
             tableCellIdenfitier = self.provinceTableCellIdenfitier
         }
-        var cell = self.tableView.dequeueReusableCellWithIdentifier(tableCellIdenfitier) as UITableViewCell?
+        var cell = self.tableView.dequeueReusableCell(withIdentifier: tableCellIdenfitier) as UITableViewCell?
         
         if cell == nil {
-            cell = UITableViewCell(style: .Default, reuseIdentifier: tableCellIdenfitier)
+            cell = UITableViewCell(style: .default, reuseIdentifier: tableCellIdenfitier)
         }
         
-        if indexPath.section == 0 {   // section to display current location or selected province/city by user
+        if (indexPath as NSIndexPath).section == 0 {   // section to display current location or selected province/city by user
             // current location or user selected location label
             let label_potentialTeamLocation = cell?.contentView.viewWithTag(1) as! UILabel
             label_potentialTeamLocation.text = self.completeLocation
             
             // make this table cell NOT selectable
-            cell?.selectionStyle = .None
-        } else if indexPath.section == 1 {    // section to display Chinese province list
+            cell?.selectionStyle = .none
+        } else if (indexPath as NSIndexPath).section == 1 {    // section to display Chinese province list
             let label_provinceName = cell?.contentView.viewWithTag(1) as! UILabel
-            label_provinceName.text = self.provinceNames[indexPath.row]
+            label_provinceName.text = self.provinceNames[(indexPath as NSIndexPath).row]
         }
         return cell!
     }
     
-    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         // remove the cell selection style effect
-        self.tableView.deselectRowAtIndexPath(indexPath, animated: true)
+        self.tableView.deselectRow(at: indexPath, animated: true)
         
-        if indexPath.section == 1 {
-            self.selectedProvinceName = self.provinceNames[indexPath.row]
+        if (indexPath as NSIndexPath).section == 1 {
+            self.selectedProvinceName = self.provinceNames[(indexPath as NSIndexPath).row]
             
             let dbManager = DBManager(databaseFilename: "soccer_ios.sqlite")
             
-            let cityRecordsForSelectedProvince = dbManager.loadDataFromDB(
-                "select name from cities where province=?",
+            let cityRecordsForSelectedProvince = dbManager?.loadData(
+                fromDB: "select name from cities where province=?",
                 parameters: [self.selectedProvinceName!]
             )
             
-            if cityRecordsForSelectedProvince.count > 1 {     // if there is only one city in selected province, there is NO NEED to make user select city, provinces with this situation are 北京，上海，天津，重庆，香港 and so on
-                self.performSegueWithIdentifier("teamCitySegue", sender: self)
+            if (cityRecordsForSelectedProvince?.count)! > 1 {     // if there is only one city in selected province, there is NO NEED to make user select city, provinces with this situation are 北京，上海，天津，重庆，香港 and so on
+                self.performSegue(withIdentifier: "teamCitySegue", sender: self)
             } else {
                 self.completeLocation = self.selectedProvinceName
                 // update the complete location
-                self.tableView.reloadRowsAtIndexPaths([NSIndexPath(forRow: 0, inSection: 0)], withRowAnimation: .Fade)
+                self.tableView.reloadRows(at: [IndexPath(row: 0, section: 0)], with: .fade)
                 Toolbox.toggleButton(self.button_submitNewTeam!, enabled: true)
                 
                 self.isLocationHandPickedByUser = true
@@ -279,14 +279,14 @@ class VTNewTeamLocationTableViewController: UITableViewController, NSURLConnecti
         }
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "teamCitySegue" {
-            let destinationViewController = segue.destinationViewController as! VTNewTeamCityTableViewController
+            let destinationViewController = segue.destination as! VTNewTeamCityTableViewController
             destinationViewController.selectedProvinceName = self.selectedProvinceName
         }
     }
     
-    @IBAction func unwindToNewTeamLocationTableView(segue: UIStoryboardSegue) {
+    @IBAction func unwindToNewTeamLocationTableView(_ segue: UIStoryboardSegue) {
     }
     
     func submitNewTeam() {
@@ -316,11 +316,11 @@ class VTNewTeamLocationTableViewController: UITableViewController, NSURLConnecti
         }
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.HUD?.hide(true)
         self.HUD = nil
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络超时")
@@ -328,19 +328,19 @@ class VTNewTeamLocationTableViewController: UITableViewController, NSURLConnecti
         self.responseData = NSMutableData()
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.HUD?.hide(true)
         self.HUD = nil
         
         // if creating new team succeeded, response from server should be team info JSON data, so retrieve team name from this JSON data to see if team creation is successful
-        let teamInfoJSON = (try? NSJSONSerialization.JSONObjectWithData(self.responseData!, options: .MutableLeaves)) as? [NSObject: AnyObject]
+        let teamInfoJSON = (try? JSONSerialization.jsonObject(with: self.responseData! as Data, options: .mutableLeaves)) as? [AnyHashable: Any]
         if teamInfoJSON?["name"] != nil {    // submit new team succeeded
             // save the new team to local database
-            Team(data: teamInfoJSON!).saveOrUpdateTeamInDatabase()
+            Team(data: teamInfoJSON! as [NSObject : AnyObject]).saveOrUpdateTeamInDatabase()
             // close modal view and all its related navigation controller to go back to teams list table view
-            self.performSegueWithIdentifier("cancelNewTeamCreationFromTeamLocationViewControllerSegue", sender: self)
+            self.performSegue(withIdentifier: "cancelNewTeamCreationFromTeamLocationViewControllerSegue", sender: self)
         } else {    // submit new team failed, prompt user with error message
-            let responseStr = NSString(data: self.responseData!, encoding: NSUTF8StringEncoding)
+            let responseStr = NSString(data: self.responseData! as Data, encoding: String.Encoding.utf8.rawValue)
             Toolbox.showCustomAlertViewWithImage("unhappy", title: (responseStr as! String))
         }
         
@@ -349,11 +349,11 @@ class VTNewTeamLocationTableViewController: UITableViewController, NSURLConnecti
     }
 
     deinit {
-        self.provinceNames.removeAll(keepCapacity: false)
+        self.provinceNames.removeAll(keepingCapacity: false)
         self.selectedProvinceName = nil
         self.completeLocation = nil
         if self.button_submitNewTeam != nil {
-            self.button_submitNewTeam?.removeTarget(nil, action: nil, forControlEvents: .AllEvents)
+            self.button_submitNewTeam?.removeTarget(nil, action: nil, for: .allEvents)
             self.button_submitNewTeam = nil
         }
         self.HUD = nil

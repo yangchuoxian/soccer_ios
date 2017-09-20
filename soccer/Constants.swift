@@ -23,18 +23,18 @@ Message types enumeration
 - UserFeedback:                                                                               // user feedback message type
 */
 enum MessageType: Int {
-    case OneToOneMessage = 1
-    case BroadCast = 2
-    case Invitation = 3
-    case Application = 4
-    case Challenge = 5
-    case ActivityRequest = 6
-    case TeamMemberRemoved = 7
-    case NewTeamMemberJoined = 8
-    case TeamCaptainChanged = 9
-    case TeamDismissed = 10
-    case RequestRefused = 11
-    case UserFeedback = 12
+    case oneToOneMessage = 1
+    case broadCast = 2
+    case invitation = 3
+    case application = 4
+    case challenge = 5
+    case activityRequest = 6
+    case teamMemberRemoved = 7
+    case newTeamMemberJoined = 8
+    case teamCaptainChanged = 9
+    case teamDismissed = 10
+    case requestRefused = 11
+    case userFeedback = 12
 }
 
 /**
@@ -69,8 +69,8 @@ message group index
 3. If team has been deleted, system will notifiy all members of the team
 */
 enum MessageGroupIndex: Int {
-    case Request = 1
-    case SystemMessage = 2
+    case request = 1
+    case systemMessage = 2
 }
 
 /**
@@ -83,11 +83,11 @@ Message status integer index
 - Accepted:    status of accepted
 */
 enum MessageStatus: Int {
-    case Unread = 1
-    case Read = 2
-    case Invalidated = 3
-    case Rejected = 4
-    case Accepted = 5
+    case unread = 1
+    case read = 2
+    case invalidated = 3
+    case rejected = 4
+    case accepted = 5
 }
 
 /**
@@ -97,8 +97,8 @@ Order by type
 - SortByPoint:    indicates the list results is sorted by point(s)
 */
 enum SortType {
-    case SortByDistance
-    case SortByPoint
+    case sortByDistance
+    case sortByPoint
 }
 
 /**
@@ -110,8 +110,8 @@ A user can do 2 things to a team:
 - SendChallenge:   the option to challenge the team
 */
 enum TeamInteractionType {
-    case SendApplication
-    case SendChallenge
+    case sendApplication
+    case sendChallenge
 }
 
 /**
@@ -121,8 +121,8 @@ Activity type
 - Exercise: activity type as an exercise that one team would suffice
 */
 enum ActivityType: Int {
-    case Match = 1
-    case Exercise = 2
+    case match = 1
+    case exercise = 2
 }
 
 /**
@@ -138,14 +138,14 @@ Activity status
 - Ongoing:                                if the activity, be it a match or exercise, is happening right now
 */
 enum ActivityStatus: Int {
-    case ConfirmingTeamAParticipants = 1
-    case WaitingForAcceptanceFromCaptainOfTeamB = 2
-    case RejectedByCaptainOfTeamB = 3
-    case ConfirmingTeamBParticipants = 4
-    case Finalized = 5
-    case Done = 6
-    case FailedPublication = 7
-    case Ongoing = 8
+    case confirmingTeamAParticipants = 1
+    case waitingForAcceptanceFromCaptainOfTeamB = 2
+    case rejectedByCaptainOfTeamB = 3
+    case confirmingTeamBParticipants = 4
+    case finalized = 5
+    case done = 6
+    case failedPublication = 7
+    case ongoing = 8
 }
 
 /**
@@ -155,8 +155,8 @@ whether the attendees and bailed users have been recorded for activity by the te
 - activityAttendeesStatusSettled:    already recorded
 */
 enum ActivityAttendeesStatus: Int {
-    case NotSettled = 0
-    case Settled = 1
+    case notSettled = 0
+    case settled = 1
 }
 
 /**
@@ -166,8 +166,8 @@ Team result types when showing teams list
 - NearbyTeams:  teams list of nearby teams
 */
 enum TeamResultsType: Int {
-    case SearchByName = 1
-    case NearbyTeams = 2
+    case searchByName = 1
+    case nearbyTeams = 2
 }
 
 /**
@@ -177,8 +177,8 @@ Number of items in page, used in database pagination
 - NumOfRequestsPerPage: number of requests for one page
 */
 enum Pagination: Int {
-    case NumOfMessagesPerPage = 20
-    case NumOfRequestsPerPage = 5
+    case numOfMessagesPerPage = 20
+    case numOfRequestsPerPage = 5
 }
 
 /**
@@ -189,39 +189,39 @@ Message send status
 - Sending:   message is sending
 */
 enum MessageSendStatus: Int {
-    case Succeeded = 1
-    case Failed = 2
-    case Sending = 3
+    case succeeded = 1
+    case failed = 2
+    case sending = 3
 }
 /* tag value for views */
 enum TagValue: Int {
-    case TextViewPlaceholder = 100
-    case EmptyTableBackgroundView = 99
-    case TableHeaderHint = 88
-    case TextFieldUsername = 1
-    case TextFieldPassword = 2
-    case TextFieldEmail = 3
-    case ButtonBasicInfo = 4
-    case ButtonSchedule = 5
-    case ButtonPlayerID = 6
-    case ButtonTeamGeneralInfo = 7
-    case ButtonTeamCalendar = 8
-    case ButtonTeamMembers = 9
+    case textViewPlaceholder = 100
+    case emptyTableBackgroundView = 99
+    case tableHeaderHint = 88
+    case textFieldUsername = 1
+    case textFieldPassword = 2
+    case textFieldEmail = 3
+    case buttonBasicInfo = 4
+    case buttonSchedule = 5
+    case buttonPlayerID = 6
+    case buttonTeamGeneralInfo = 7
+    case buttonTeamCalendar = 8
+    case buttonTeamMembers = 9
 }
 /* table section index value */
 enum MessageGroupTableSectionIndex: Int {
-    case Notification = 0
-    case Conversation = 1
+    case notification = 0
+    case conversation = 1
 }
 /* define the avatar type */
 enum AvatarType: Int {
-    case User = 1
-    case Team = 2
+    case user = 1
+    case team = 2
 }
 /* http status code and parameters*/
 enum HttpStatusCode: Int {
-    case OK = 200
-    case NotFound = 404
+    case ok = 200
+    case notFound = 404
 }
 
 /**
@@ -230,7 +230,7 @@ Error code index
 - LocalDatabaseError: local database error code
 */
 enum ErrorCode: Int {
-    case LocalDatabaseError = -1
+    case localDatabaseError = -1
 }
 
 /**
@@ -242,10 +242,10 @@ Tab index
 - Me:      the user profile tab
 */
 enum TabIndex: Int {
-    case Discover = 0
-    case Message = 1
-    case Team = 2
-    case Me = 3
+    case discover = 0
+    case message = 1
+    case team = 2
+    case me = 3
 }
 
 /**
@@ -266,19 +266,19 @@ Message database table index
 - ToTeam:         the receiver team id, when the message is an application, it is sent to a team instead of a user
 */
 enum MessageTableIndex: Int {
-    case From = 1
-    case To = 2
-    case MessageType = 3
-    case Content = 4
-    case Status = 5
-    case FromTeam = 6
-    case ForActivity = 7
-    case SenderName = 8
-    case ReceiverName = 9
-    case CreatedAt = 10
-    case MessageGroupId = 11
-    case MessageId = 12
-    case ToTeam = 13
+    case from = 1
+    case to = 2
+    case messageType = 3
+    case content = 4
+    case status = 5
+    case fromTeam = 6
+    case forActivity = 7
+    case senderName = 8
+    case receiverName = 9
+    case createdAt = 10
+    case messageGroupId = 11
+    case messageId = 12
+    case toTeam = 13
 }
 
 /**
@@ -301,22 +301,22 @@ Team database table index
 - Points:                number of points of this team
 */
 enum TeamTableIndex: Int {
-    case TeamId = 1
-    case Name = 2
-    case TeamType = 3
-    case MaximumNumberOfPeople = 4
-    case Wins = 5
-    case Loses = 6
-    case Ties = 7
-    case ForUserId = 8
-    case CaptainUserId = 9
-    case NumberOfMembers = 10
-    case Location = 11
-    case CreatedAt = 12
-    case Introduction = 13
-    case HomeCourt = 14
-    case Points = 15
-    case IsRecruiting = 16
+    case teamId = 1
+    case name = 2
+    case teamType = 3
+    case maximumNumberOfPeople = 4
+    case wins = 5
+    case loses = 6
+    case ties = 7
+    case forUserId = 8
+    case captainUserId = 9
+    case numberOfMembers = 10
+    case location = 11
+    case createdAt = 12
+    case introduction = 13
+    case homeCourt = 14
+    case points = 15
+    case isRecruiting = 16
     case latitude = 17
     case longitude = 18
 }
@@ -343,24 +343,24 @@ activity database table index
 - ForUserId:             index for the logged in user id, used to differentiate users if more than one user logged in using this iOS device
 */
 enum ActivityTableIndex: Int {
-    case ActivityId = 1
-    case Initiator = 2
-    case Date = 3
-    case Time = 4
-    case Place = 5
-    case ActivityType = 6
-    case Status = 7
-    case MinimumNumberOfPeople = 8
-    case NameOfA = 9
-    case IdOfA = 10
-    case NameOfB = 11
-    case IdOfB = 12
-    case ScoresOfA = 13
-    case ScoresOfB = 14
-    case Note = 15
-    case ForUserId = 16
-    case Latitude = 17
-    case Longitude = 18
+    case activityId = 1
+    case initiator = 2
+    case date = 3
+    case time = 4
+    case place = 5
+    case activityType = 6
+    case status = 7
+    case minimumNumberOfPeople = 8
+    case nameOfA = 9
+    case idOfA = 10
+    case nameOfB = 11
+    case idOfB = 12
+    case scoresOfA = 13
+    case scoresOfB = 14
+    case note = 15
+    case forUserId = 16
+    case latitude = 17
+    case longitude = 18
 }
 
 /**
@@ -369,9 +369,9 @@ Different time intervals
 - ImageUploadTimeout: time interval for image upload timeout
 - HttpRequestTimeout: time interval for http request timeout
 */
-enum TimeIntervals: NSTimeInterval {
-    case ImageUploadTimeout = 10
-    case HttpRequestTimeout = 5
+enum TimeIntervals: TimeInterval {
+    case imageUploadTimeout = 10
+    case httpRequestTimeout = 5
 }
 
 /**
@@ -381,8 +381,8 @@ potential team member type
 - Applied: potential member who's applying for membership of a team
 */
 enum PotentialMemberType: Int {
-    case Invited = 1
-    case Applied = 2
+    case invited = 1
+    case applied = 2
 }
 
 /**
@@ -412,8 +412,8 @@ verification code when resetting password, whether verification code is sent by 
 - SMS:   SMS type
 */
 enum VerificationCodeType {
-    case Email
-    case SMS
+    case email
+    case sms
 }
 
 /**
@@ -436,8 +436,8 @@ SQL query statement parameter types
 - String:  string parameter type
 */
 @objc enum ParamType: Int {
-    case Integer = 1
-    case String = 2
+    case integer = 1
+    case string = 2
 }
 
 /**
@@ -447,8 +447,8 @@ device types enumeration
 - Android: Android version integer number
 */
 enum DeviceType: Int {
-    case IOS = 1
-    case Android = 2
+    case ios = 1
+    case android = 2
 }
 
 /**
@@ -493,13 +493,13 @@ enum PlayerAttributeNames: String {
 }
 
 enum PlayerAttributeIndexes: Int {
-    case AverageAbility = 1
-    case Speed = 2
-    case JumpAbility = 3
-    case ExplosiveAbility = 4
-    case Conscious = 5
-    case Cooperation = 6
-    case Personality = 7
+    case averageAbility = 1
+    case speed = 2
+    case jumpAbility = 3
+    case explosiveAbility = 4
+    case conscious = 5
+    case cooperation = 6
+    case personality = 7
 }
 
 /**
@@ -510,9 +510,9 @@ Baidu map zoom level
 - Min:     Allowed minimum zoom level
 */
 enum BaiduMapZoomLevel: Float {
-    case Default = 16
-    case Max = 19
-    case Min = 3
+    case `default` = 16
+    case max = 19
+    case min = 3
 }
 
 /// http request urls
@@ -576,13 +576,13 @@ let URLGetNearbyGrounds = BaseUrl + "/mobile/get_nearby_grounds"
 let URLGetRecentMatchesNearAround = BaseUrl + "/mobile/get_recent_matches_near_around"
 
 /// app display name
-let AppDisplayName = NSBundle.mainBundle().objectForInfoDictionaryKey("CFBundleDisplayName") as! String
+let AppDisplayName = Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as! String
 /// app version
-let AppVersion = NSBundle.mainBundle().objectForInfoDictionaryKey("CFBundleShortVersionString") as! String
+let AppVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as! String
 /// app store id
 let AppStoreId: UInt = 1027309197
  /// device screen size
-let ScreenSize = UIScreen.mainScreen().bounds.size
+let ScreenSize = UIScreen.main.bounds.size
 /* iOS control widget size constant */
 let ToolbarHeight: CGFloat = 20
 let NavigationbarHeight: CGFloat = 44

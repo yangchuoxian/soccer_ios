@@ -51,7 +51,7 @@ class Activity: NSObject {
             self.date = data["date"] as? String
             self.time = data["time"] as? String
         } else {
-            let date = NSDate(dateTimeString: data["time"] as! String)
+            let date = Date(dateTimeString: data["time"] as! String)
             self.date = date.getDateString()
             self.time = date.getTimeString()
         }
@@ -98,23 +98,23 @@ class Activity: NSObject {
         let dbManager = DBManager(databaseFilename: "soccer_ios.sqlite")
         let currentUser = Singleton_CurrentUser.sharedInstance
         // first off, check if such activyt with the activityId exists in local database already, if so, update the activity record, otherwise, add a new activity
-        let existedActivity = dbManager.loadDataFromDB(
-            "select * from activities where activityId=? and forUserId=?",
+        let existedActivity = dbManager?.loadData(
+            fromDB: "select * from activities where activityId=? and forUserId=?",
             parameters: [self.activityId!, currentUser.userId!]
         )
         
         var safeDatabaseQuery: String
         var queryParams: [AnyObject]
-        if existedActivity.count > 0 {  // activity record exists, should update
+        if (existedActivity?.count)! > 0 {  // activity record exists, should update
             safeDatabaseQuery = "update activities set initiator=?,date=?,time=?,place=?,type=?,status=?,minimumNumberOfPeople=?,nameOfA=?,idOfA=?,nameOfB=?,idOfB=?,scoreOfA=?,scoreOfB=?,note=?,latitude=?,longitude=? where activityId=? and forUserId=?"
             queryParams = [
-                self.initiator!,
-                self.date!,
-                self.time!,
-                self.place!,
-                "\(self.type!)",
-                "\(self.status!)",
-                "\(self.minimumNumberOfPeople)",
+                self.initiator! as AnyObject,
+                self.date! as AnyObject,
+                self.time! as AnyObject,
+                self.place! as AnyObject,
+                "\(self.type!)" as AnyObject,
+                "\(self.status!)" as AnyObject,
+                "\(self.minimumNumberOfPeople)" as AnyObject,
                 self.nameOfA!,
                 self.idOfA!,
                 self.nameOfB,
@@ -130,13 +130,13 @@ class Activity: NSObject {
         } else {    // new activity, should insert
             safeDatabaseQuery = "insert into activities(activityId,initiator,date,time,place,type,status,minimumNumberOfPeople,nameOfA,idOfA,nameOfB,idOfB,scoreOfA,scoreOfB,note,forUserId,latitude,longitude) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
             queryParams = [
-                self.activityId!,
-                self.initiator!,
-                self.date!,
-                self.time!,
-                self.place!,
-                "\(self.type!)",
-                "\(self.status!)",
+                self.activityId! as AnyObject,
+                self.initiator! as AnyObject,
+                self.date! as AnyObject,
+                self.time! as AnyObject,
+                self.place! as AnyObject,
+                "\(self.type!)" as AnyObject,
+                "\(self.status!)" as AnyObject,
                 "\(self.minimumNumberOfPeople)",
                 self.nameOfA!,
                 self.idOfA!,
@@ -150,36 +150,36 @@ class Activity: NSObject {
                 self.longitude
             ]
         }
-        dbManager.modifyDataInDB(safeDatabaseQuery, parameters: queryParams)
-        if dbManager.affectedRows == 0 {    // query failed
+        dbManager?.modifyData(inDB: safeDatabaseQuery, parameters: queryParams)
+        if dbManager?.affectedRows == 0 {    // query failed
             Toolbox.showCustomAlertViewWithImage("unhappy", title: "数据库操作失败")
-            return ErrorCode.LocalDatabaseError.rawValue
+            return ErrorCode.localDatabaseError.rawValue
         } else {
-            NSNotificationCenter.defaultCenter().postNotificationName("activityRecordSavedOrUpdated", object: self)
+            NotificationCenter.default.post(name: Notification.Name(rawValue: "activityRecordSavedOrUpdated"), object: self)
             return 1
         }
     }
     
-    static func formatDatabaseRecordToActivity(databaseRecord: [AnyObject]) -> Activity {
+    static func formatDatabaseRecordToActivity(_ databaseRecord: [AnyObject]) -> Activity {
         let activityDictionary = [
-            "activityId": databaseRecord[ActivityTableIndex.ActivityId.rawValue],
-            "initiator": databaseRecord[ActivityTableIndex.Initiator.rawValue],
-            "date": databaseRecord[ActivityTableIndex.Date.rawValue],
-            "time": databaseRecord[ActivityTableIndex.Time.rawValue],
-            "place": databaseRecord[ActivityTableIndex.Place.rawValue],
-            "type": databaseRecord[ActivityTableIndex.ActivityType.rawValue].integerValue,
-            "status": databaseRecord[ActivityTableIndex.Status.rawValue].integerValue,
-            "minimumNumberOfPeople": databaseRecord[ActivityTableIndex.MinimumNumberOfPeople.rawValue].integerValue,
-            "nameOfA": databaseRecord[ActivityTableIndex.NameOfA.rawValue],
-            "idOfA": databaseRecord[ActivityTableIndex.IdOfA.rawValue],
-            "nameOfB": databaseRecord[ActivityTableIndex.NameOfB.rawValue],
-            "idOfB": databaseRecord[ActivityTableIndex.IdOfB.rawValue],
-            "scoreOfA": databaseRecord[ActivityTableIndex.ScoresOfA.rawValue].integerValue,
-            "scoreOfB": databaseRecord[ActivityTableIndex.ScoresOfB.rawValue].integerValue,
-            "note": databaseRecord[ActivityTableIndex.Note.rawValue],
-            "forUserId": databaseRecord[ActivityTableIndex.ForUserId.rawValue],
-            "latitude": databaseRecord[ActivityTableIndex.Latitude.rawValue],
-            "longitude": databaseRecord[ActivityTableIndex.Longitude.rawValue]
+            "activityId": databaseRecord[ActivityTableIndex.activityId.rawValue],
+            "initiator": databaseRecord[ActivityTableIndex.initiator.rawValue],
+            "date": databaseRecord[ActivityTableIndex.date.rawValue],
+            "time": databaseRecord[ActivityTableIndex.time.rawValue],
+            "place": databaseRecord[ActivityTableIndex.place.rawValue],
+            "type": databaseRecord[ActivityTableIndex.activityType.rawValue].intValue,
+            "status": databaseRecord[ActivityTableIndex.status.rawValue].intValue,
+            "minimumNumberOfPeople": databaseRecord[ActivityTableIndex.minimumNumberOfPeople.rawValue].intValue,
+            "nameOfA": databaseRecord[ActivityTableIndex.nameOfA.rawValue],
+            "idOfA": databaseRecord[ActivityTableIndex.idOfA.rawValue],
+            "nameOfB": databaseRecord[ActivityTableIndex.nameOfB.rawValue],
+            "idOfB": databaseRecord[ActivityTableIndex.idOfB.rawValue],
+            "scoreOfA": databaseRecord[ActivityTableIndex.scoresOfA.rawValue].intValue,
+            "scoreOfB": databaseRecord[ActivityTableIndex.scoresOfB.rawValue].intValue,
+            "note": databaseRecord[ActivityTableIndex.note.rawValue],
+            "forUserId": databaseRecord[ActivityTableIndex.forUserId.rawValue],
+            "latitude": databaseRecord[ActivityTableIndex.latitude.rawValue],
+            "longitude": databaseRecord[ActivityTableIndex.longitude.rawValue]
         ]
         return Activity(data: activityDictionary)
     }

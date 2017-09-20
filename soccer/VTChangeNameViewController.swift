@@ -21,11 +21,11 @@ class VTChangeNameViewController: UIViewController {
             self.input_name.text = Singleton_CurrentUser.sharedInstance.name
         }
         // listen to userInfoUpdated message and handles it by unwinding the navigation controller to the previous view controller
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "updateUserInfo:", name: "userInfoUpdated", object: nil)
-        self.input_name.addTarget(self, action: "validateUserInput", forControlEvents: .EditingChanged)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTChangeNameViewController.updateUserInfo(_:)), name: NSNotification.Name(rawValue: "userInfoUpdated"), object: nil)
+        self.input_name.addTarget(self, action: #selector(VTChangeNameViewController.validateUserInput), for: .editingChanged)
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Appearance.customizeNavigationBar(self, title: "设置姓名")
     }
@@ -39,16 +39,16 @@ class VTChangeNameViewController: UIViewController {
         }
     }
     
-    func updateUserInfo(notification: NSNotification) {
+    func updateUserInfo(_ notification: Notification) {
         // unwind navigation controller to the previous view controller
-        self.navigationController?.popViewControllerAnimated(true)
+        self.navigationController?.popViewController(animated: true)
     }
     
-    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         self.input_name.resignFirstResponder()
     }
     
-    @IBAction func updateName(sender: AnyObject) {
+    @IBAction func updateName(_ sender: AnyObject) {
         let newName = Toolbox.trim(self.input_name.text!)
         Singleton_CurrentUser.sharedInstance.updateUserInfo("name", infoValue: newName)
     }

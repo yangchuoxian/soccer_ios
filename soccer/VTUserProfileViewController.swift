@@ -35,7 +35,7 @@ class VTUserProfileTableViewController: UITableViewController {
 
     func showUserInfo() {
         // show user info
-        Toolbox.loadAvatarImage(self.userObject!.userId, toImageView: self.imageView_avatar, avatarType: AvatarType.User)
+        Toolbox.loadAvatarImage(self.userObject!.userId, toImageView: self.imageView_avatar, avatarType: AvatarType.user)
         self.label_username.text = self.userObject?.username
         
         if Toolbox.isStringValueValid(self.userObject?.dateOfBirth) {
@@ -61,8 +61,8 @@ class VTUserProfileTableViewController: UITableViewController {
         }
     }
     
-    override func tableView(tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
-        return UIView(frame: CGRectZero)
+    override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+        return UIView(frame: CGRect.zero)
     }
     
     override func didReceiveMemoryWarning() {
@@ -70,9 +70,9 @@ class VTUserProfileTableViewController: UITableViewController {
         // Dispose of any resources that can be recreated.
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "statsSegue" {
-            let destinationViewController = segue.destinationViewController as! VTUserStatsTableViewController
+            let destinationViewController = segue.destination as! VTUserStatsTableViewController
             destinationViewController.userObject = self.userObject
         }
     }

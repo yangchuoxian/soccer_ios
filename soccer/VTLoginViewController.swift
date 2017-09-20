@@ -36,15 +36,15 @@ import UIKit
         // round corner for app icon image view
         self.imageView_appIconOrLastLoginUserAvatar.layer.cornerRadius = 20.0
         self.imageView_appIconOrLastLoginUserAvatar.clipsToBounds = true
-        let lastLoginUserId = NSUserDefaults.standardUserDefaults().stringForKey("lastLoginUserId")
+        let lastLoginUserId = UserDefaults.standard.string(forKey: "lastLoginUserId")
         if Toolbox.isStringValueValid(lastLoginUserId) {
-            Toolbox.loadAvatarImage(lastLoginUserId!, toImageView: self.imageView_appIconOrLastLoginUserAvatar, avatarType: AvatarType.User)
+            Toolbox.loadAvatarImage(lastLoginUserId!, toImageView: self.imageView_appIconOrLastLoginUserAvatar, avatarType: AvatarType.user)
         }
         
         self.input_username.delegate = self
         self.input_password.delegate = self
-        self.input_username.addTarget(self, action: "validateUserInput", forControlEvents: .EditingChanged)
-        self.input_password.addTarget(self, action: "validateUserInput", forControlEvents: .EditingChanged)
+        self.input_username.addTarget(self, action: #selector(VTLoginViewController.validateUserInput), for: .editingChanged)
+        self.input_password.addTarget(self, action: #selector(VTLoginViewController.validateUserInput), for: .editingChanged)
     }
     
     func validateUserInput() {
@@ -57,7 +57,7 @@ import UIKit
         }
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         self.navigationController?.setNavigationBarHidden(true, animated: animated)
     }
@@ -67,21 +67,21 @@ import UIKit
         // Dispose of any resources that can be recreated.
     }
     
-    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
-        // resign the keyboard when tapped somewhere else other than the text field or the keyboard iteslf
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        // resign the keyboard when tapped somewhere else other than the text field or the keyboard itself
         self.input_username.resignFirstResponder()
         self.input_password.resignFirstResponder()
     }
     
-    func textFieldShouldReturn(textField: UITextField) -> Bool {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         if textField == self.input_username {
             self.input_username.resignFirstResponder()
             self.input_password.becomeFirstResponder()
             return true
         } else if textField == self.input_password {
-            if self.button_login.enabled {
+            if self.button_login.isEnabled {
                 self.input_password.resignFirstResponder()
-                self.button_login.sendActionsForControlEvents(.TouchUpInside)
+                self.button_login.sendActions(for: .touchUpInside)
                 return true
             }
             return false
@@ -89,52 +89,52 @@ import UIKit
         return false
     }
     
-    @IBAction func showResetPasswordOptions(sender: AnyObject) {
+    @IBAction func showResetPasswordOptions(_ sender: AnyObject) {
         let sendSMS = "发送短信验证码"
         let sendEmail = "发送邮件验证码"
         let cancelTitle: String = "取消"
         let actionSheet: UIActionSheet = UIActionSheet(title: nil, delegate: self, cancelButtonTitle: cancelTitle, destructiveButtonTitle: nil, otherButtonTitles: sendSMS, sendEmail)
-        actionSheet.showInView(self.view)
+        actionSheet.show(in: self.view)
         self.currentActiveActionSheet = .retrievePasswordOptions
     }
     
-    @IBAction func showRegisterOptions(sender: AnyObject) {
+    @IBAction func showRegisterOptions(_ sender: AnyObject) {
         let registerThroughEmail = "通过邮箱注册"
         let registerThroughPhone = "通过手机号注册"
         let cancelTitle = "取消"
         let actionSheet = UIActionSheet(title: nil, delegate: self, cancelButtonTitle: cancelTitle, destructiveButtonTitle: nil, otherButtonTitles: registerThroughPhone, registerThroughEmail)
-        actionSheet.showInView(self.view)
+        actionSheet.show(in: self.view)
         self.currentActiveActionSheet = .registerOptions
     }
     
-    func actionSheet(actionSheet: UIActionSheet, clickedButtonAtIndex buttonIndex: Int) {
+    func actionSheet(_ actionSheet: UIActionSheet, clickedButtonAt buttonIndex: Int) {
         if self.currentActiveActionSheet == .retrievePasswordOptions {
             if buttonIndex == 1 {   // user chose to retrieve password by SMS
-                self.verificationType = .SMS
+                self.verificationType = .sms
             } else if buttonIndex == 2 {    // user chose to retrieve password by email
-                self.verificationType = .Email
+                self.verificationType = .email
             } else {    // cancel button clicked
                 return
             }
-            self.performSegueWithIdentifier("sendVerificationCodeSegue", sender: self)
+            self.performSegue(withIdentifier: "sendVerificationCodeSegue", sender: self)
         } else {
             if buttonIndex == 1 {   // user chose to register through phone
-                self.performSegueWithIdentifier("registerThroughPhoneSegue", sender: self)
+                self.performSegue(withIdentifier: "registerThroughPhoneSegue", sender: self)
             } else if buttonIndex == 2 {    // user chose to register through email
-                self.performSegueWithIdentifier("registerThroughEmailSegue", sender: self)
+                self.performSegue(withIdentifier: "registerThroughEmailSegue", sender: self)
             }
         }
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "sendVerificationCodeSegue" {
-            let destinationNavigationController = segue.destinationViewController as! UINavigationController
+            let destinationNavigationController = segue.destination as! UINavigationController
             let enterUserIdentityForVerificationViewController = destinationNavigationController.viewControllers[0] as! VTEnterUserIdentityForVerificationViewController
             enterUserIdentityForVerificationViewController.verificationType = self.verificationType
         }
     }
     
-    @IBAction func submitLogin(sender: AnyObject) {
+    @IBAction func submitLogin(_ sender: AnyObject) {
         let username = Toolbox.trim(self.input_username.text!)
         let password = Toolbox.trim(self.input_password.text!)
         // save login username
@@ -152,11 +152,11 @@ import UIKit
         }
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.HUD?.hide(true)
         self.HUD = nil
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络超时")
@@ -164,22 +164,22 @@ import UIKit
         self.responseData = NSMutableData()
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.HUD?.hide(true)
         self.HUD = nil
         // if login succeeded, response from server should be user info JSON data, so retrieve username from this JSON data to see if login is successful
-        let userJSON = (try? NSJSONSerialization.JSONObjectWithData(self.responseData!, options: .MutableLeaves)) as? [NSObject: AnyObject]
+        let userJSON = (try? JSONSerialization.jsonObject(with: self.responseData! as Data, options: .mutableLeaves)) as? [AnyHashable: Any]
         if userJSON != nil {   // login succeeded
             Singleton_CurrentUser.sharedInstance.processUserLogin(userJSON!)
         } else {    // login failed with error message
-            let responseStr = NSString(data: self.responseData!, encoding: NSUTF8StringEncoding)
+            let responseStr = NSString(data: self.responseData! as Data, encoding: String.Encoding.utf8.rawValue)
             Toolbox.showCustomAlertViewWithImage("unhappy", title: responseStr! as String)
         }
         self.responseData = nil
         self.responseData = NSMutableData()
     }
     
-    @IBAction func unwindToLoginView(segue: UIStoryboardSegue) {
+    @IBAction func unwindToLoginView(_ segue: UIStoryboardSegue) {
     }
     
     deinit {

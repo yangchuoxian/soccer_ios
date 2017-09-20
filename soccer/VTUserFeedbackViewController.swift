@@ -24,18 +24,18 @@ class VTUserFeedbackViewController: UIViewController, NSURLConnectionDelegate, N
         self.textView_feedback.delegate = self
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Appearance.customizeNavigationBar(self, title: "意见反馈")
     }
     
-    func textViewDidChange(textView: UITextView) {
+    func textViewDidChange(_ textView: UITextView) {
         // Get the placeholder label
-        let placeHolderLabel = textView.viewWithTag(TagValue.TextViewPlaceholder.rawValue)
-        if !textView.hasText() {
-            placeHolderLabel?.hidden = false
+        let placeHolderLabel = textView.viewWithTag(TagValue.textViewPlaceholder.rawValue)
+        if !textView.hasText {
+            placeHolderLabel?.isHidden = false
         } else {
-            placeHolderLabel?.hidden = true
+            placeHolderLabel?.isHidden = true
         }
         
         let enteredFeedbackLength = Toolbox.trim(self.textView_feedback.text).characters.count
@@ -51,11 +51,11 @@ class VTUserFeedbackViewController: UIViewController, NSURLConnectionDelegate, N
         // Dispose of any resources that can be recreated.
     }
     
-    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         self.textView_feedback.resignFirstResponder()
     }
     
-    @IBAction func submitFeedback(sender: AnyObject) {
+    @IBAction func submitFeedback(_ sender: AnyObject) {
         let newFeedback = Toolbox.trim(self.textView_feedback.text)
         let currentUser = Singleton_CurrentUser.sharedInstance
         let connection = Toolbox.asyncHttpPostToURL(URLSubmitFeedback, parameters: "feedback=\(newFeedback)&userId=\(currentUser.userId!)", delegate: self)
@@ -66,26 +66,26 @@ class VTUserFeedbackViewController: UIViewController, NSURLConnectionDelegate, N
         }
     }
     
-    func connection(connection: NSURLConnection, didReceiveResponse response: NSURLResponse) {
+    func connection(_ connection: NSURLConnection, didReceive response: URLResponse) {
         // get http response status code
-        let httpResponse = response as! NSHTTPURLResponse
-        if httpResponse.statusCode == HttpStatusCode.OK.rawValue {  // feedback successfully submitted
-            let param = NSDictionary(object: "feedback", forKey: "settings")
-        NSNotificationCenter.defaultCenter().postNotificationName("settingsInstructionComplete", object: param)
+        let httpResponse = response as! HTTPURLResponse
+        if httpResponse.statusCode == HttpStatusCode.ok.rawValue {  // feedback successfully submitted
+            let param = NSDictionary(object: "feedback", forKey: "settings" as NSCopying)
+        NotificationCenter.default.post(name: Notification.Name(rawValue: "settingsInstructionComplete"), object: param)
             // unwind segue, go back to previous view controller
-            self.navigationController?.popViewControllerAnimated(true)
+            self.navigationController?.popViewController(animated: true)
         } else {
             Toolbox.showCustomAlertViewWithImage("unhappy", title: "提交反馈失败")
         }
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.HUD?.hide(true)
         self.HUD = nil
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络超时")
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.HUD?.hide(true)
         self.HUD = nil
     }

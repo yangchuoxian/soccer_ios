@@ -28,7 +28,7 @@ class VTNearbyMatchesTableViewController: UITableViewController, NSURLConnection
         self.setTableFooterView()
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Appearance.customizeNavigationBar(self, title: "近期赛事")
     }
@@ -39,16 +39,16 @@ class VTNearbyMatchesTableViewController: UITableViewController, NSURLConnection
 
     // MARK: - Table view data source
 
-    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return self.matchesList.count
     }
 
-    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        var cell = self.tableView.dequeueReusableCellWithIdentifier(self.tableCellIdentifier) as UITableViewCell?
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        var cell = self.tableView.dequeueReusableCell(withIdentifier: self.tableCellIdentifier) as UITableViewCell?
         if cell == nil {
-            cell = UITableViewCell(style: .Default, reuseIdentifier: self.tableCellIdentifier)
+            cell = UITableViewCell(style: .default, reuseIdentifier: self.tableCellIdentifier)
         }
-        let matchInCurrentRow = self.matchesList[indexPath.row]
+        let matchInCurrentRow = self.matchesList[(indexPath as NSIndexPath).row]
         // set up the match info labels and team avatars
         let imageView_teamAAvatar = cell!.contentView.viewWithTag(1) as! UIImageView
         let label_teamAName = cell!.contentView.viewWithTag(2) as! UILabel
@@ -57,20 +57,20 @@ class VTNearbyMatchesTableViewController: UITableViewController, NSURLConnection
         label_teamAName.text = matchInCurrentRow.nameOfA
         label_teamBName.text = matchInCurrentRow.nameOfB
  
-        Toolbox.loadAvatarImage(matchInCurrentRow.idOfA!, toImageView: imageView_teamAAvatar, avatarType: .Team)
-        Toolbox.loadAvatarImage(matchInCurrentRow.idOfB, toImageView: imageView_teamBAvatar, avatarType: .Team)
+        Toolbox.loadAvatarImage(matchInCurrentRow.idOfA!, toImageView: imageView_teamAAvatar, avatarType: .team)
+        Toolbox.loadAvatarImage(matchInCurrentRow.idOfB, toImageView: imageView_teamBAvatar, avatarType: .team)
         
         return cell!
     }
     
-    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        self.selectedMatch = self.matchesList[indexPath.row]
-        self.performSegueWithIdentifier("matchInfoSegue", sender: self)
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        self.selectedMatch = self.matchesList[(indexPath as NSIndexPath).row]
+        self.performSegue(withIdentifier: "matchInfoSegue", sender: self)
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "matchInfoSegue" {
-            let destinationViewController = segue.destinationViewController as! VTUserActivityInfoTableViewController
+            let destinationViewController = segue.destination as! VTUserActivityInfoTableViewController
             destinationViewController.activity = self.selectedMatch
         }
     }
@@ -87,11 +87,11 @@ class VTNearbyMatchesTableViewController: UITableViewController, NSURLConnection
         }
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.isLoadingNextPage = false
         // set tableView footer to replace activity indicator with next page button
         self.setTableFooterView()
@@ -100,9 +100,9 @@ class VTNearbyMatchesTableViewController: UITableViewController, NSURLConnection
         self.responseData = NSMutableData()
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.isLoadingNextPage = false
-        let responseDictionary = (try? NSJSONSerialization.JSONObjectWithData(self.responseData!, options: .MutableLeaves)) as? [NSObject: AnyObject]
+        let responseDictionary = (try? JSONSerialization.jsonObject(with: self.responseData! as Data, options: .mutableLeaves)) as? [AnyHashable: Any]
         self.responseData = nil
         self.responseData = NSMutableData()
         
@@ -110,19 +110,19 @@ class VTNearbyMatchesTableViewController: UITableViewController, NSURLConnection
             Toolbox.showCustomAlertViewWithImage("unhappy", title: "获取失败")
             return
         }
-        self.totalNearbyMatches = responseDictionary!["total"]!.integerValue
+        self.totalNearbyMatches = (responseDictionary!["total"]! as AnyObject).intValue
         let models = responseDictionary!["models"] as? [[String: AnyObject]]
         if self.totalNearbyMatches == 0 || models == nil {
             Toolbox.showCustomAlertViewWithImage("unhappy", title: "没有找到更多比赛")
             return
         }
-        self.currentPage++
+        self.currentPage += 1
         for matchModel in models! {
             let matchObject = Activity(data: matchModel)
             self.matchesList.append(matchObject)
             // insert row in table view
             self.tableView.beginUpdates()
-            self.tableView.insertRowsAtIndexPaths([NSIndexPath(forRow: self.matchesList.count - 1, inSection: 0)], withRowAnimation: .Fade)
+            self.tableView.insertRows(at: [IndexPath(row: self.matchesList.count - 1, section: 0)], with: .fade)
             self.tableView.endUpdates()
         }
         // set tableView footer to replace activity indicator with next page button

@@ -34,7 +34,7 @@ class VTUserInfoTableViewController: UITableViewController {
         self.clearsSelectionOnViewWillAppear = true
         
         // this will remove extra separators from tableView
-        self.tableView.tableFooterView = UIView(frame: CGRectZero)
+        self.tableView.tableFooterView = UIView(frame: CGRect.zero)
         // retrieve username, avatar image, email address, actual name, phone number, location from singleton currentUser instance and show them
         let currentUser = Singleton_CurrentUser.sharedInstance
         self.label_username.text = currentUser.username
@@ -76,18 +76,18 @@ class VTUserInfoTableViewController: UITableViewController {
             self.switch_isLookingForTeam.setOn(false, animated: false)
         }
 
-        self.textView_introduction.userInteractionEnabled = false
+        self.textView_introduction.isUserInteractionEnabled = false
         // load current user avatar
-        Toolbox.loadAvatarImage(currentUser.userId!, toImageView: self.imageView_avatar, avatarType: AvatarType.User)
+        Toolbox.loadAvatarImage(currentUser.userId!, toImageView: self.imageView_avatar, avatarType: AvatarType.user)
  
         self.imageView_avatar.layer.cornerRadius = 5.0
         self.tableView.rowHeight = DefaultTableRowHeight
         
         // listen to userInfoUpdated message and handles it by updating the user info value
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "updateUserInfo:", name: "userInfoUpdated", object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTUserInfoTableViewController.updateUserInfo(_:)), name: NSNotification.Name(rawValue: "userInfoUpdated"), object: nil)
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Appearance.customizeNavigationBar(self, title: "基本资料")
     }
@@ -97,8 +97,8 @@ class VTUserInfoTableViewController: UITableViewController {
         // Dispose of any resources that can be recreated.
     }
 
-    func updateUserInfo(notification: NSNotification) {
-        let nameOfUpdatedUserInfo = (notification.object as! NSDictionary).objectForKey("userInfoIndex") as! String
+    func updateUserInfo(_ notification: Notification) {
+        let nameOfUpdatedUserInfo = (notification.object as! NSDictionary).object(forKey: "userInfoIndex") as! String
         let currentUser = Singleton_CurrentUser.sharedInstance
         if nameOfUpdatedUserInfo == "userAvatar" {
             let avatarFilePath = Toolbox.getAvatarImagePathForModelId(currentUser.userId!)
@@ -134,20 +134,20 @@ class VTUserInfoTableViewController: UITableViewController {
         }
     }
     
-    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        self.tableView.deselectRowAtIndexPath(indexPath, animated: true)
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        self.tableView.deselectRow(at: indexPath, animated: true)
         
-        if indexPath.section == 2 {
-            switch indexPath.row {
+        if (indexPath as NSIndexPath).section == 2 {
+            switch (indexPath as NSIndexPath).row {
             case 0: // birth date cell selected
-                let selectedDate = NSDate()
-                let selectedTableCell = self.tableView.cellForRowAtIndexPath(indexPath)
-                let birthDatePicker = ActionSheetDatePicker(title: "选择生日", datePickerMode: .Date, selectedDate: selectedDate, minimumDate: nil, maximumDate: nil, target: self, action: "birthDateSelected:", cancelAction: nil, origin: selectedTableCell)
-                birthDatePicker.hideCancel = false
-                birthDatePicker.showActionSheetPicker()
+                let selectedDate = Date()
+                let selectedTableCell = self.tableView.cellForRow(at: indexPath)
+                let birthDatePicker = ActionSheetDatePicker(title: "选择生日", datePickerMode: .date, selectedDate: selectedDate, minimumDate: nil, maximumDate: nil, target: self, action: #selector(VTUserInfoTableViewController.birthDateSelected(_:)), cancelAction: nil, origin: selectedTableCell)
+                birthDatePicker?.hideCancel = false
+                birthDatePicker?.show()
                 break
             case 2: // player position cell selected
-                ActionSheetStringPicker.showPickerWithTitle("选择场上位置",
+                ActionSheetStringPicker.show(withTitle: "选择场上位置",
                     rows: self.positions,
                     initialSelection: 0,
                     doneBlock: {
@@ -156,12 +156,12 @@ class VTUserInfoTableViewController: UITableViewController {
                         Singleton_CurrentUser.sharedInstance.updateUserInfo(
                             "position", infoValue: value)
                         return
-                    }, cancelBlock: {
+                    }, cancel: {
                         picker in return
                     }, origin: self.view)
                 break
             case 5: // gender cell selected
-                ActionSheetStringPicker.showPickerWithTitle("选择性别",
+                ActionSheetStringPicker.show(withTitle: "选择性别",
                     rows: self.genders,
                     initialSelection: 0,
                     doneBlock: {
@@ -169,7 +169,7 @@ class VTUserInfoTableViewController: UITableViewController {
                         self.label_gender.text = value as? String
                         Singleton_CurrentUser.sharedInstance.updateUserInfo("gender", infoValue: value)
                         return
-                    }, cancelBlock: {
+                    }, cancel: {
                         picker in return
                     }, origin: self.view)
                 break
@@ -179,28 +179,28 @@ class VTUserInfoTableViewController: UITableViewController {
         }
     }
     
-    override func tableView(tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+    override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let footerView = UIView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: 0))
-        footerView.backgroundColor = UIColor.clearColor()
+        footerView.backgroundColor = UIColor.clear
         
         return footerView
     }
     
-    func birthDateSelected(selectedDate: NSDate) {
-        let dateOfBirth = (selectedDate.description as NSString).substringToIndex(10)
+    func birthDateSelected(_ selectedDate: Date) {
+        let dateOfBirth = (selectedDate.description as NSString).substring(to: 10)
         self.label_dateOfBirth.text = dateOfBirth
         Singleton_CurrentUser.sharedInstance.updateUserInfo("dateOfBirth", infoValue: dateOfBirth)
     }
     
-    @IBAction func changeIsLookingForGroupStatus(sender: AnyObject) {
+    @IBAction func changeIsLookingForGroupStatus(_ sender: AnyObject) {
         var isLookingForTeam = LookForTeamStatus.NotLookingForTeam.rawValue
-        if self.switch_isLookingForTeam.on == true {    // looking for team status set to true
+        if self.switch_isLookingForTeam.isOn == true {    // looking for team status set to true
             isLookingForTeam = LookForTeamStatus.IsLookingForTeam.rawValue
         }
         Singleton_CurrentUser.sharedInstance.updateUserInfo("isLookingForTeam", infoValue: isLookingForTeam)
     }
     
-    @IBAction func unwindToUserInfoTableView(segue: UIStoryboardSegue) {
+    @IBAction func unwindToUserInfoTableView(_ segue: UIStoryboardSegue) {
     }
     
     deinit {

@@ -18,7 +18,7 @@ class Singleton_SocketManager: NSObject {
     func connectToSocket() {
         self.intentionallyDisconnected = false
         // connect to server socket.io and subscribe to message event
-        if self.socket.status == .Connected { // if already connected, do nothing
+        if self.socket.status == .connected { // if already connected, do nothing
             return
         }
         let currentUser = Singleton_CurrentUser.sharedInstance

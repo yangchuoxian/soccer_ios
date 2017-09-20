@@ -26,10 +26,10 @@ class VTResetPasswordViewController: UIViewController {
         Appearance.customizeTextField(self.input_newPassword, iconName: "key")
         Appearance.customizeTextField(self.input_confirmPassword, iconName: "key")
         // listen to userInfoUpdated message and handles it by unwinding the navigation controller to the previous view controller
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "passwordUpdated:", name: "settingsInstructionComplete", object: nil)
-        self.input_oldPassword.addTarget(self, action: "validateUserInput", forControlEvents: .EditingChanged)
-        self.input_newPassword.addTarget(self, action: "validateUserInput", forControlEvents: .EditingChanged)
-        self.input_confirmPassword.addTarget(self, action: "validateUserInput", forControlEvents: .EditingChanged)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTResetPasswordViewController.passwordUpdated(_:)), name: NSNotification.Name(rawValue: "settingsInstructionComplete"), object: nil)
+        self.input_oldPassword.addTarget(self, action: #selector(VTResetPasswordViewController.validateUserInput), for: .editingChanged)
+        self.input_newPassword.addTarget(self, action: #selector(VTResetPasswordViewController.validateUserInput), for: .editingChanged)
+        self.input_confirmPassword.addTarget(self, action: #selector(VTResetPasswordViewController.validateUserInput), for: .editingChanged)
     }
     
     func validateUserInput() {
@@ -47,9 +47,9 @@ class VTResetPasswordViewController: UIViewController {
         }
     }
     
-    func passwordUpdated(notification: NSNotification) {
+    func passwordUpdated(_ notification: Notification) {
         // unwind navigation controller to the previous view controller
-        self.navigationController?.popViewControllerAnimated(true)
+        self.navigationController?.popViewController(animated: true)
     }
     
     override func didReceiveMemoryWarning() {
@@ -57,13 +57,13 @@ class VTResetPasswordViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
-    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         self.input_oldPassword.resignFirstResponder()
         self.input_newPassword.resignFirstResponder()
         self.input_confirmPassword.resignFirstResponder()
     }
     
-    @IBAction func submitPasswordChange(sender: AnyObject) {
+    @IBAction func submitPasswordChange(_ sender: AnyObject) {
         let oldPassword = Toolbox.trim(self.input_oldPassword.text!)
         let newPassword = Toolbox.trim(self.input_newPassword.text!)
         let confirmPassword = Toolbox.trim(self.input_confirmPassword.text!)

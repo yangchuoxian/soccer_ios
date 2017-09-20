@@ -31,7 +31,7 @@ class Singleton_UserOwnedTeam: NSObject {
     var latitude = ""
     var longitude = ""
 
-    func getTeamInfoFrom(teamObject: Team) {
+    func getTeamInfoFrom(_ teamObject: Team) {
         self.teamId = teamObject.teamId
         self.teamName = teamObject.teamName
         self.type = teamObject.type

@@ -11,9 +11,9 @@ import UIKit
 class VTRequestGroupViewController: UIViewController, UIScrollViewDelegate, NSURLConnectionDelegate, NSURLConnectionDataDelegate {
     
     enum HttpRequest {
-        case AcceptOrRejectRequest
-        case GetTappedTeamInfo
-        case GetTappedUserInfo
+        case acceptOrRejectRequest
+        case getTappedTeamInfo
+        case getTappedUserInfo
     }
 
     @IBOutlet weak var scrollView: UIScrollView!
@@ -34,35 +34,35 @@ class VTRequestGroupViewController: UIViewController, UIScrollViewDelegate, NSUR
     override func viewDidLoad() {
         super.viewDidLoad()
         // listen to the system notification that says new message received
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "handleSavedMessageInDatabase:", name: "receivedNewMessageAndSavedInLocalDatabase", object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTRequestGroupViewController.handleSavedMessageInDatabase(_:)), name: NSNotification.Name(rawValue: "receivedNewMessageAndSavedInLocalDatabase"), object: nil)
         // listen to notification that says team avatar in notification view tapped, should show team info view controller now
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "getTappedTeamOrUserProfile:", name: "avatarTappedInRequestCardView", object:nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTRequestGroupViewController.getTappedTeamOrUserProfile(_:)), name: NSNotification.Name(rawValue: "avatarTappedInRequestCardView"), object:nil)
         
-        self.scrollView.userInteractionEnabled = true
-        self.scrollView.exclusiveTouch = true
+        self.scrollView.isUserInteractionEnabled = true
+        self.scrollView.isExclusiveTouch = true
         self.scrollView.canCancelContentTouches = true
         self.scrollView.delaysContentTouches = true
         self.scrollView.delegate = self
         
-        self.topActivityIndicator = UIActivityIndicatorView(activityIndicatorStyle: .Gray)
-        self.topActivityIndicator?.frame = CGRectMake(ScreenSize.width / 2 - 10, 0, 20, 20)
+        self.topActivityIndicator = UIActivityIndicatorView(activityIndicatorStyle: .gray)
+        self.topActivityIndicator?.frame = CGRect(x: ScreenSize.width / 2 - 10, y: 0, width: 20, height: 20)
         self.topActivityIndicator?.hidesWhenStopped = true
         self.scrollView.addSubview(self.topActivityIndicator!)
         
         // start activityIndicator animation indicating fetcing database and rendering UI in progress
-        self.topActivityIndicator!.hidden = false
+        self.topActivityIndicator!.isHidden = false
         self.topActivityIndicator!.startAnimating()
         
         let dbManager = DBManager(databaseFilename: "soccer_ios.sqlite")
-        let countTotalMessagesInThisGroup = dbManager.loadDataFromDB(
-            "select count(id) from messages where messageGroupId=? and recipientId=?",
+        let countTotalMessagesInThisGroup = dbManager?.loadData(
+            fromDB: "select count(id) from messages where messageGroupId=? and recipientId=?",
             parameters: [self.messageGroupId, Singleton_CurrentUser.sharedInstance.userId!]
         )
         
-        self.numberOfTotalRequestsInThisGroup = countTotalMessagesInThisGroup[0][0].integerValue
+        self.numberOfTotalRequestsInThisGroup = countTotalMessagesInThisGroup?[0][0].intValue
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Appearance.customizeNavigationBar(self, title: "请求通知")
     }
@@ -72,13 +72,13 @@ class VTRequestGroupViewController: UIViewController, UIScrollViewDelegate, NSUR
         // Dispose of any resources that can be recreated.
     }
 
-    func getTappedTeamOrUserProfile(notification: NSNotification) {
-        let info = notification.object as! [NSObject: AnyObject]
+    func getTappedTeamOrUserProfile(_ notification: Notification) {
+        let info = notification.object as! [AnyHashable: Any]
         let tappedModelId = info["modelId"] as! String
         let messageType = info["messageType"] as! Int
         // get tapped team or user info from server
         var urlToGetModelInfo: String
-        if messageType == MessageType.Application.rawValue {    // tapped avatar is a user
+        if messageType == MessageType.application.rawValue {    // tapped avatar is a user
             urlToGetModelInfo = URLGetUserInfo + "?id=\(tappedModelId)"
         } else {    // tapped avatar is a team
             urlToGetModelInfo = URLGetTeamInfo + "?id=\(tappedModelId)"
@@ -88,17 +88,17 @@ class VTRequestGroupViewController: UIViewController, UIScrollViewDelegate, NSUR
             Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络连接失败")
         } else {
             self.HUD = Toolbox.setupCustomProcessingViewWithTitle(title: nil)
-            if messageType == MessageType.Application.rawValue {
-                self.indexOfCurrentHttpRequest = .GetTappedUserInfo
+            if messageType == MessageType.application.rawValue {
+                self.indexOfCurrentHttpRequest = .getTappedUserInfo
             } else {
-                self.indexOfCurrentHttpRequest = .GetTappedTeamInfo
+                self.indexOfCurrentHttpRequest = .getTappedTeamInfo
             }
         }
         // releases the allocated memory
         connection = nil
     }
     
-    func handleSavedMessageInDatabase(notification: NSNotification) {
+    func handleSavedMessageInDatabase(_ notification: Notification) {
         let newRequest = notification.object as! Message
         if self.messageGroupId == newRequest.messageGroupId {
             // play message receive sound
@@ -113,7 +113,7 @@ class VTRequestGroupViewController: UIViewController, UIScrollViewDelegate, NSUR
         }
     }
     
-    func addRequestSequentially(message: Message) {
+    func addRequestSequentially(_ message: Message) {
         let currentRequestIndex = self.requests.count
         let requestView = self.addMessageView(message, index: currentRequestIndex)
         // add the message and its view height together as a dictionary object into requests
@@ -124,7 +124,7 @@ class VTRequestGroupViewController: UIViewController, UIScrollViewDelegate, NSUR
         self.requests.append(requestInfo)
     }
     
-    func addMessageView(message: Message, index: Int) -> VTRequestView {
+    func addMessageView(_ message: Message, index: Int) -> VTRequestView {
         var topOffset = RequestViewVerticalMargin + ActivityIndicatorViewHeight
         // calculate the top offset. i.e. the vertical position where this request view should be added
         var existingRequestView: VTRequestView?
@@ -141,8 +141,8 @@ class VTRequestGroupViewController: UIViewController, UIScrollViewDelegate, NSUR
         requestView.button_accept?.tag = index
         requestView.button_refuse?.tag = index
         
-        requestView.button_accept?.addTarget(self, action: "acceptRequest:", forControlEvents: .TouchUpInside)
-        requestView.button_refuse?.addTarget(self, action: "refuseRequest:", forControlEvents: .TouchUpInside)
+        requestView.button_accept?.addTarget(self, action: #selector(VTRequestGroupViewController.acceptRequest(_:)), for: .touchUpInside)
+        requestView.button_refuse?.addTarget(self, action: #selector(VTRequestGroupViewController.refuseRequest(_:)), for: .touchUpInside)
         
         self.scrollView.addSubview(requestView)
         
@@ -154,18 +154,18 @@ class VTRequestGroupViewController: UIViewController, UIScrollViewDelegate, NSUR
         
         let dbManager = DBManager(databaseFilename: "soccer_ios.sqlite")
         // get messages from database based on message group index
-        let paginatedMessagesResults = dbManager.loadDataFromDB(
-            "select * from messages where messageGroupId=? and recipientId=? order by createdAt desc limit ? offset ?",
+        let paginatedMessagesResults = dbManager?.loadData(
+            fromDB: "select * from messages where messageGroupId=? and recipientId=? order by createdAt desc limit ? offset ?",
             parameters: [
                 self.messageGroupId,
                 Singleton_CurrentUser.sharedInstance.userId!,
-                Pagination.NumOfRequestsPerPage.rawValue,
+                Pagination.numOfRequestsPerPage.rawValue,
                 self.requests.count
             ]
         )
         
         var tempRequests = [Message]()
-        for messageDatabaseRecord in Array(paginatedMessagesResults.reverse()) {   // iterate the paginatedMessagesResults REVERSELY
+        for messageDatabaseRecord in Array(paginatedMessagesResults.reversed()) {   // iterate the paginatedMessagesResults REVERSELY
             // put all the retrieved messages in tempMessages for display
             let currentMessage = Message.formatDatabaseRecordToMessageFormat(messageDatabaseRecord as! [String])
             
@@ -187,7 +187,7 @@ class VTRequestGroupViewController: UIViewController, UIScrollViewDelegate, NSUR
             // inserting the new fetched message results
             // before the existing ones in REVERSE order
             var totalOffset = -NavigationbarHeight - ToolbarHeight
-            for tempRequest in Array(tempRequests.reverse()) {
+            for tempRequest in Array(tempRequests.reversed()) {
                 // show the request
                 let requestView = self.addMessageView(tempRequest, index: 0)
                 // add the message and its view height together as a dictionary object into requests
@@ -195,17 +195,17 @@ class VTRequestGroupViewController: UIViewController, UIScrollViewDelegate, NSUR
                     "message": tempRequest,
                     "requestView": requestView
                 ]
-                self.requests.insert(requestInfo, atIndex: 0)
+                self.requests.insert(requestInfo, at: 0)
                 totalOffset = totalOffset + requestView.viewHeight! + RequestViewVerticalMargin
                 // move down the existing request views with the calculated offset
                 var existingRequestView: VTRequestView?
                 for i in 1...(self.requests.count - 1) {
                     existingRequestView = self.requests[i]["requestView"] as? VTRequestView
-                    existingRequestView?.frame = CGRectMake(
-                        existingRequestView!.frame.origin.x,
-                        existingRequestView!.frame.origin.y + requestView.viewHeight! + RequestViewVerticalMargin,
-                        existingRequestView!.frame.size.width,
-                        existingRequestView!.frame.size.height
+                    existingRequestView?.frame = CGRect(
+                        x: existingRequestView!.frame.origin.x,
+                        y: existingRequestView!.frame.origin.y + requestView.viewHeight! + RequestViewVerticalMargin,
+                        width: existingRequestView!.frame.size.width,
+                        height: existingRequestView!.frame.size.height
                     )
                     // the index of the existing request view in self.requests has changed, so we need to update its button_accept and button_refuse tag value as well
                     if existingRequestView?.button_accept != nil && existingRequestView?.button_refuse != nil {
@@ -223,7 +223,7 @@ class VTRequestGroupViewController: UIViewController, UIScrollViewDelegate, NSUR
         self.isLoadingMessageFromLocalDababase = false
     }
     
-    func acceptRequest(sender: AnyObject) {
+    func acceptRequest(_ sender: AnyObject) {
         let senderButton = sender as! UIButton
         let requestsIndex = senderButton.tag
         
@@ -236,15 +236,15 @@ class VTRequestGroupViewController: UIViewController, UIScrollViewDelegate, NSUR
         } else {
             // set up action info so that in async http response, it knows which button is tapped
             self.currentActionInfo = [
-                "index": requestsIndex,
-                "action": "accepted"
+                "index": requestsIndex as AnyObject,
+                "action": "accepted" as AnyObject
             ]
             self.HUD = Toolbox.setupCustomProcessingViewWithTitle(title: nil)
-            self.indexOfCurrentHttpRequest = .AcceptOrRejectRequest
+            self.indexOfCurrentHttpRequest = .acceptOrRejectRequest
         }
     }
     
-    func refuseRequest(sender: AnyObject) {
+    func refuseRequest(_ sender: AnyObject) {
         let senderButton = sender as! UIButton
         
         let requestsIndex = senderButton.tag
@@ -257,11 +257,11 @@ class VTRequestGroupViewController: UIViewController, UIScrollViewDelegate, NSUR
         } else {
             // set up action info so that in async http response, it knows which button is tapped
             self.currentActionInfo = [
-                "index": requestsIndex,
-                "action": "refused"
+                "index": requestsIndex as AnyObject,
+                "action": "refused" as AnyObject
             ]
             self.HUD = Toolbox.setupCustomProcessingViewWithTitle(title: nil)
-            self.indexOfCurrentHttpRequest = .AcceptOrRejectRequest
+            self.indexOfCurrentHttpRequest = .acceptOrRejectRequest
         }
     }
     
@@ -277,7 +277,7 @@ class VTRequestGroupViewController: UIViewController, UIScrollViewDelegate, NSUR
             totalHeight = totalHeight + existingRequestView!.viewHeight! + RequestViewVerticalMargin
         }
         if self.scrollView.contentSize.height < totalHeight {
-            self.scrollView.contentSize = CGSizeMake(ScreenSize.width, totalHeight)
+            self.scrollView.contentSize = CGSize(width: ScreenSize.width, height: totalHeight)
         }
     }
     
@@ -286,7 +286,7 @@ class VTRequestGroupViewController: UIViewController, UIScrollViewDelegate, NSUR
         self.scrollView.setContentOffset(bottomOffset, animated: true)
     }
     
-    func scrollViewDidScroll(scrollView: UIScrollView) {
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
         if scrollView.contentOffset.y == (-NavigationbarHeight - ToolbarHeight) && !self.isLoadingMessageFromLocalDababase {
             // scrollView has scrolled to top AND not currently FETCHING messages from database/render UI
             if self.requests.count < self.numberOfTotalRequestsInThisGroup {  // still more earlier messages
@@ -297,26 +297,26 @@ class VTRequestGroupViewController: UIViewController, UIScrollViewDelegate, NSUR
         }
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.HUD?.hide(true)
         self.HUD = nil
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "接收/拒绝通知失败")
-        self.currentActionInfo.removeAll(keepCapacity: false)
+        self.currentActionInfo.removeAll(keepingCapacity: false)
         
         self.responseData = nil
         self.responseData = NSMutableData()
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.HUD?.hide(true)
         self.HUD = nil
         
-        let responseStr = NSString(data: self.responseData!, encoding: NSUTF8StringEncoding)
-        if self.indexOfCurrentHttpRequest == .AcceptOrRejectRequest {
+        let responseStr = NSString(data: self.responseData! as Data, encoding: String.Encoding.utf8.rawValue)
+        if self.indexOfCurrentHttpRequest == .acceptOrRejectRequest {
             let actionIndex = self.currentActionInfo["index"] as! Int
             let requestView = self.requests[actionIndex]["requestView"] as! VTRequestView
             let correspondingMessage = self.requests[actionIndex]["message"] as! Message
@@ -325,51 +325,51 @@ class VTRequestGroupViewController: UIViewController, UIScrollViewDelegate, NSUR
             if responseStr == "OK" {  // accept or reject request succeeded
                 if (self.currentActionInfo["action"] as! String) == "accepted" {
                     requestView.updateAppearanceForMessageStatusChange("已接受", backgroundColor: ColorSettledGreen)
-                    status = MessageStatus.Accepted.rawValue
+                    status = MessageStatus.accepted.rawValue
                 } else {    // the original action is to refuse the request
                     requestView.updateAppearanceForMessageStatusChange("已拒绝", backgroundColor: ColorOrange)
-                    status = MessageStatus.Rejected.rawValue
+                    status = MessageStatus.rejected.rawValue
                 }
             } else {    // the accepted or rejected request is an invalidated request message
                 Toolbox.showCustomAlertViewWithImage("unhappy", title: responseStr as! String)
                 requestView.updateAppearanceForMessageStatusChange("已失效", backgroundColor: ColorBackgroundGray)
-                status = MessageStatus.Invalidated.rawValue
+                status = MessageStatus.invalidated.rawValue
             }
             let dbManager = DBManager(databaseFilename: "soccer_ios.sqlite")
-            dbManager.modifyDataInDB(
-                "update messages set status=? where messageId=?",
+            dbManager?.modifyData(
+                inDB: "update messages set status=? where messageId=?",
                 parameters:[
                     status!,
                     correspondingMessage.messageId
                 ]
             )
             // notify VTMainTabBarViewController that the number of total unread messages should decrease by dbManager.affectedRows
-            NSNotificationCenter.defaultCenter().postNotificationName(
-                "totalNumOfUnreadMessagesChanged",
+            NotificationCenter.default.post(
+                name: Notification.Name(rawValue: "totalNumOfUnreadMessagesChanged"),
                 object: [
                     "action": "-",
-                    "quantity": "\(Int(dbManager.affectedRows))"
+                    "quantity": "\(Int((dbManager?.affectedRows)!))"
                 ]
             )
             // notify VTGroupsOfMessagesTableViewController that the number of unread messages for specific message group should be updated
-            NSNotificationCenter.defaultCenter().postNotificationName(
-                "numOfUnreadMessagesInOneMessageGroupChanged",
+            NotificationCenter.default.post(
+                name: Notification.Name(rawValue: "numOfUnreadMessagesInOneMessageGroupChanged"),
                 object: "\(Int(self.messageGroupId))"
             )
-        } else if self.indexOfCurrentHttpRequest == .GetTappedTeamInfo {    // get tapped team info
-            let teamDictionary = (try? NSJSONSerialization.JSONObjectWithData(self.responseData!, options: .MutableLeaves)) as? NSDictionary
+        } else if self.indexOfCurrentHttpRequest == .getTappedTeamInfo {    // get tapped team info
+            let teamDictionary = (try? JSONSerialization.jsonObject(with: self.responseData! as Data, options: .mutableLeaves)) as? NSDictionary
             if teamDictionary != nil {  // http request to get tapped team info succeeded
-                self.tappedTeamObject = Team(data: teamDictionary! as [NSObject : AnyObject])
-                self.performSegueWithIdentifier("teamProfileSegue", sender: self)
+                self.tappedTeamObject = Team(data: teamDictionary! as! [AnyHashable : Any] as [AnyHashable: Any] as [NSObject : AnyObject])
+                self.performSegue(withIdentifier: "teamProfileSegue", sender: self)
             } else {        // http request to get tapped team info failed
                 Toolbox.showCustomAlertViewWithImage("unhappy", title:"获取球队信息失败")
             }
         } else {    // get tapped user info
-            let userJSON = (try? NSJSONSerialization.JSONObjectWithData(self.responseData!, options: .MutableLeaves)) as? [NSObject: AnyObject]
+            let userJSON = (try? JSONSerialization.jsonObject(with: self.responseData! as Data, options: .mutableLeaves)) as? [AnyHashable: Any]
             if userJSON != nil {    // http request to get tapped user info succeeded
-                self.tappedUserObject = User(data: userJSON!)
-                self.performSegueWithIdentifier(
-                    "fromRequestGroupViewToUserProfileSegue", sender: self)
+                self.tappedUserObject = User(data: userJSON! as [NSObject : AnyObject])
+                self.performSegue(
+                    withIdentifier: "fromRequestGroupViewToUserProfileSegue", sender: self)
             } else {    // http request to get tapped team info failed
                 Toolbox.showCustomAlertViewWithImage("unhappy", title: "获取用户信息失败")
             }
@@ -379,12 +379,12 @@ class VTRequestGroupViewController: UIViewController, UIScrollViewDelegate, NSUR
         self.responseData = NSMutableData()
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "teamProfileSegue" {
-            let destinationViewController = segue.destinationViewController as! VTTeamProfileTableViewController
+            let destinationViewController = segue.destination as! VTTeamProfileTableViewController
             destinationViewController.teamObject = self.tappedTeamObject
         } else if segue.identifier == "fromRequestGroupViewToUserProfileSegue" {
-            let destinationViewController = segue.destinationViewController as! VTUserProfileTableViewController
+            let destinationViewController = segue.destination as! VTUserProfileTableViewController
             destinationViewController.userObject = self.tappedUserObject
         }
     }
@@ -392,17 +392,17 @@ class VTRequestGroupViewController: UIViewController, UIScrollViewDelegate, NSUR
     deinit {
         self.HUD = nil
         self.responseData = nil
-        self.currentActionInfo.removeAll(keepCapacity: false)
+        self.currentActionInfo.removeAll(keepingCapacity: false)
         self.indexOfCurrentHttpRequest = nil
         
         self.scrollView.delegate = nil
         self.topActivityIndicator = nil
         
-        self.requests.removeAll(keepCapacity: false)
+        self.requests.removeAll(keepingCapacity: false)
         self.tappedTeamObject = nil
         self.tappedUserObject = nil
         
-        NSNotificationCenter.defaultCenter().removeObserver(self)
+        NotificationCenter.default.removeObserver(self)
     }
     
 }

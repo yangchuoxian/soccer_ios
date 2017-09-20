@@ -7,6 +7,26 @@
 //
 
 import UIKit
+fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l < r
+  case (nil, _?):
+    return true
+  default:
+    return false
+  }
+}
+
+fileprivate func <= <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l <= r
+  default:
+    return !(rhs < lhs)
+  }
+}
+
 
 class VTChangeCareerAgeViewController: UIViewController {
 
@@ -24,11 +44,11 @@ class VTChangeCareerAgeViewController: UIViewController {
         Appearance.addRightViewToTextField(self.input_careerAge, withText: "年")
         
         // listen to userInfoUpdated message and handles it by unwinding the navigation controller to the previous view controller
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "updateUserInfo:", name: "userInfoUpdated", object: nil)
-        self.input_careerAge.addTarget(self, action: "validateUserInput", forControlEvents: .EditingChanged)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTChangeCareerAgeViewController.updateUserInfo(_:)), name: NSNotification.Name(rawValue: "userInfoUpdated"), object: nil)
+        self.input_careerAge.addTarget(self, action: #selector(VTChangeCareerAgeViewController.validateUserInput), for: .editingChanged)
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Appearance.customizeNavigationBar(self, title: "更改球龄")
     }
@@ -42,16 +62,16 @@ class VTChangeCareerAgeViewController: UIViewController {
         }
     }
     
-    func updateUserInfo(notification: NSNotification) {
+    func updateUserInfo(_ notification: Notification) {
         // unwind navigation controller to the previous view controller
-        self.performSegueWithIdentifier("unwindToUserInfoTableSegue", sender: self)
+        self.performSegue(withIdentifier: "unwindToUserInfoTableSegue", sender: self)
     }
     
-    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         self.input_careerAge.resignFirstResponder()
     }
     
-    @IBAction func updateCareerAge(sender: AnyObject) {
+    @IBAction func updateCareerAge(_ sender: AnyObject) {
         let newCareerAge = Toolbox.trim(self.input_careerAge.text!)
         Singleton_CurrentUser.sharedInstance.updateUserInfo("careerAge", infoValue: newCareerAge)
     }
@@ -62,7 +82,7 @@ class VTChangeCareerAgeViewController: UIViewController {
     }
     
     deinit {
-        NSNotificationCenter.defaultCenter().removeObserver(self)
+        NotificationCenter.default.removeObserver(self)
     }
 
 }

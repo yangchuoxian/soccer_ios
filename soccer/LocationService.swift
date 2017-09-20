@@ -9,13 +9,13 @@
 import UIKit
 
 @objc protocol LocationServiceDelegate {
-    optional func didStartToLocate()
-    optional func didFailToLocateUser()
-    optional func didFailToSearchPOI()
-    optional func didFinishFindingLocationAndAddress(locationInfo: [NSObject: AnyObject])
-    optional func didFinishFindingGeoCodeResult(geoCodeInfo: [NSObject: AnyObject])
-    optional func didFinishSearchingPOIResult(poiResult: BMKPoiResult)
-    optional func didGetUserCoordinates(coordinate: CLLocationCoordinate2D)
+    @objc optional func didStartToLocate()
+    @objc optional func didFailToLocateUser()
+    @objc optional func didFailToSearchPOI()
+    @objc optional func didFinishFindingLocationAndAddress(_ locationInfo: [AnyHashable: Any])
+    @objc optional func didFinishFindingGeoCodeResult(_ geoCodeInfo: [AnyHashable: Any])
+    @objc optional func didFinishSearchingPOIResult(_ poiResult: BMKPoiResult)
+    @objc optional func didGetUserCoordinates(_ coordinate: CLLocationCoordinate2D)
 }
 
 class LocationService: NSObject, UIAlertViewDelegate, CLLocationManagerDelegate, BMKGeoCodeSearchDelegate, BMKLocationServiceDelegate, BMKPoiSearchDelegate {
@@ -54,7 +54,7 @@ class LocationService: NSObject, UIAlertViewDelegate, CLLocationManagerDelegate,
             return
         }
         // check app-wide location service authorization status provided by user
-        if appGeolocationAuthorizationStatus == .NotDetermined {
+        if appGeolocationAuthorizationStatus == .notDetermined {
             // user has NOT determined whether to allow or deny location service authorization for this app,
             // this is mostly happening for the first time the app is running and user asks for location service, so we ask for location service permission
             self.locationManager = CLLocationManager()
@@ -65,7 +65,7 @@ class LocationService: NSObject, UIAlertViewDelegate, CLLocationManagerDelegate,
                 // start to find out user current location
                 self.baiduLocationService?.startUserLocationService()
             }
-        } else if appGeolocationAuthorizationStatus == .Denied {
+        } else if appGeolocationAuthorizationStatus == .denied {
             let alert = UIAlertView(
                 title: "定位服务已经关闭",
                 message: "请前往设置打开",
@@ -76,24 +76,24 @@ class LocationService: NSObject, UIAlertViewDelegate, CLLocationManagerDelegate,
             return
         }
         if #available(iOS 8.0, *) {
-            if appGeolocationAuthorizationStatus == .AuthorizedAlways || appGeolocationAuthorizationStatus == .AuthorizedWhenInUse {
+            if appGeolocationAuthorizationStatus == .authorizedAlways || appGeolocationAuthorizationStatus == .authorizedWhenInUse {
                 self.startToFindUserLocation()
             }
         } else {
-            if appGeolocationAuthorizationStatus == .Authorized {
+            if appGeolocationAuthorizationStatus == .authorized {
                 self.startToFindUserLocation()
             }
         }
     }
     
-    func alertView(alertView: UIAlertView, clickedButtonAtIndex buttonIndex: Int) {
+    func alertView(_ alertView: UIAlertView, clickedButtonAt buttonIndex: Int) {
         switch buttonIndex {
         case 0:     // cancel button clicked, do nothing
             break
         case 1:
             // go to settings to turn on location service
             if #available(iOS 8.0, *) {
-                UIApplication.sharedApplication().openURL(NSURL(string: UIApplicationOpenSettingsURLString)!)
+                UIApplication.shared.openURL(URL(string: UIApplicationOpenSettingsURLString)!)
             } else {
                 // Fallback on earlier versions
             }
@@ -104,15 +104,15 @@ class LocationService: NSObject, UIAlertViewDelegate, CLLocationManagerDelegate,
     }
     
     // user changed location service authorization status
-    func locationManager(manager: CLLocationManager, didChangeAuthorizationStatus status: CLAuthorizationStatus) {
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         // user allows location service authorization
         if #available(iOS 8.0, *) {
-            if status == .AuthorizedAlways || status == .AuthorizedWhenInUse {
+            if status == .authorizedAlways || status == .authorizedWhenInUse {
                 // find user location now
                 self.startToFindUserLocation()
             }
         } else {
-            if status == .Authorized {
+            if status == .authorized {
                 // find user location now
                 self.startToFindUserLocation()
             }
@@ -126,14 +126,14 @@ class LocationService: NSObject, UIAlertViewDelegate, CLLocationManagerDelegate,
         self.delegate?.didStartToLocate!()
     }
     
-    func didFailToLocateUserWithError(error: NSError!) {
+    func didFailToLocateUserWithError(_ error: NSError!) {
         // stop baidu location service
         self.baiduLocationService?.stopUserLocationService()
         self.delegate?.didFailToLocateUser!()
     }
     
     // Geolocation finished, user location latitude and longitude has been decided
-    func didUpdateBMKUserLocation(userLocation: BMKUserLocation!) {
+    func didUpdate(_ userLocation: BMKUserLocation!) {
         self.baiduLocationService?.stopUserLocationService() // stop user location service
         if self.shouldGetReverseGeoCode == true {
             // proceed to find user address /reverse geocode
@@ -152,7 +152,7 @@ class LocationService: NSObject, UIAlertViewDelegate, CLLocationManagerDelegate,
     }
     
     // Get location address based on latitude/longitude coordinate finished
-    func onGetReverseGeoCodeResult(searcher: BMKGeoCodeSearch!, result: BMKReverseGeoCodeResult!, errorCode error: BMKSearchErrorCode) {
+    func onGetReverseGeoCodeResult(_ searcher: BMKGeoCodeSearch!, result: BMKReverseGeoCodeResult!, errorCode error: BMKSearchErrorCode) {
         if error.rawValue != 0 {
             self.delegate?.didFailToLocateUser!()
             return
@@ -160,13 +160,13 @@ class LocationService: NSObject, UIAlertViewDelegate, CLLocationManagerDelegate,
         let userLocationInfo = [
             "locationObject": self.userLocation!,
             "geoCodeResult": result
-        ]
+        ] as [String : Any]
         // delegate callback to handle found location and address or show error message
         self.delegate?.didFinishFindingLocationAndAddress!(userLocationInfo)
     }
     
     // Start to get latitude/longitude coordinates based on location address
-    func startToFindGeoCodeResultBasedOnAddress(address: String) {
+    func startToFindGeoCodeResultBasedOnAddress(_ address: String) {
         let geocodeSearchOption = BMKGeoCodeSearchOption()
         geocodeSearchOption.address = address
         let success = self.baiduGeoCodeSearch?.geoCode(geocodeSearchOption)
@@ -176,7 +176,7 @@ class LocationService: NSObject, UIAlertViewDelegate, CLLocationManagerDelegate,
     }
     
     // Get latitude/longitude coordinates based on location address finished
-    func onGetGeoCodeResult(searcher: BMKGeoCodeSearch!, result: BMKGeoCodeResult!, errorCode error: BMKSearchErrorCode) {
+    func onGetGeoCodeResult(_ searcher: BMKGeoCodeSearch!, result: BMKGeoCodeResult!, errorCode error: BMKSearchErrorCode) {
         // release memory
         self.baiduGeoCodeSearch?.delegate = nil
         self.baiduGeoCodeSearch = nil
@@ -187,21 +187,21 @@ class LocationService: NSObject, UIAlertViewDelegate, CLLocationManagerDelegate,
         let geoCodeInfo = [
             "geoCodeResult": result,
             "error": "\(error)"
-        ]
+        ] as [String : Any]
         self.delegate?.didFinishFindingGeoCodeResult!(geoCodeInfo)
     }
     
     /**
     Search POI based on the user input address
     */
-    func startToSearchPOIBasedOnAddress(address: String, city: String) {
+    func startToSearchPOIBasedOnAddress(_ address: String, city: String) {
         // should search in team city
         let citySearchOption = BMKCitySearchOption()
         citySearchOption.keyword = address
         citySearchOption.city = city
         self.baiduPOISearch = BMKPoiSearch()
         self.baiduPOISearch?.delegate = self
-        self.baiduPOISearch?.poiSearchInCity(citySearchOption)
+        self.baiduPOISearch?.poiSearch(inCity: citySearchOption)
     }
     
     /**
@@ -211,7 +211,7 @@ class LocationService: NSObject, UIAlertViewDelegate, CLLocationManagerDelegate,
     - parameter poiResult: poi result that contains poiInfoList
     - parameter errorCode: error code
     */
-    func onGetPoiResult(searcher: BMKPoiSearch!, result poiResult: BMKPoiResult!, errorCode: BMKSearchErrorCode) {
+    func onGetPoiResult(_ searcher: BMKPoiSearch!, result poiResult: BMKPoiResult!, errorCode: BMKSearchErrorCode) {
         self.baiduPOISearch?.delegate = nil
         self.baiduPOISearch = nil
         if errorCode == BMK_SEARCH_NO_ERROR {

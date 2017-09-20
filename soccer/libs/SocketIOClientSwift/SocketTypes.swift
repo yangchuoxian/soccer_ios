@@ -26,5 +26,5 @@ import Foundation
 
 public typealias AckCallback = ([AnyObject]) -> Void
 public typealias NormalCallback = ([AnyObject], SocketAckEmitter?) -> Void
-public typealias OnAckCallback = (timeoutAfter: UInt64, callback: AckCallback) -> Void
+public typealias OnAckCallback = (_ timeoutAfter: UInt64, _ callback: AckCallback) -> Void
 

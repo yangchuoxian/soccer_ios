@@ -33,13 +33,13 @@ class VTSendInvitationViewController: UIViewController, MBProgressHUDDelegate, N
         // Dispose of any resources that can be recreated.
     }
     
-    func textViewDidChange(textView: UITextView) {
+    func textViewDidChange(_ textView: UITextView) {
         // Get the placeholder label
-        let placeHolderLabel = textView.viewWithTag(TagValue.TextViewPlaceholder.rawValue)
-        if !textView.hasText() {
-            placeHolderLabel?.hidden = false
+        let placeHolderLabel = textView.viewWithTag(TagValue.textViewPlaceholder.rawValue)
+        if !textView.hasText {
+            placeHolderLabel?.isHidden = false
         } else {
-            placeHolderLabel?.hidden = true
+            placeHolderLabel?.isHidden = true
         }
         
         let enteredInvitationLength = Toolbox.trim(self.textView_invitation.text).characters.count
@@ -50,13 +50,13 @@ class VTSendInvitationViewController: UIViewController, MBProgressHUDDelegate, N
         }
     }
     
-    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         self.textView_invitation.resignFirstResponder()
     }
     
-    @IBAction func sendInvitation(sender: AnyObject) {
+    @IBAction func sendInvitation(_ sender: AnyObject) {
         let invitationContent = Toolbox.trim(self.textView_invitation.text)
-        let connection = Toolbox.asyncHttpPostToURL(URLSendMessage, parameters: "recipientId=\(self.receiverUserObject!.userId)&messageContent=\(invitationContent)&type=\(MessageType.Invitation.rawValue)&fromTeam=\(self.fromTeamId)", delegate: self)
+        let connection = Toolbox.asyncHttpPostToURL(URLSendMessage, parameters: "recipientId=\(self.receiverUserObject!.userId)&messageContent=\(invitationContent)&type=\(MessageType.invitation.rawValue)&fromTeam=\(self.fromTeamId)", delegate: self)
         if connection == nil {
             Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络连接失败")
         } else {
@@ -64,11 +64,11 @@ class VTSendInvitationViewController: UIViewController, MBProgressHUDDelegate, N
         }
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.HUD?.hide(true)
         self.HUD = nil
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络超时")
@@ -76,14 +76,14 @@ class VTSendInvitationViewController: UIViewController, MBProgressHUDDelegate, N
         self.responseData = NSMutableData()
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.HUD?.hide(true)
         self.HUD = nil
-        let responseStr = NSString(data: self.responseData!, encoding: NSUTF8StringEncoding)
-        if (responseStr as! String).rangeOfString("newMessageId") != nil {  // send invitation succeeded, server respond back with the invitation(message) create time and message id
-            self.performSegueWithIdentifier("unwindToMembersContainerSegue", sender: self)
-            NSNotificationCenter.defaultCenter().postNotificationName(
-                "invitationSentSuccessfully",
+        let responseStr = NSString(data: self.responseData! as Data, encoding: String.Encoding.utf8.rawValue)
+        if (responseStr as! String).range(of: "newMessageId") != nil {  // send invitation succeeded, server respond back with the invitation(message) create time and message id
+            self.performSegue(withIdentifier: "unwindToMembersContainerSegue", sender: self)
+            NotificationCenter.default.post(
+                name: Notification.Name(rawValue: "invitationSentSuccessfully"),
                 object: self.receiverUserObject
             )
         } else {    // send invitation failed

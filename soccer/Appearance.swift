@@ -27,16 +27,16 @@ let ColorNearBlack = UIColor(red: 33/255.0, green: 34/255.0, blue: 36/255.0, alp
     
     static func setupRefreshControl() -> UIRefreshControl {
         let refreshControl = UIRefreshControl()
-        refreshControl.tintColor = UIColor.blackColor()
+        refreshControl.tintColor = UIColor.black
         refreshControl.backgroundColor = ColorBackgroundGray
         
         return refreshControl
     }
     
-    static func setupTableFooterButtonWithTitle(title: String, backgroundColor: UIColor) -> UIButton {
-        let tableFooterButton = UIButton(type: .System)
-        tableFooterButton.setTitle(title, forState: .Normal)
-        tableFooterButton.setTitleColor(UIColor.whiteColor(), forState: .Normal)
+    static func setupTableFooterButtonWithTitle(_ title: String, backgroundColor: UIColor) -> UIButton {
+        let tableFooterButton = UIButton(type: .system)
+        tableFooterButton.setTitle(title, for: UIControlState())
+        tableFooterButton.setTitleColor(UIColor.white, for: UIControlState())
         tableFooterButton.backgroundColor = backgroundColor
         
         tableFooterButton.frame = CGRect(x: 15, y: 15, width: ScreenSize.width - 30, height: 40)
@@ -45,65 +45,65 @@ let ColorNearBlack = UIColor(red: 33/255.0, green: 34/255.0, blue: 36/255.0, alp
         return tableFooterButton
     }
     
-    static func setupTableSectionHeaderTitle(title: String) -> UILabel {
+    static func setupTableSectionHeaderTitle(_ title: String) -> UILabel {
         let sectionHeaderLabel = UILabel(frame: CGRect(x: 20, y: 6, width: 220, height: TableSectionHeaderHeight - 2 * 6))
         sectionHeaderLabel.text = title
-        sectionHeaderLabel.font = UIFont.systemFontOfSize(15.0)
-        sectionHeaderLabel.textColor = UIColor.lightGrayColor()
-        sectionHeaderLabel.backgroundColor = UIColor.clearColor()
+        sectionHeaderLabel.font = UIFont.systemFont(ofSize: 15.0)
+        sectionHeaderLabel.textColor = UIColor.lightGray
+        sectionHeaderLabel.backgroundColor = UIColor.clear
         
         return sectionHeaderLabel
     }
     
-    static func customizeTextField(textField: UITextField, iconName: String) {
+    static func customizeTextField(_ textField: UITextField, iconName: String) {
         let borderColor = UIColor(red: 221/255.0, green: 221/255.0, blue: 221/255.0, alpha: 1.0)
         
         // make the textField has only bottom border
         let borderWidth: CGFloat = 1
-        let textFieldBorder = UIView(frame: CGRectMake(0, textField.frame.size.height - borderWidth, textField.frame.size.width, borderWidth))
+        let textFieldBorder = UIView(frame: CGRect(x: 0, y: textField.frame.size.height - borderWidth, width: textField.frame.size.width, height: borderWidth))
         textFieldBorder.backgroundColor = borderColor
         textField.addSubview(textFieldBorder)
         // add icon padding inside textField
         let icon = UIImageView(image: UIImage(named: iconName))
         icon.frame = CGRect(x: 0, y: 0, width: icon.image!.size.width + 15.0, height: icon.image!.size.height)
-        icon.contentMode = .Center
+        icon.contentMode = .center
         
         // add left side icon inside textField
-        textField.leftViewMode = .Always
+        textField.leftViewMode = .always
         textField.leftView = icon
-        textField.clearButtonMode = .WhileEditing
+        textField.clearButtonMode = .whileEditing
     }
     
-    static func customizeAvatarImage(avatarImage: UIImageView) {
-        avatarImage.backgroundColor = UIColor.whiteColor()
+    static func customizeAvatarImage(_ avatarImage: UIImageView) {
+        avatarImage.backgroundColor = UIColor.white
         avatarImage.layer.borderWidth = 2.0
-        avatarImage.layer.borderColor = UIColor.whiteColor().CGColor
+        avatarImage.layer.borderColor = UIColor.white.cgColor
         avatarImage.layer.masksToBounds = true
         avatarImage.layer.cornerRadius = avatarImage.frame.size.width / 2
     }
     
-    static func customizeNavigationBar(viewController: UIViewController, title: String) {
-        viewController.navigationController?.navigationBar.tintColor = UIColor.whiteColor()
+    static func customizeNavigationBar(_ viewController: UIViewController, title: String) {
+        viewController.navigationController?.navigationBar.tintColor = UIColor.white
         viewController.navigationController?.navigationBar.topItem!.title = ""
         viewController.title = title
     }
     
-    static func customizeTopTabButton(button: UIButton) {
+    static func customizeTopTabButton(_ button: UIButton) {
         let borderColor = ColorBackgroundGray
         let buttonBorder = CALayer()
         
-        buttonBorder.borderColor = borderColor.CGColor
+        buttonBorder.borderColor = borderColor.cgColor
         buttonBorder.frame = CGRect(x: 0, y: button.frame.size.height - 1, width: button.frame.size.width, height: button.frame.size.height)
         buttonBorder.borderWidth = 1
         button.layer.addSublayer(buttonBorder)
         button.layer.masksToBounds = true
     }
     
-    static func customizeTextView(textView: UITextView, placeholder p: String?) {
+    static func customizeTextView(_ textView: UITextView, placeholder p: String?) {
         let borderColor = UIColor(red: 221/255.0, green: 221/255.0, blue: 221/255.0, alpha: 1.0)
         let textViewBorder = CALayer()
         
-        textViewBorder.borderColor = borderColor.CGColor
+        textViewBorder.borderColor = borderColor.cgColor
         textViewBorder.frame = CGRect(x: 0, y: textView.frame.size.height - 1, width: textView.frame.size.width, height: textView.frame.size.height)
         textViewBorder.borderWidth = 1
         
@@ -113,61 +113,61 @@ let ColorNearBlack = UIColor(red: 33/255.0, green: 34/255.0, blue: 36/255.0, alp
         textView.placeholder = p
     }
     
-    static func addRightViewToTextField(textField: UITextField, withText text: String) {
-        let rightView = UILabel(frame: CGRectMake(0, 0, 40, 21))
-        rightView.contentMode = .Center
+    static func addRightViewToTextField(_ textField: UITextField, withText text: String) {
+        let rightView = UILabel(frame: CGRect(x: 0, y: 0, width: 40, height: 21))
+        rightView.contentMode = .center
         rightView.text = text
-        textField.rightViewMode = .Always
+        textField.rightViewMode = .always
         textField.rightView = rightView
     }
     
-    static func showAlertViewWithInput(title: String, delegate d: AnyObject) {
+    static func showAlertViewWithInput(_ title: String, delegate d: AnyObject) {
         let searchAlertView = UIAlertView(title: "", message: title, delegate: (d as? UIAlertViewDelegate), cancelButtonTitle: "取消", otherButtonTitles: "确定")
-        searchAlertView.alertViewStyle = .PlainTextInput
-        searchAlertView.textFieldAtIndex(0)?.placeholder = title
-        searchAlertView.textFieldAtIndex(0)?.delegate = d as? UITextFieldDelegate
+        searchAlertView.alertViewStyle = .plainTextInput
+        searchAlertView.textField(at: 0)?.placeholder = title
+        searchAlertView.textField(at: 0)?.delegate = d as? UITextFieldDelegate
         searchAlertView.show()
     }
     
-    static func showAlertView(title: String, delegate d: AnyObject) {
+    static func showAlertView(_ title: String, delegate d: AnyObject) {
         let alertView = UIAlertView(title: "", message: title, delegate: (d as? UIAlertViewDelegate), cancelButtonTitle: "取消", otherButtonTitles: "确定")
-        alertView.alertViewStyle = .Default
+        alertView.alertViewStyle = .default
         alertView.show()
     }
     
-    static func setupViewBorder(view: AnyObject, borderWidth bWidth: CGFloat, borderColor bColor: UIColor, hasTopBorder: Bool, hasLeftBorder: Bool, hasBottomBorder: Bool, hasRightBorder: Bool) {
+    static func setupViewBorder(_ view: AnyObject, borderWidth bWidth: CGFloat, borderColor bColor: UIColor, hasTopBorder: Bool, hasLeftBorder: Bool, hasBottomBorder: Bool, hasRightBorder: Bool) {
         let viewToAddBorder = view as! UIView
         if hasTopBorder {
-            let topBorder = UIView(frame: CGRectMake(0, 0, viewToAddBorder.frame.size.width, bWidth))
+            let topBorder = UIView(frame: CGRect(x: 0, y: 0, width: viewToAddBorder.frame.size.width, height: bWidth))
             topBorder.backgroundColor = bColor
             viewToAddBorder.addSubview(topBorder)
-            viewToAddBorder.bringSubviewToFront(topBorder)
+            viewToAddBorder.bringSubview(toFront: topBorder)
         }
         if hasLeftBorder {
-            let leftBorder = UIView(frame: CGRectMake(0, 0, bWidth, viewToAddBorder.frame.size.height))
+            let leftBorder = UIView(frame: CGRect(x: 0, y: 0, width: bWidth, height: viewToAddBorder.frame.size.height))
             leftBorder.backgroundColor = bColor
             viewToAddBorder.addSubview(leftBorder)
-            viewToAddBorder.bringSubviewToFront(leftBorder)
+            viewToAddBorder.bringSubview(toFront: leftBorder)
         }
         if hasBottomBorder {
-            let bottomBorder = UIView(frame: CGRectMake(0, viewToAddBorder.frame.size.height - bWidth, viewToAddBorder.frame.size.width, bWidth))
+            let bottomBorder = UIView(frame: CGRect(x: 0, y: viewToAddBorder.frame.size.height - bWidth, width: viewToAddBorder.frame.size.width, height: bWidth))
             bottomBorder.backgroundColor = bColor
             viewToAddBorder.addSubview(bottomBorder)
-            viewToAddBorder.bringSubviewToFront(bottomBorder)
+            viewToAddBorder.bringSubview(toFront: bottomBorder)
         }
         if hasRightBorder {
-            let rightBorder = UIView(frame: CGRectMake(viewToAddBorder.frame.size.width - bWidth, 0, bWidth, viewToAddBorder.frame.size.height))
+            let rightBorder = UIView(frame: CGRect(x: viewToAddBorder.frame.size.width - bWidth, y: 0, width: bWidth, height: viewToAddBorder.frame.size.height))
             rightBorder.backgroundColor = bColor
             viewToAddBorder.addSubview(rightBorder)
-            viewToAddBorder.bringSubviewToFront(rightBorder)
+            viewToAddBorder.bringSubview(toFront: rightBorder)
         }
     }
     
-    static func dropShadowForView(view: UIView) {
-        view.layer.shadowColor = UIColor.blackColor().CGColor
+    static func dropShadowForView(_ view: UIView) {
+        view.layer.shadowColor = UIColor.black.cgColor
         view.layer.shadowOpacity = 0.5
         view.layer.shadowRadius = 0.6
-        view.layer.shadowOffset = CGSizeMake(1.0, 1.0)
+        view.layer.shadowOffset = CGSize(width: 1.0, height: 1.0)
         view.backgroundColor = ColorBackgroundGray
     }
     

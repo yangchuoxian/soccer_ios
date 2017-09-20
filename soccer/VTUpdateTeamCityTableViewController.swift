@@ -18,15 +18,15 @@ class VTUpdateTeamCityTableViewController: UITableViewController {
         super.viewDidLoad()
         
         // This will remove extra serparators from tableView
-        self.tableView.tableFooterView = UIView(frame: CGRectZero)
+        self.tableView.tableFooterView = UIView(frame: CGRect.zero)
         
         Appearance.customizeNavigationBar(self, title: "选择城市")
         
         let dbManager:DBManager = DBManager(databaseFilename: "soccer_ios.sqlite")
-        let cityRecordsForSelectedProvince:NSArray = dbManager.loadDataFromDB(
-            "select name from cities where province=?",
+        let cityRecordsForSelectedProvince:NSArray = dbManager.loadData(
+            fromDB: "select name from cities where province=?",
             parameters: [self.selectedProvinceName!]
-        )
+        ) as NSArray
         for anyObject in cityRecordsForSelectedProvince {
             let cityRecord = anyObject as? NSArray
             self.cityNames.append(cityRecord![0] as! String)
@@ -42,15 +42,15 @@ class VTUpdateTeamCityTableViewController: UITableViewController {
         self.selectedCityName = nil
     }
     
-    override func tableView(tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+    override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         return TableSectionHeaderHeight
     }
     
-    override func tableView(tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+    override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
         return 0
     }
     
-    override func tableView(tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+    override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let headerView = UIView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: TableSectionHeaderHeight))
         
         if section == 0 {
@@ -62,11 +62,11 @@ class VTUpdateTeamCityTableViewController: UITableViewController {
         return headerView
     }
     
-    override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+    override func numberOfSections(in tableView: UITableView) -> Int {
         return 2
     }
     
-    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if section == 0 {
             return 1
         } else if section == 1 {
@@ -75,44 +75,44 @@ class VTUpdateTeamCityTableViewController: UITableViewController {
         return 0
     }
     
-    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         var tableCellIdentifier:String?
-        if indexPath.section == 0 {
+        if (indexPath as NSIndexPath).section == 0 {
             tableCellIdentifier = "selectedProvinceCell"
         } else {
             tableCellIdentifier = "cityNameCell"
         }
         
-        var cell = self.tableView.dequeueReusableCellWithIdentifier(tableCellIdentifier!) as UITableViewCell?
+        var cell = self.tableView.dequeueReusableCell(withIdentifier: tableCellIdentifier!) as UITableViewCell?
         if cell == nil {
-            cell = UITableViewCell(style: .Default, reuseIdentifier: tableCellIdentifier)
+            cell = UITableViewCell(style: .default, reuseIdentifier: tableCellIdentifier)
         }
         
-        if indexPath.section == 0 { // section to display selected province name
+        if (indexPath as NSIndexPath).section == 0 { // section to display selected province name
             let label_selectedProvince:UILabel = cell?.contentView.viewWithTag(1) as! UILabel
             label_selectedProvince.text = self.selectedProvinceName
             
             // make this table cell NOT selectable
-            cell?.selectionStyle = .None
+            cell?.selectionStyle = .none
         } else {    // section to display cities in current province
             let label_cityName:UILabel = cell?.contentView.viewWithTag(1) as! UILabel
-            label_cityName.text = self.cityNames[indexPath.row]
+            label_cityName.text = self.cityNames[(indexPath as NSIndexPath).row]
         }
         
         return cell!
     }
     
-    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        if indexPath.section == 1 {
-            self.selectedCityName = self.cityNames[indexPath.row]
-            self.performSegueWithIdentifier("teamCitySelectedSegue", sender: self)
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        if (indexPath as NSIndexPath).section == 1 {
+            self.selectedCityName = self.cityNames[(indexPath as NSIndexPath).row]
+            self.performSegue(withIdentifier: "teamCitySelectedSegue", sender: self)
         }
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         // team city selected, go back to team location view controller
         if segue.identifier == "teamCitySelectedSegue" {
-            let destinationViewController:VTUpdateTeamLocationTableViewController = segue.destinationViewController as! VTUpdateTeamLocationTableViewController
+            let destinationViewController:VTUpdateTeamLocationTableViewController = segue.destination as! VTUpdateTeamLocationTableViewController
             destinationViewController.completeLocation = "" + self.selectedProvinceName! + "" + self.selectedCityName!
         }
     }

@@ -13,12 +13,12 @@ private let reuseIdentifier = "discoverOptionCell"
 class VTDiscoverCollectionViewController: UICollectionViewController, UICollectionViewDelegateFlowLayout, NSURLConnectionDataDelegate, NSURLConnectionDelegate, LocationServiceDelegate {
     
     enum SearchingType {
-        case RankingOfTeams
-        case RankingOfUsers
-        case Teams
-        case Users
-        case Matches
-        case Grounds
+        case rankingOfTeams
+        case rankingOfUsers
+        case teams
+        case users
+        case matches
+        case grounds
     }
     
     var HUD: MBProgressHUD?
@@ -43,7 +43,7 @@ class VTDiscoverCollectionViewController: UICollectionViewController, UICollecti
          self.clearsSelectionOnViewWillAppear = true
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         Appearance.customizeNavigationBar(self, title: "发现")
     }
 
@@ -76,11 +76,11 @@ class VTDiscoverCollectionViewController: UICollectionViewController, UICollecti
     
     // MARK: UICollectionViewDataSource
 
-    override func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
+    override func numberOfSections(in collectionView: UICollectionView) -> Int {
         return 5
     }
 
-    override func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+    override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         if section == 0 {
             return 2
         } else {
@@ -88,72 +88,72 @@ class VTDiscoverCollectionViewController: UICollectionViewController, UICollecti
         }
     }
     
-    func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAtIndex section: Int) -> CGFloat {
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
         // set up the spacing/margin between collection cells
         return 0
     }
     
-    func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAtIndex section: Int) -> UIEdgeInsets {
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
         // set up insets/paddings inside the collection view cells
-        return UIEdgeInsetsZero
+        return UIEdgeInsets.zero
     }
     
-    func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: NSIndexPath) -> CGSize {
-        if indexPath.section == 0 {
-            return CGSizeMake(ScreenSize.width / 2, DiscoverOptionCellHeight)
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        if (indexPath as NSIndexPath).section == 0 {
+            return CGSize(width: ScreenSize.width / 2, height: DiscoverOptionCellHeight)
         } else {
-            return CGSizeMake(ScreenSize.width, DiscoverOptionCellHeight)
+            return CGSize(width: ScreenSize.width, height: DiscoverOptionCellHeight)
         }
     }
     
-    override func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCellWithReuseIdentifier(reuseIdentifier, forIndexPath: indexPath)
+    override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath)
         cell.backgroundColor = ColorBiege
         
         let icon = cell.contentView.viewWithTag(1) as? UIImageView
         let label = cell.contentView.viewWithTag(2) as? UILabel
-        if indexPath.section == 0 && indexPath.item == 0 {
+        if (indexPath as NSIndexPath).section == 0 && (indexPath as NSIndexPath).item == 0 {
             icon?.image = UIImage(named: "team_ranking")
             label?.text = "球队排行榜"
             cell.contentView.frame.size.width = ScreenSize.width / 2
             cell.contentView.frame.size.height = DiscoverOptionCellHeight
 
-            Appearance.setupViewBorder(cell.contentView, borderWidth: 1, borderColor: UIColor.whiteColor(), hasTopBorder: true, hasLeftBorder: true, hasBottomBorder: true, hasRightBorder: true)
-        } else if indexPath.section == 0 && indexPath.item == 1 {
+            Appearance.setupViewBorder(cell.contentView, borderWidth: 1, borderColor: UIColor.white, hasTopBorder: true, hasLeftBorder: true, hasBottomBorder: true, hasRightBorder: true)
+        } else if (indexPath as NSIndexPath).section == 0 && (indexPath as NSIndexPath).item == 1 {
             icon?.image = UIImage(named: "player_ranking")
             label?.text = "球员积分榜"
             cell.contentView.frame.size.width = ScreenSize.width / 2
             cell.contentView.frame.size.height = DiscoverOptionCellHeight
 
-            Appearance.setupViewBorder(cell.contentView, borderWidth: 1, borderColor: UIColor.whiteColor(), hasTopBorder: true, hasLeftBorder: true, hasBottomBorder: true, hasRightBorder: true)
-        } else if indexPath.section == 1 && indexPath.item == 0 {
+            Appearance.setupViewBorder(cell.contentView, borderWidth: 1, borderColor: UIColor.white, hasTopBorder: true, hasLeftBorder: true, hasBottomBorder: true, hasRightBorder: true)
+        } else if (indexPath as NSIndexPath).section == 1 && (indexPath as NSIndexPath).item == 0 {
             cell.contentView.frame.size.width = ScreenSize.width
             cell.contentView.frame.size.height = DiscoverOptionCellHeight
 
             icon?.image = UIImage(named: "discover_team")
             label?.text = "加入球队"
-            Appearance.setupViewBorder(cell.contentView, borderWidth: 1, borderColor: UIColor.whiteColor(), hasTopBorder: true, hasLeftBorder: true, hasBottomBorder: true, hasRightBorder: true)
-        } else if indexPath.section == 2 && indexPath.item == 0 {
+            Appearance.setupViewBorder(cell.contentView, borderWidth: 1, borderColor: UIColor.white, hasTopBorder: true, hasLeftBorder: true, hasBottomBorder: true, hasRightBorder: true)
+        } else if (indexPath as NSIndexPath).section == 2 && (indexPath as NSIndexPath).item == 0 {
             cell.contentView.frame.size.width = ScreenSize.width
             cell.contentView.frame.size.height = DiscoverOptionCellHeight
 
             icon?.image = UIImage(named: "discover_player")
             label?.text = "发现球员"
-            Appearance.setupViewBorder(cell.contentView, borderWidth: 1, borderColor: UIColor.whiteColor(), hasTopBorder: true, hasLeftBorder: true, hasBottomBorder: true, hasRightBorder: true)
-        } else if indexPath.section == 3 && indexPath.item == 0 {
+            Appearance.setupViewBorder(cell.contentView, borderWidth: 1, borderColor: UIColor.white, hasTopBorder: true, hasLeftBorder: true, hasBottomBorder: true, hasRightBorder: true)
+        } else if (indexPath as NSIndexPath).section == 3 && (indexPath as NSIndexPath).item == 0 {
             cell.contentView.frame.size.width = ScreenSize.width
             cell.contentView.frame.size.height = DiscoverOptionCellHeight
 
             icon?.image = UIImage(named: "discover_match")
             label?.text = "附近比赛"
-            Appearance.setupViewBorder(cell.contentView, borderWidth: 1, borderColor: UIColor.whiteColor(), hasTopBorder: true, hasLeftBorder: true, hasBottomBorder: true, hasRightBorder: true)
-        } else if indexPath.section == 4 && indexPath.item == 0 {
+            Appearance.setupViewBorder(cell.contentView, borderWidth: 1, borderColor: UIColor.white, hasTopBorder: true, hasLeftBorder: true, hasBottomBorder: true, hasRightBorder: true)
+        } else if (indexPath as NSIndexPath).section == 4 && (indexPath as NSIndexPath).item == 0 {
             cell.contentView.frame.size.width = ScreenSize.width
             cell.contentView.frame.size.height = DiscoverOptionCellHeight
             
             icon?.image = UIImage(named: "discover_stadium")
             label?.text = "附近球场"
-            Appearance.setupViewBorder(cell.contentView, borderWidth: 1, borderColor: UIColor.whiteColor(), hasTopBorder: true, hasLeftBorder: true, hasBottomBorder: true, hasRightBorder: true)
+            Appearance.setupViewBorder(cell.contentView, borderWidth: 1, borderColor: UIColor.white, hasTopBorder: true, hasLeftBorder: true, hasBottomBorder: true, hasRightBorder: true)
         }
         
         return cell
@@ -161,25 +161,25 @@ class VTDiscoverCollectionViewController: UICollectionViewController, UICollecti
 
     // MARK: UICollectionViewDelegate
     
-    override func collectionView(collectionView: UICollectionView, shouldHighlightItemAtIndexPath indexPath: NSIndexPath) -> Bool {
+    override func collectionView(_ collectionView: UICollectionView, shouldHighlightItemAt indexPath: IndexPath) -> Bool {
         return true
     }
 
-    override func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
-        if indexPath.section == 0 {
-            if indexPath.item == 0 {    // get team points ranking
-                self.currentlySearching = .RankingOfTeams
-            } else if indexPath.item == 1 { // get user points ranking
-                self.currentlySearching = .RankingOfUsers
+    override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        if (indexPath as NSIndexPath).section == 0 {
+            if (indexPath as NSIndexPath).item == 0 {    // get team points ranking
+                self.currentlySearching = .rankingOfTeams
+            } else if (indexPath as NSIndexPath).item == 1 { // get user points ranking
+                self.currentlySearching = .rankingOfUsers
             }
-        } else if indexPath.section == 1 {
-            self.currentlySearching = .Teams
-        } else if indexPath.section == 2 {
-            self.currentlySearching = .Users
-        } else if indexPath.section == 3 {
-            self.currentlySearching = .Matches
-        } else if indexPath.section == 4 {
-            self.currentlySearching = .Grounds
+        } else if (indexPath as NSIndexPath).section == 1 {
+            self.currentlySearching = .teams
+        } else if (indexPath as NSIndexPath).section == 2 {
+            self.currentlySearching = .users
+        } else if (indexPath as NSIndexPath).section == 3 {
+            self.currentlySearching = .matches
+        } else if (indexPath as NSIndexPath).section == 4 {
+            self.currentlySearching = .grounds
         }
 
         if self.currentUserCoordinate == nil {
@@ -208,7 +208,7 @@ class VTDiscoverCollectionViewController: UICollectionViewController, UICollecti
     }
     
     // Finished getting user current geo coordinates, now should submit the request to server to find related models
-    func didGetUserCoordinates(coordinate: CLLocationCoordinate2D) {
+    func didGetUserCoordinates(_ coordinate: CLLocationCoordinate2D) {
         self.currentUserCoordinate = coordinate
         self.startHttpRequestToQueryCorrespondingModels()
     }
@@ -226,22 +226,22 @@ class VTDiscoverCollectionViewController: UICollectionViewController, UICollecti
         var url = ""
         let generalQueryParams = "?latitude=\(self.currentUserCoordinate!.latitude)&longitude=\(self.currentUserCoordinate!.longitude)&page=1"
         // submit request to server with current user location coordinate to search for nearby whatevers
-        if self.currentlySearching == .RankingOfTeams {
+        if self.currentlySearching == .rankingOfTeams {
             self.HUD?.labelText = "获取球队排名中..."
             url = "\(URLGetNearbyTeamsForUser)\(generalQueryParams)&sortedByPoints=1"
-        } else if self.currentlySearching == .RankingOfUsers {
+        } else if self.currentlySearching == .rankingOfUsers {
             self.HUD?.labelText = "获取球员积分榜中..."
             url = "\(URLGetNearbyUsersForTeam)\(generalQueryParams)&sortedByPoints=1"
-        } else if self.currentlySearching == .Teams {
+        } else if self.currentlySearching == .teams {
             self.HUD?.labelText = "搜索附近球队中..."
             url = "\(URLGetNearbyTeamsForUser)\(generalQueryParams)"
-        } else if self.currentlySearching == .Users {
+        } else if self.currentlySearching == .users {
             self.HUD?.labelText = "搜索附近球员中..."
             url = "\(URLGetNearbyUsersForTeam)\(generalQueryParams)"
-        } else if self.currentlySearching == .Matches {
+        } else if self.currentlySearching == .matches {
             self.HUD?.labelText = "搜索附近比赛中..."
             url = "\(URLGetRecentMatchesNearAround)\(generalQueryParams)"
-        } else if self.currentlySearching == .Grounds {
+        } else if self.currentlySearching == .grounds {
             self.HUD?.labelText = "搜索附近场馆中..."
             url = "\(URLGetNearbyGrounds)\(generalQueryParams)"
         }
@@ -252,7 +252,7 @@ class VTDiscoverCollectionViewController: UICollectionViewController, UICollecti
         }
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络超时")
         self.HUD?.hide(true)
         self.HUD = nil
@@ -260,15 +260,15 @@ class VTDiscoverCollectionViewController: UICollectionViewController, UICollecti
         self.responseData = NSMutableData()
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.HUD?.hide(true)
         self.HUD = nil
         
-        let responseDictionary = (try? NSJSONSerialization.JSONObjectWithData(self.responseData!, options: .MutableLeaves)) as? [String: AnyObject]
+        let responseDictionary = (try? JSONSerialization.jsonObject(with: self.responseData! as Data, options: .mutableLeaves)) as? [String: AnyObject]
         self.responseData = nil
         self.responseData = NSMutableData()
 
@@ -276,23 +276,23 @@ class VTDiscoverCollectionViewController: UICollectionViewController, UICollecti
             Toolbox.showCustomAlertViewWithImage("unhappy", title: "查询失败")
             return
         }
-        let total = responseDictionary!["total"]?.integerValue
+        let total = responseDictionary!["total"]?.intValue
         let models = responseDictionary!["models"] as? [[String: AnyObject]]
         if total == 0 || models == nil {
             Toolbox.showCustomAlertViewWithImage("unhappy", title: "没有找到相关结果")
             return
         }
-        if self.currentlySearching == .Teams || self.currentlySearching == .RankingOfTeams {
+        if self.currentlySearching == .teams || self.currentlySearching == .rankingOfTeams {
             self.totalNearbyTeams = total
             self.nearbyTeams?.removeAll()
             for teamModel in models! {
-                let teamObject = Team(data: teamModel)
+                let teamObject = Team(data: teamModel as [NSObject : AnyObject])
                 self.nearbyTeams?.append(teamObject)
             }
-            let currentUserOwnedTeam = responseDictionary!["currentUserOwnedTeam"] as? [NSObject: AnyObject]
+            let currentUserOwnedTeam = responseDictionary!["currentUserOwnedTeam"] as? [AnyHashable: Any]
             if currentUserOwnedTeam != nil {
                 // save current user owned team in database
-                let userOwnedTeamObject = Team(data: currentUserOwnedTeam!)
+                let userOwnedTeamObject = Team(data: currentUserOwnedTeam! as [NSObject : AnyObject])
                 userOwnedTeamObject.saveOrUpdateTeamInDatabase()
             } else {
                 Singleton_UserOwnedTeam.sharedInstance.resetUserOwnedTeamInfo()
@@ -305,23 +305,23 @@ class VTDiscoverCollectionViewController: UICollectionViewController, UICollecti
             destinationViewController.userCoordinates = self.currentUserCoordinate!
             destinationViewController.totalNearbyTeams = self.totalNearbyTeams!
             destinationViewController.teamsList = self.nearbyTeams!
-            if self.currentlySearching == .Teams {
-                destinationViewController.sortedType = .SortByDistance
-            } else if self.currentlySearching == .RankingOfTeams {
-                destinationViewController.sortedType = .SortByPoint
+            if self.currentlySearching == .teams {
+                destinationViewController.sortedType = .sortByDistance
+            } else if self.currentlySearching == .rankingOfTeams {
+                destinationViewController.sortedType = .sortByPoint
             }
             
-        } else if self.currentlySearching == .Users || self.currentlySearching == .RankingOfUsers {
+        } else if self.currentlySearching == .users || self.currentlySearching == .rankingOfUsers {
             self.totalNearbyUsers = total
             self.nearbyUsers?.removeAll()
             for userModel in models! {
-                let userObject = User(data: userModel)
+                let userObject = User(data: userModel as [NSObject : AnyObject])
                 self.nearbyUsers?.append(userObject)
             }
-            let currentUserOwnedTeam = responseDictionary!["currentUserOwnedTeam"] as? [NSObject: AnyObject]
+            let currentUserOwnedTeam = responseDictionary!["currentUserOwnedTeam"] as? [AnyHashable: Any]
             if currentUserOwnedTeam != nil {
                 // save current user owned team in database
-                let userOwnedTeamObject = Team(data: currentUserOwnedTeam!)
+                let userOwnedTeamObject = Team(data: currentUserOwnedTeam! as [NSObject : AnyObject])
                 userOwnedTeamObject.saveOrUpdateTeamInDatabase()
             } else {
                 Singleton_UserOwnedTeam.sharedInstance.resetUserOwnedTeamInfo()
@@ -333,12 +333,12 @@ class VTDiscoverCollectionViewController: UICollectionViewController, UICollecti
             destinationViewController.totalNearbyUsers = self.totalNearbyUsers!
             destinationViewController.usersList = self.nearbyUsers!
             destinationViewController.currentUserCoordinate = self.currentUserCoordinate!
-            if self.currentlySearching == .Users {
-                destinationViewController.sortedType = .SortByDistance
-            } else if self.currentlySearching == .RankingOfUsers {
-                destinationViewController.sortedType = .SortByPoint
+            if self.currentlySearching == .users {
+                destinationViewController.sortedType = .sortByDistance
+            } else if self.currentlySearching == .rankingOfUsers {
+                destinationViewController.sortedType = .sortByPoint
             }
-        } else if self.currentlySearching == .Matches {
+        } else if self.currentlySearching == .matches {
             self.totalNearbyMatches = total
             self.nearbyMatches?.removeAll()
             for matchModel in models! {
@@ -352,7 +352,7 @@ class VTDiscoverCollectionViewController: UICollectionViewController, UICollecti
             destinationViewController.totalNearbyMatches = self.totalNearbyMatches!
             destinationViewController.matchesList = self.nearbyMatches!
             destinationViewController.userCoordinates = self.currentUserCoordinate!
-        } else if self.currentlySearching == .Grounds {
+        } else if self.currentlySearching == .grounds {
             self.totalNearbyGrounds = total
             self.nearbyGrounds?.removeAll()
             for groundModel in models! {
@@ -371,16 +371,16 @@ class VTDiscoverCollectionViewController: UICollectionViewController, UICollecti
     }
     
     // setup collection view cell highligh and unhighlight effect when tapped
-    override func collectionView(collectionView: UICollectionView, didHighlightItemAtIndexPath indexPath: NSIndexPath) {
-        let cell = self.collectionView!.cellForItemAtIndexPath(indexPath)
-        cell?.contentView.backgroundColor = UIColor.whiteColor()
+    override func collectionView(_ collectionView: UICollectionView, didHighlightItemAt indexPath: IndexPath) {
+        let cell = self.collectionView!.cellForItem(at: indexPath)
+        cell?.contentView.backgroundColor = UIColor.white
     }
     
-    override func collectionView(collectionView: UICollectionView, didUnhighlightItemAtIndexPath indexPath: NSIndexPath) {
-        let cell = self.collectionView!.cellForItemAtIndexPath(indexPath)
+    override func collectionView(_ collectionView: UICollectionView, didUnhighlightItemAt indexPath: IndexPath) {
+        let cell = self.collectionView!.cellForItem(at: indexPath)
         
-        UIView.animateWithDuration(0.3, animations: {
-            cell?.contentView.backgroundColor = UIColor.clearColor()
+        UIView.animate(withDuration: 0.3, animations: {
+            cell?.contentView.backgroundColor = UIColor.clear
         })
     }
     

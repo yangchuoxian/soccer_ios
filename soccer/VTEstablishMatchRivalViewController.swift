@@ -23,18 +23,18 @@ class VTEstablishMatchRivalViewController: UIViewController, UIAlertViewDelegate
         self.view_containerOfNextStepButton.alpha = 0
         // remove navigation bar back button text, just show the chevron_left icon
         self.navigationController!.navigationBar.topItem!.title = ""
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "showNextStepButton:", name: "selectedRival", object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTEstablishMatchRivalViewController.showNextStepButton(_:)), name: NSNotification.Name(rawValue: "selectedRival"), object: nil)
         // add right button in navigation bar programmatically
-        self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Stop, target: self, action: "cancelNewActivityPublication")
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .stop, target: self, action: #selector(VTEstablishMatchRivalViewController.cancelNewActivityPublication))
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Appearance.customizeNavigationBar(self, title: "选择比赛对手")
     }
     
     func cancelNewActivityPublication() {
-        self.performSegueWithIdentifier("unwindToTeamCalendarSegue", sender: self)
+        self.performSegue(withIdentifier: "unwindToTeamCalendarSegue", sender: self)
     }
 
     override func didReceiveMemoryWarning() {
@@ -42,24 +42,24 @@ class VTEstablishMatchRivalViewController: UIViewController, UIAlertViewDelegate
         // Dispose of any resources that can be recreated.
     }
     
-    func showNextStepButton(notification: NSNotification) {
+    func showNextStepButton(_ notification: Notification) {
         self.selectedRivalTeamId = notification.object as? String
         
         self.view_containerOfNextStepButton.alpha = 1.0
         self.containerViewBottomLayoutConstraint.constant = 61
     }
 
-    @IBAction func searchTeamsByName(sender: AnyObject) {
+    @IBAction func searchTeamsByName(_ sender: AnyObject) {
         // hide the next step button
         self.view_containerOfNextStepButton.alpha = 0
         self.containerViewBottomLayoutConstraint.constant = 0
         
         if #available(iOS 8.0, *) {
-            let alertController = UIAlertController(title: "", message: "请输入要搜索的球队名称", preferredStyle: .Alert)
-            let actionCancel = UIAlertAction(title: "取消", style: .Cancel) {
+            let alertController = UIAlertController(title: "", message: "请输入要搜索的球队名称", preferredStyle: .alert)
+            let actionCancel = UIAlertAction(title: "取消", style: .cancel) {
                 ACTION in return
             }
-            let actionInput = UIAlertAction(title: "确定", style: .Default) {
+            let actionInput = UIAlertAction(title: "确定", style: .default) {
                 ACTION in
                 // retrieve the user input in textField and start searching
                 let textField = alertController.textFields?.first as UITextField?
@@ -72,57 +72,57 @@ class VTEstablishMatchRivalViewController: UIViewController, UIAlertViewDelegate
                 if (searchKeyword!).characters.count == 0 {
                     return
                 }
-                NSNotificationCenter.defaultCenter().postNotificationName(
-                    "launchSearchRivals", object: searchKeyword
+                NotificationCenter.default.post(
+                    name: Notification.Name(rawValue: "launchSearchRivals"), object: searchKeyword
                 )
             }
             
             alertController.addAction(actionCancel)
             alertController.addAction(actionInput)
-            alertController.addTextFieldWithConfigurationHandler({
+            alertController.addTextField(configurationHandler: {
                 (textField: UITextField) in
                 textField.placeholder = "球队名称"
-                textField.keyboardType = .Default
+                textField.keyboardType = .default
             })
-            presentViewController(alertController, animated: true, completion: nil)
+            present(alertController, animated: true, completion: nil)
         } else {
             Appearance.showAlertViewWithInput("请输入球队名称", delegate: self)
         }
     }
     
-    func textFieldDidEndEditing(textField: UITextField) {
+    func textFieldDidEndEditing(_ textField: UITextField) {
         self.searchKeyword = textField.text!
     }
     
-    func alertView(alertView: UIAlertView, clickedButtonAtIndex buttonIndex: Int) {
-        alertView.dismissWithClickedButtonIndex(buttonIndex, animated: true)
+    func alertView(_ alertView: UIAlertView, clickedButtonAt buttonIndex: Int) {
+        alertView.dismiss(withClickedButtonIndex: buttonIndex, animated: true)
         if buttonIndex == 1 && self.searchKeyword.characters.count > 0 {
-            NSNotificationCenter.defaultCenter().postNotificationName("launchSearchRivals", object: searchKeyword)
+            NotificationCenter.default.post(name: Notification.Name(rawValue: "launchSearchRivals"), object: searchKeyword)
         }
     }
     
-    @IBAction func showNearbyTeams(sender: AnyObject) {
+    @IBAction func showNearbyTeams(_ sender: AnyObject) {
         // hide the next step button
         self.view_containerOfNextStepButton.alpha = 0
         self.containerViewBottomLayoutConstraint.constant = 0
-        NSNotificationCenter.defaultCenter().postNotificationName("getNearbyRivals", object: nil)
+        NotificationCenter.default.post(name: Notification.Name(rawValue: "getNearbyRivals"), object: nil)
     }
     
-    @IBAction func nextStep(sender: AnyObject) {
+    @IBAction func nextStep(_ sender: AnyObject) {
         if self.selectedRivalTeamId == nil {
             Toolbox.showCustomAlertViewWithImage("unhappy", title: "请选定对手球队")
             return
         }
         // retrieve activity info
-        var activityInfo = NSUserDefaults.standardUserDefaults().objectForKey("activityInfo") as! [String: AnyObject]
+        var activityInfo = UserDefaults.standard.object(forKey: "activityInfo") as! [String: AnyObject]
         // save selected rival team id in userDefaults
-        activityInfo["idOfTeamB"] = self.selectedRivalTeamId!
-        NSUserDefaults.standardUserDefaults().setObject(activityInfo, forKey: "activityInfo")
-        self.performSegueWithIdentifier("matchNoteSegue", sender: self)
+        activityInfo["idOfTeamB"] = self.selectedRivalTeamId! as AnyObject?
+        UserDefaults.standard.set(activityInfo, forKey: "activityInfo")
+        self.performSegue(withIdentifier: "matchNoteSegue", sender: self)
     }
     
     deinit {
         self.selectedRivalTeamId = nil
-        NSNotificationCenter.defaultCenter().removeObserver(self)
+        NotificationCenter.default.removeObserver(self)
     }
 }

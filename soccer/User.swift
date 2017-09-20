@@ -41,7 +41,7 @@ class User: NSObject {
     var numToReviewOnPersonality = ""
     var distanceToCurrentUser = ""
     
-    init(data: [NSObject: AnyObject]) {
+    init(data: [AnyHashable: Any]) {
         self.userId = Toolbox.getValidStringValue(data["id"])
         self.username = Toolbox.getValidStringValue(data["username"])
         self.email = Toolbox.getValidStringValue(data["email"])

@@ -18,8 +18,8 @@ class VTRegisterThroughEmailViewController: UIViewController, UIActionSheetDeleg
     @IBOutlet weak var image_avatar: UIImageView!
     
     enum httpRequest {
-        case UploadAvatar
-        case SubmitNewUser
+        case uploadAvatar
+        case submitNewUser
     }
     
     var picker: UIImagePickerController?
@@ -39,26 +39,26 @@ class VTRegisterThroughEmailViewController: UIViewController, UIActionSheetDeleg
         
         self.button_register.layer.cornerRadius = 2.0
         // add tap gesture event to image_avatar, when image_avatar is tapped, user will be provided with options to whether select image or shoot a photo as avatar to upload
-        let singleTap: UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: "avatarImageTapped")
+        let singleTap: UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(VTRegisterThroughEmailViewController.avatarImageTapped))
         singleTap.numberOfTapsRequired = 1
         
-        self.image_avatar.userInteractionEnabled = true
+        self.image_avatar.isUserInteractionEnabled = true
         self.image_avatar.addGestureRecognizer(singleTap)
         // assign tag value for different textField so that the system knows which textField is active/being edited
-        self.input_username.tag = TagValue.TextFieldUsername.rawValue
-        self.input_password.tag = TagValue.TextFieldPassword.rawValue
-        self.input_email.tag = TagValue.TextFieldEmail.rawValue
+        self.input_username.tag = TagValue.textFieldUsername.rawValue
+        self.input_password.tag = TagValue.textFieldPassword.rawValue
+        self.input_email.tag = TagValue.textFieldEmail.rawValue
         
         self.input_username.delegate = self
         self.input_password.delegate = self
         self.input_email.delegate = self
         
         // add tap gesture for scrollView to hide keyboard
-        let gestureRecognizer: UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: "hideKeyboard:")
+        let gestureRecognizer: UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(VTRegisterThroughEmailViewController.hideKeyboard(_:)))
         self.scrollView.addGestureRecognizer(gestureRecognizer)
-        self.input_username.addTarget(self, action: "validateUserInput", forControlEvents: .EditingChanged)
-        self.input_password.addTarget(self, action: "validateUserInput", forControlEvents: .EditingChanged)
-        self.input_email.addTarget(self, action: "validateUserInput", forControlEvents: .EditingChanged)
+        self.input_username.addTarget(self, action: #selector(VTRegisterThroughEmailViewController.validateUserInput), for: .editingChanged)
+        self.input_password.addTarget(self, action: #selector(VTRegisterThroughEmailViewController.validateUserInput), for: .editingChanged)
+        self.input_email.addTarget(self, action: #selector(VTRegisterThroughEmailViewController.validateUserInput), for: .editingChanged)
     }
     
     func validateUserInput() {
@@ -77,7 +77,7 @@ class VTRegisterThroughEmailViewController: UIViewController, UIActionSheetDeleg
         }
     }
     
-    func hideKeyboard(sender: AnyObject) {
+    func hideKeyboard(_ sender: AnyObject) {
         // hide keyboard
         self.input_username.resignFirstResponder()
         self.input_password.resignFirstResponder()
@@ -88,7 +88,7 @@ class VTRegisterThroughEmailViewController: UIViewController, UIActionSheetDeleg
         super.didReceiveMemoryWarning()
     }
     
-    func actionSheet(actionSheet: UIActionSheet, clickedButtonAtIndex buttonIndex: Int) {
+    func actionSheet(_ actionSheet: UIActionSheet, clickedButtonAt buttonIndex: Int) {
         if buttonIndex == 1 {   // choose image from gallery
             // release self.picker memory first
             if self.picker != nil {
@@ -99,9 +99,9 @@ class VTRegisterThroughEmailViewController: UIViewController, UIActionSheetDeleg
             self.picker = UIImagePickerController()
             self.picker?.delegate = self
             self.picker?.allowsEditing = true
-            self.picker?.sourceType = .PhotoLibrary
+            self.picker?.sourceType = .photoLibrary
             
-            self.presentViewController(self.picker!, animated: true, completion: nil)
+            self.present(self.picker!, animated: true, completion: nil)
         } else if buttonIndex == 2 {    // take a photo
             if self.picker != nil {
                 self.picker?.delegate = nil
@@ -111,9 +111,9 @@ class VTRegisterThroughEmailViewController: UIViewController, UIActionSheetDeleg
             self.picker = UIImagePickerController()
             self.picker?.delegate = self
             self.picker?.allowsEditing = true
-            self.picker?.sourceType = .Camera
+            self.picker?.sourceType = .camera
             
-            self.presentViewController(self.picker!, animated: true, completion: nil)
+            self.present(self.picker!, animated: true, completion: nil)
         }
     }
     
@@ -122,17 +122,17 @@ class VTRegisterThroughEmailViewController: UIViewController, UIActionSheetDeleg
         let takePhoto: String = "拍照"
         let cancelTitle: String = "取消"
         let actionSheet: UIActionSheet = UIActionSheet(title: nil, delegate: self, cancelButtonTitle: cancelTitle, destructiveButtonTitle: nil, otherButtonTitles: selectPhoto, takePhoto)
-        actionSheet.showInView(self.view)
+        actionSheet.show(in: self.view)
     }
     
-    func textFieldDidBeginEditing(textField: UITextField) {
+    func textFieldDidBeginEditing(_ textField: UITextField) {
         self.currentActiveTextFieldIndex = textField.tag
     }
     
     // called when the UIKeyboardDidShowNotification is sent
-    func keyboardWasShown(notification: NSNotification) {
-        let info: NSDictionary = notification.userInfo!
-        let keyboardSize: CGSize = info.objectForKey(UIKeyboardFrameBeginUserInfoKey)!.CGRectValue.size
+    func keyboardWasShown(_ notification: Notification) {
+        let info: NSDictionary = (notification as NSNotification).userInfo! as NSDictionary
+        let keyboardSize: CGSize = (info.object(forKey: UIKeyboardFrameBeginUserInfoKey)! as AnyObject).cgRectValue.size
         let contentInsets: UIEdgeInsets = UIEdgeInsetsMake(0, 0, keyboardSize.height, 0)
         self.scrollView.contentInset = contentInsets
         self.scrollView.scrollIndicatorInsets = contentInsets
@@ -141,32 +141,32 @@ class VTRegisterThroughEmailViewController: UIViewController, UIActionSheetDeleg
         let tempRect: CGRect = CGRect(x: self.view.frame.origin.x, y: self.view.frame.origin.y + (ToolbarHeight + NavigationbarHeight), width: self.view.frame.size.width, height: self.view.frame.size.height - keyboardSize.height - (ToolbarHeight + NavigationbarHeight))
         var activeField: UITextField?
         switch self.currentActiveTextFieldIndex! {
-        case TagValue.TextFieldUsername.rawValue:
+        case TagValue.textFieldUsername.rawValue:
             activeField = self.input_username
             break
-        case TagValue.TextFieldPassword.rawValue:
+        case TagValue.textFieldPassword.rawValue:
             activeField = self.input_password
             break
-        case TagValue.TextFieldEmail.rawValue:
+        case TagValue.textFieldEmail.rawValue:
             activeField = self.input_email
             break
         default:
             activeField = nil
             break
         }
-        if !CGRectContainsPoint(tempRect, activeField!.frame.origin) {
+        if !tempRect.contains(activeField!.frame.origin) {
             self.scrollView.scrollRectToVisible(activeField!.frame, animated: true)
         }
     }
     
     // called when the UIKeyboardWillHideNotification is sent
-    func keyboardWillBeHidden(notification: NSNotification) {
+    func keyboardWillBeHidden(_ notification: Notification) {
         let contentInsets: UIEdgeInsets = UIEdgeInsets(top: ToolbarHeight + NavigationbarHeight, left: 0, bottom: 0, right: 0)
         self.scrollView.contentInset = contentInsets
         self.scrollView.scrollIndicatorInsets = contentInsets
     }
     
-    func textFieldShouldReturn(textField: UITextField) -> Bool {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         if textField == self.input_username {
             self.input_username.resignFirstResponder()
             self.input_password.becomeFirstResponder()
@@ -176,9 +176,9 @@ class VTRegisterThroughEmailViewController: UIViewController, UIActionSheetDeleg
             self.input_email.becomeFirstResponder()
             return true
         } else if textField == self.input_email {
-            if self.button_register.enabled {
+            if self.button_register.isEnabled {
                 self.input_email.resignFirstResponder()
-                self.button_register.sendActionsForControlEvents(.TouchUpInside)
+                self.button_register.sendActions(for: .touchUpInside)
                 return true
             }
             return false
@@ -186,23 +186,23 @@ class VTRegisterThroughEmailViewController: UIViewController, UIActionSheetDeleg
         return false
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         self.navigationController?.setNavigationBarHidden(false, animated: animated)
         Appearance.customizeNavigationBar(self, title: "用户注册")
         // register for keyboard notifications
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "keyboardWasShown:", name: UIKeyboardWillShowNotification, object: nil)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "keyboardWillBeHidden:", name: UIKeyboardWillHideNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTRegisterThroughEmailViewController.keyboardWasShown(_:)), name: NSNotification.Name.UIKeyboardWillShow, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTRegisterThroughEmailViewController.keyboardWillBeHidden(_:)), name: NSNotification.Name.UIKeyboardWillHide, object: nil)
     }
     
-    override func viewWillDisappear(animated: Bool) {
+    override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        NSNotificationCenter.defaultCenter().removeObserver(self, name: UIKeyboardWillShowNotification, object: nil)
-        NSNotificationCenter.defaultCenter().removeObserver(self, name: UIKeyboardWillHideNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIKeyboardWillShow, object: nil)
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIKeyboardWillHide, object: nil)
     }
     
-    func imagePickerControllerDidCancel(picker: UIImagePickerController) {
-        picker.dismissViewControllerAnimated(true, completion: nil)
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        picker.dismiss(animated: true, completion: nil)
         
         if self.picker != nil {
             self.picker?.delegate = nil
@@ -210,10 +210,10 @@ class VTRegisterThroughEmailViewController: UIViewController, UIActionSheetDeleg
         self.picker = nil
     }
     
-    func imagePickerController(picker: UIImagePickerController, didFinishPickingImage image: UIImage!, editingInfo: [NSObject : AnyObject]!) {
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingImage image: UIImage!, editingInfo: [AnyHashable: Any]!) {
         self.image_avatar.image = image
         self.uploadAvatar(image)
-        picker.dismissViewControllerAnimated(true, completion: nil)
+        picker.dismiss(animated: true, completion: nil)
         
         if self.picker != nil {
             self.picker?.delegate = nil
@@ -221,14 +221,14 @@ class VTRegisterThroughEmailViewController: UIViewController, UIActionSheetDeleg
         self.picker = nil
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "serviceAgreementSegue" {
-            let destinationViewController = segue.destinationViewController as! VTPostViewController
+            let destinationViewController = segue.destination as! VTPostViewController
             destinationViewController.postType = .ServiceAgreement
         }
     }
     
-    func uploadAvatar(image: UIImage) {
+    func uploadAvatar(_ image: UIImage) {
         var connection: NSURLConnection?
         if Toolbox.isStringValueValid(self.userId) {    // self.userId defined, meaning user avatar is already uploaded, temporary user already generated in server database
             let postParamsDictionary = ["modelId": self.userId!]
@@ -239,7 +239,7 @@ class VTRegisterThroughEmailViewController: UIViewController, UIActionSheetDeleg
         if connection == nil {
             Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络连接失败")
         } else {
-            self.indexOfCurrentHttpRequest = .UploadAvatar
+            self.indexOfCurrentHttpRequest = .uploadAvatar
             self.HUD = MBProgressHUD(view: self.navigationController?.view)
             self.navigationController?.view.addSubview(self.HUD!)
             self.HUD?.show(true)
@@ -247,25 +247,25 @@ class VTRegisterThroughEmailViewController: UIViewController, UIActionSheetDeleg
         connection = nil
     }
 
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.HUD!.hide(true)
         self.HUD = nil
         
-        let responseStr = NSString(data: self.responseData!, encoding: NSUTF8StringEncoding)
-        if self.indexOfCurrentHttpRequest == .UploadAvatar {
+        let responseStr = NSString(data: self.responseData! as Data, encoding: String.Encoding.utf8.rawValue)
+        if self.indexOfCurrentHttpRequest == .uploadAvatar {
             // response for user avatar upload
             // retrieve user id from json data
-            let jsonArray = (try? NSJSONSerialization.JSONObjectWithData(self.responseData!, options: .MutableLeaves)) as? NSDictionary
-            self.userId = jsonArray!.objectForKey("modelId") as? String
+            let jsonArray = (try? JSONSerialization.jsonObject(with: self.responseData! as Data, options: .mutableLeaves)) as? NSDictionary
+            self.userId = jsonArray!.object(forKey: "modelId") as? String
             // save successfully uploaded user avatar to local app directory
             Toolbox.saveAvatarImageLocally(self.image_avatar.image!, modelId: self.userId!)
         } else {    // response for new user registration
             // if registration succeeded, response from server should be user info JSON data, so retrieve username from this JSON data to see if registration is successful
-            let userJSON = (try? NSJSONSerialization.JSONObjectWithData(self.responseData!, options: .MutableLeaves)) as? [NSObject: AnyObject]
+            let userJSON = (try? JSONSerialization.jsonObject(with: self.responseData! as Data, options: .mutableLeaves)) as? [AnyHashable: Any]
             
             let respondedUsername = userJSON?["username"] as? String
             if respondedUsername != nil {   // submit new user succeeded
@@ -279,7 +279,7 @@ class VTRegisterThroughEmailViewController: UIViewController, UIActionSheetDeleg
         self.responseData = NSMutableData()
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.HUD!.hide(true)
         self.HUD = nil
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "加载失败")
@@ -287,7 +287,7 @@ class VTRegisterThroughEmailViewController: UIViewController, UIActionSheetDeleg
         self.responseData = NSMutableData()
     }
     
-    @IBAction func submitNewUser(sender: AnyObject) {
+    @IBAction func submitNewUser(_ sender: AnyObject) {
         let username = Toolbox.trim(self.input_username.text!)
         let password = Toolbox.trim(self.input_password.text!)
         let email = Toolbox.trim(self.input_email.text!)
@@ -302,7 +302,7 @@ class VTRegisterThroughEmailViewController: UIViewController, UIActionSheetDeleg
         if connection == nil {
             Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络连接失败")
         } else {
-            self.indexOfCurrentHttpRequest = .SubmitNewUser
+            self.indexOfCurrentHttpRequest = .submitNewUser
             self.HUD = Toolbox.setupCustomProcessingViewWithTitle(title: nil)
         }
     }

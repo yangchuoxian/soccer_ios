@@ -28,11 +28,11 @@ class VTGroundInfoViewController: UIViewController, BMKMapViewDelegate, Location
         Appearance.dropShadowForView(self.button_zoomOut)
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(true)
         Appearance.customizeNavigationBar(self, title: "球场地址")
-        self.mapView = BMKMapView(frame: CGRectMake(0, 0, ScreenSize.width, ScreenSize.height))
-        self.mapView?.zoomLevel = BaiduMapZoomLevel.Default.rawValue
+        self.mapView = BMKMapView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: ScreenSize.height))
+        self.mapView?.zoomLevel = BaiduMapZoomLevel.default.rawValue
         let groundCoordinates = CLLocationCoordinate2D(latitude: Double(self.groundObject!.latitude)!, longitude: Double(self.groundObject!.longitude)!)
         self.mapView?.centerCoordinate = groundCoordinates
         
@@ -42,15 +42,15 @@ class VTGroundInfoViewController: UIViewController, BMKMapViewDelegate, Location
         self.mapView?.addAnnotation(groundAddressAnnotation)
         
         self.view.addSubview(self.mapView!)
-        self.view.bringSubviewToFront(self.button_locateUser)
-        self.view.bringSubviewToFront(self.button_zoomIn)
-        self.view.bringSubviewToFront(self.button_zoomOut)
+        self.view.bringSubview(toFront: self.button_locateUser)
+        self.view.bringSubview(toFront: self.button_zoomIn)
+        self.view.bringSubview(toFront: self.button_zoomOut)
         
         self.mapView?.viewWillAppear()
         self.mapView?.delegate = self
     }
     
-    override func viewWillDisappear(animated: Bool) {
+    override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(true)
         self.mapView?.viewWillDisappear()
         self.mapView?.delegate = nil
@@ -78,21 +78,21 @@ class VTGroundInfoViewController: UIViewController, BMKMapViewDelegate, Location
     
     - returns: the generated annotation view
     */
-    func mapView(mapView: BMKMapView!, viewForAnnotation annotation: BMKAnnotation!) -> BMKAnnotationView! {
-        if annotation.isKindOfClass(BMKPointAnnotation) {
+    func mapView(_ mapView: BMKMapView!, viewFor annotation: BMKAnnotation!) -> BMKAnnotationView! {
+        if annotation.isKind(of: BMKPointAnnotation.self) {
             let newAnnotationView = BMKPinAnnotationView(annotation: annotation, reuseIdentifier: "POIAnnotation")
-            newAnnotationView.animatesDrop = true
-            newAnnotationView.canShowCallout = true
+            newAnnotationView?.animatesDrop = true
+            newAnnotationView?.canShowCallout = true
             if annotation.subtitle?() == "当前位置" {
-                newAnnotationView.image = UIImage(named: "user_location")
-                newAnnotationView.animatesDrop = false
+                newAnnotationView?.image = UIImage(named: "user_location")
+                newAnnotationView?.animatesDrop = false
             }
             return newAnnotationView
         }
         return nil
     }
     
-    @IBAction func locateUser(sender: AnyObject) {
+    @IBAction func locateUser(_ sender: AnyObject) {
         if self.locationService == nil {
             self.locationService = LocationService()
             self.locationService?.delegate = self
@@ -105,7 +105,7 @@ class VTGroundInfoViewController: UIViewController, BMKMapViewDelegate, Location
         self.HUD = Toolbox.setupCustomProcessingViewWithTitle(title: "正在定位中...")
     }
     
-    func didGetUserCoordinates(coordinate: CLLocationCoordinate2D) {
+    func didGetUserCoordinates(_ coordinate: CLLocationCoordinate2D) {
         self.HUD?.hide(true)
         self.HUD = nil
         self.mapView?.centerCoordinate = coordinate
@@ -126,30 +126,30 @@ class VTGroundInfoViewController: UIViewController, BMKMapViewDelegate, Location
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "定位失败")
     }
     
-    @IBAction func zoomInMap(sender: AnyObject) {
+    @IBAction func zoomInMap(_ sender: AnyObject) {
         var currentZoomLevel = self.mapView!.zoomLevel
-        if currentZoomLevel < BaiduMapZoomLevel.Max.rawValue {
+        if currentZoomLevel < BaiduMapZoomLevel.max.rawValue {
             currentZoomLevel = currentZoomLevel + 1
             self.mapView?.zoomLevel = currentZoomLevel
         }
-        if self.button_zoomOut.enabled == false {
+        if self.button_zoomOut.isEnabled == false {
             Toolbox.toggleButton(self.button_zoomOut, enabled: true)
         }
-        if currentZoomLevel == BaiduMapZoomLevel.Max.rawValue {
+        if currentZoomLevel == BaiduMapZoomLevel.max.rawValue {
             Toolbox.toggleButton(self.button_zoomIn, enabled: false)
         }
     }
     
-    @IBAction func zoomOutMap(sender: AnyObject) {
+    @IBAction func zoomOutMap(_ sender: AnyObject) {
         var currentZoomLevel = self.mapView!.zoomLevel
-        if currentZoomLevel > BaiduMapZoomLevel.Min.rawValue {
+        if currentZoomLevel > BaiduMapZoomLevel.min.rawValue {
             currentZoomLevel = currentZoomLevel - 1
             self.mapView?.zoomLevel = currentZoomLevel - 1
         }
-        if self.button_zoomIn.enabled == false {
+        if self.button_zoomIn.isEnabled == false {
             Toolbox.toggleButton(self.button_zoomIn, enabled: true)
         }
-        if currentZoomLevel == BaiduMapZoomLevel.Min.rawValue {
+        if currentZoomLevel == BaiduMapZoomLevel.min.rawValue {
             Toolbox.toggleButton(self.button_zoomOut, enabled: false)
         }
     }

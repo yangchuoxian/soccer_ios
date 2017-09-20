@@ -30,29 +30,29 @@ class VTActivityNoteViewController: UIViewController, NSURLConnectionDelegate, N
         self.textView_activityNote.delegate = self
         
         // add right button in navigation bar to cancel new activity publication
-        self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Stop, target: self, action: "cancelPublishingNewActivity")
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .stop, target: self, action: #selector(VTActivityNoteViewController.cancelPublishingNewActivity))
     }
    
     func cancelPublishingNewActivity() {
         if self.isNewActivityMatchInitiatedFromDiscoverTab == true {
-            self.performSegueWithIdentifier("unwindToTeamBriefIntroSegue", sender: self)
+            self.performSegue(withIdentifier: "unwindToTeamBriefIntroSegue", sender: self)
         } else {
-            self.performSegueWithIdentifier("unwindToTeamCalendarSegue", sender: self)
+            self.performSegue(withIdentifier: "unwindToTeamCalendarSegue", sender: self)
         }
     }
     
-    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         // resign the keyboard when tapped somewhere else other than the text field or the keyboard itself
         self.textView_activityNote.resignFirstResponder()
     }
     
-    func textViewDidChange(textView: UITextView) {
+    func textViewDidChange(_ textView: UITextView) {
         // Get the placeholder label
-        let placeHolderLabel = textView.viewWithTag(TagValue.TextViewPlaceholder.rawValue)
-        if !textView.hasText() {
-            placeHolderLabel?.hidden = false
+        let placeHolderLabel = textView.viewWithTag(TagValue.textViewPlaceholder.rawValue)
+        if !textView.hasText {
+            placeHolderLabel?.isHidden = false
         } else {
-            placeHolderLabel?.hidden = true
+            placeHolderLabel?.isHidden = true
         }
         
         let enteredNoteLength = Toolbox.trim(self.textView_activityNote.text).characters.count
@@ -68,13 +68,13 @@ class VTActivityNoteViewController: UIViewController, NSURLConnectionDelegate, N
         // Dispose of any resources that can be recreated.
     }
     
-    @IBAction func publishNewActivity(sender: AnyObject) {
+    @IBAction func publishNewActivity(_ sender: AnyObject) {
         self.textView_activityNote.resignFirstResponder()
         // retrieve activity info from userDefaults
-        var activityInfo = NSUserDefaults.standardUserDefaults().objectForKey("activityInfo") as! [String: String]
+        var activityInfo = UserDefaults.standard.object(forKey: "activityInfo") as! [String: String]
         let activityNote = Toolbox.trim(self.textView_activityNote.text)
         activityInfo["note"] = activityNote
-        NSUserDefaults.standardUserDefaults().setObject(activityInfo, forKey: "activityInfo")
+        UserDefaults.standard.set(activityInfo, forKey: "activityInfo")
         
         // convert activityInfo dictionary to JSON string to post to server
         let activityInfoJSONString = Toolbox.convertDictionaryOrArrayToJSONString(activityInfo)
@@ -90,11 +90,11 @@ class VTActivityNoteViewController: UIViewController, NSURLConnectionDelegate, N
         }
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.HUD?.hide(true)
         self.HUD = nil
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络超时")
@@ -102,31 +102,31 @@ class VTActivityNoteViewController: UIViewController, NSURLConnectionDelegate, N
         self.responseData = NSMutableData()
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.HUD?.hide(true)
         self.HUD = nil
-        let publishedActivityDictionary = (try? NSJSONSerialization.JSONObjectWithData(self.responseData!, options: .MutableLeaves)) as? [String: AnyObject]
+        let publishedActivityDictionary = (try? JSONSerialization.jsonObject(with: self.responseData! as Data, options: .mutableLeaves)) as? [String: AnyObject]
         
         if publishedActivityDictionary != nil { // new activity published successfully with new activity json data
             // post a notification to let other view controllers new activity published
             let newActivity = Activity(data: publishedActivityDictionary!)
             newActivity.saveOrUpdateActivityInDatabase()
-            NSNotificationCenter.defaultCenter().postNotificationName(
-                "newActivityPublished", object: newActivity)
+            NotificationCenter.default.post(
+                name: Notification.Name(rawValue: "newActivityPublished"), object: newActivity)
             
             // find out from which view controller/tab did this activity initiated,
             // if this activity is a match initiated from discover tab -> teams list sorted by point -> send a challenge, then current view controller should unwind back to the team list table view
             // otherwise if the activity is initiated from team calendar view controller, then current view controller should unwind back to team calendar view
             if self.isNewActivityMatchInitiatedFromDiscoverTab == true {
-                self.performSegueWithIdentifier("unwindToTeamBriefIntroSegue", sender: self)
+                self.performSegue(withIdentifier: "unwindToTeamBriefIntroSegue", sender: self)
             } else {
-                self.performSegueWithIdentifier("unwindToTeamCalendarSegue", sender: self)
+                self.performSegue(withIdentifier: "unwindToTeamCalendarSegue", sender: self)
             }
         } else {    // new activity published failed with error message
-            let errorMessage = NSString(data: self.responseData!, encoding: NSUTF8StringEncoding)!
+            let errorMessage = NSString(data: self.responseData! as Data, encoding: String.Encoding.utf8.rawValue)!
             Toolbox.showCustomAlertViewWithImage("unhappy", title: errorMessage as String)
         }
-        NSUserDefaults.standardUserDefaults().removeObjectForKey("activityInfo")
+        UserDefaults.standard.removeObject(forKey: "activityInfo")
         
         self.responseData = nil
         self.responseData = NSMutableData()

@@ -26,27 +26,27 @@ class VTChangePlayerIntroductionViewController: UIViewController, UITextViewDele
         self.textView_introduction.delegate = self
 
         // Get the placeholder label, if the introduction text is not empty, we should hide the placeholder label
-        let placeHolderLabel = self.textView_introduction.viewWithTag(TagValue.TextViewPlaceholder.rawValue)
+        let placeHolderLabel = self.textView_introduction.viewWithTag(TagValue.textViewPlaceholder.rawValue)
         if self.textView_introduction.text.characters.count > 0 {
-            placeHolderLabel?.hidden = true
+            placeHolderLabel?.isHidden = true
         }
 
         // listen to userInfoUpdated message and handles it by unwinding the navigation controller to the previous view controller
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "updateUserInfo:", name: "userInfoUpdated", object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTChangePlayerIntroductionViewController.updateUserInfo(_:)), name: NSNotification.Name(rawValue: "userInfoUpdated"), object: nil)
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Appearance.customizeNavigationBar(self, title: "个人简介")
     }
     
-    func textViewDidChange(textView: UITextView) {
+    func textViewDidChange(_ textView: UITextView) {
         // Get the placeholder label
-        let placeHolderLabel = textView.viewWithTag(TagValue.TextViewPlaceholder.rawValue)
-        if !textView.hasText() {
-            placeHolderLabel?.hidden = false
+        let placeHolderLabel = textView.viewWithTag(TagValue.textViewPlaceholder.rawValue)
+        if !textView.hasText {
+            placeHolderLabel?.isHidden = false
         } else {
-            placeHolderLabel?.hidden = true
+            placeHolderLabel?.isHidden = true
         }
         
         let enteredIntroductionLength = Toolbox.trim(self.textView_introduction.text).characters.count
@@ -57,16 +57,16 @@ class VTChangePlayerIntroductionViewController: UIViewController, UITextViewDele
         }
     }
 
-    func updateUserInfo(notification: NSNotification) {
+    func updateUserInfo(_ notification: Notification) {
         // unwind navigation controller to the previous view controller
-        self.performSegueWithIdentifier("unwindToUserInfoTableSegue", sender: self)
+        self.performSegue(withIdentifier: "unwindToUserInfoTableSegue", sender: self)
     }
     
-    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         self.textView_introduction.resignFirstResponder()
     }
     
-    @IBAction func updateIntroduction(sender: AnyObject) {
+    @IBAction func updateIntroduction(_ sender: AnyObject) {
         let newIntroduction = Toolbox.trim(self.textView_introduction.text)
         Singleton_CurrentUser.sharedInstance.updateUserInfo("introduction", infoValue: newIntroduction)
     }
@@ -77,7 +77,7 @@ class VTChangePlayerIntroductionViewController: UIViewController, UITextViewDele
     }
     
     deinit {
-        NSNotificationCenter.defaultCenter().removeObserver(self)
+        NotificationCenter.default.removeObserver(self)
     }
     
 }

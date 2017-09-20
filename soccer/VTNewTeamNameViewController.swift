@@ -21,11 +21,11 @@ class VTNewTeamNameViewController: UIViewController, UITextFieldDelegate {
         Appearance.customizeTextField(self.input_teamName, iconName: "tshirt")
         
         // add right button in navigation bar programmatically
-        self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Stop, target:self, action: "cancelNewTeamCreation")
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .stop, target:self, action: #selector(VTNewTeamNameViewController.cancelNewTeamCreation))
         
         // Set this in every view controller so that the back button displays back instead of the root view controller name
-        self.navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .Plain, target: nil, action: nil)
-        self.input_teamName.addTarget(self, action: "validateUserInput", forControlEvents: .EditingChanged)
+        self.navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
+        self.input_teamName.addTarget(self, action: #selector(VTNewTeamNameViewController.validateUserInput), for: .editingChanged)
         
         self.input_teamName.delegate = self
     }
@@ -39,11 +39,11 @@ class VTNewTeamNameViewController: UIViewController, UITextFieldDelegate {
         }
     }
     
-    func textFieldShouldReturn(textField: UITextField) -> Bool {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         if textField == self.input_teamName {
-            if self.button_nextStep.enabled {
+            if self.button_nextStep.isEnabled {
                 self.input_teamName.resignFirstResponder()
-                self.button_nextStep.sendActionsForControlEvents(.TouchUpInside)
+                self.button_nextStep.sendActions(for: .touchUpInside)
                 return true
             }
             return false
@@ -53,24 +53,24 @@ class VTNewTeamNameViewController: UIViewController, UITextFieldDelegate {
     
     func cancelNewTeamCreation() {
         // close modal view and all its related navigation controller to go back to teams list table view
-        self.performSegueWithIdentifier("cancelNewTeamCreationFromTeamNameViewControllerSegue", sender: self)
+        self.performSegue(withIdentifier: "cancelNewTeamCreationFromTeamNameViewControllerSegue", sender: self)
  
     }
     
-    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         self.input_teamName.resignFirstResponder()
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "newTeamLocationSegue" {
-            let destinationViewController = segue.destinationViewController as! VTNewTeamLocationTableViewController
+            let destinationViewController = segue.destination as! VTNewTeamLocationTableViewController
             destinationViewController.teamName = self.teamName
         }
     }
 
-    @IBAction func nextStepOfCreatingNewTeam(sender: AnyObject) {
+    @IBAction func nextStepOfCreatingNewTeam(_ sender: AnyObject) {
         self.teamName = Toolbox.trim(self.input_teamName.text!)
-        self.performSegueWithIdentifier("newTeamLocationSegue", sender: self)
+        self.performSegue(withIdentifier: "newTeamLocationSegue", sender: self)
     }
     
     override func didReceiveMemoryWarning() {

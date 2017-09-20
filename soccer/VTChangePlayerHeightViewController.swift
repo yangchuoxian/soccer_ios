@@ -7,6 +7,26 @@
 //
 
 import UIKit
+fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l < r
+  case (nil, _?):
+    return true
+  default:
+    return false
+  }
+}
+
+fileprivate func > <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l > r
+  default:
+    return rhs < lhs
+  }
+}
+
 
 class VTChangePlayerHeightViewController: UIViewController {
     
@@ -22,11 +42,11 @@ class VTChangePlayerHeightViewController: UIViewController {
         // add unit label as rightView of textField input_height
         Appearance.addRightViewToTextField(self.input_height, withText: "cm")
         // listen to userInfoUpdated message and handles it by unwinding the navigation controller to the previous view controller
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "updateUserInfo:", name: "userInfoUpdated", object: nil)
-        self.input_height.addTarget(self, action: "validateUserInput", forControlEvents: .EditingChanged)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTChangePlayerHeightViewController.updateUserInfo(_:)), name: NSNotification.Name(rawValue: "userInfoUpdated"), object: nil)
+        self.input_height.addTarget(self, action: #selector(VTChangePlayerHeightViewController.validateUserInput), for: .editingChanged)
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Appearance.customizeNavigationBar(self, title: "修改身高")
     }
@@ -40,17 +60,17 @@ class VTChangePlayerHeightViewController: UIViewController {
         }
     }
     
-    func updateUserInfo(notification: NSNotification) {
-        self.navigationController?.popViewControllerAnimated(true)
+    func updateUserInfo(_ notification: Notification) {
+        _ = self.navigationController?.popViewController(animated: true)
     }
     
-    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         self.input_height.resignFirstResponder()
     }
     
-    @IBAction func updateHeight(sender: AnyObject) {
+    @IBAction func updateHeight(_ sender: AnyObject) {
         let newHeight = Toolbox.trim(self.input_height.text!)
-        Singleton_CurrentUser.sharedInstance.updateUserInfo("height", infoValue: newHeight)
+        Singleton_CurrentUser.sharedInstance.updateUserInfo("height", infoValue: newHeight as AnyObject)
     }
     
     override func didReceiveMemoryWarning() {
@@ -59,7 +79,7 @@ class VTChangePlayerHeightViewController: UIViewController {
     }
     
     deinit {
-        NSNotificationCenter.defaultCenter().removeObserver(self)
+        NotificationCenter.default.removeObserver(self)
     }
     
 }

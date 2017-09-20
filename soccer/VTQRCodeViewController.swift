@@ -19,7 +19,7 @@ class VTQRCodeViewController: UIViewController {
         self.imageView_fullQRCode.image = Toolbox.generateQRCodeWithString(Singleton_CurrentUser.sharedInstance.userId!, scale: 25.0)
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Appearance.customizeNavigationBar(self, title: "二维码名片")
     }

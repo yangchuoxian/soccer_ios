@@ -29,11 +29,11 @@ class VTNearbyUsersTableViewController: UITableViewController, NSURLConnectionDa
         self.setTableFooterView()
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        if sortedType == .SortByDistance {
+        if sortedType == .sortByDistance {
             Appearance.customizeNavigationBar(self, title: "附近球员")
-        } else if sortedType == .SortByPoint {
+        } else if sortedType == .sortByPoint {
             Appearance.customizeNavigationBar(self, title: "球员积分排名")
         }
     }
@@ -44,15 +44,15 @@ class VTNearbyUsersTableViewController: UITableViewController, NSURLConnectionDa
 
     // MARK: - Table view data source
 
-    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return self.usersList.count
     }
     
-    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        var cell = self.tableView.dequeueReusableCellWithIdentifier(self.tableCellIdentifier) as UITableViewCell?
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        var cell = self.tableView.dequeueReusableCell(withIdentifier: self.tableCellIdentifier) as UITableViewCell?
         
         if cell == nil {
-            cell = UITableViewCell(style: .Default, reuseIdentifier: self.tableCellIdentifier)
+            cell = UITableViewCell(style: .default, reuseIdentifier: self.tableCellIdentifier)
         }
         // set up user avatar image view
         let imageView_userAvatar = cell!.contentView.viewWithTag(1) as! UIImageView
@@ -65,9 +65,9 @@ class VTNearbyUsersTableViewController: UITableViewController, NSURLConnectionDa
         // set up label to display user's distance to current user
         let label_distance = cell!.contentView.viewWithTag(4) as! UILabel
         
-        let userInCurrentRow = self.usersList[indexPath.row]
+        let userInCurrentRow = self.usersList[(indexPath as NSIndexPath).row]
         // load user avatar
-        Toolbox.loadAvatarImage(userInCurrentRow.userId, toImageView: imageView_userAvatar, avatarType: AvatarType.User)
+        Toolbox.loadAvatarImage(userInCurrentRow.userId, toImageView: imageView_userAvatar, avatarType: AvatarType.user)
         label_username.text = userInCurrentRow.username
         label_position.text = userInCurrentRow.position
         label_distance.text = "\(userInCurrentRow.distanceToCurrentUser) km"
@@ -75,14 +75,14 @@ class VTNearbyUsersTableViewController: UITableViewController, NSURLConnectionDa
         return cell!
     }
     
-    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        self.selectedUser = self.usersList[indexPath.row]
-        self.performSegueWithIdentifier("nearbyStrangerProfileSegue", sender: self)
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        self.selectedUser = self.usersList[(indexPath as NSIndexPath).row]
+        self.performSegue(withIdentifier: "nearbyStrangerProfileSegue", sender: self)
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "nearbyStrangerProfileSegue" {
-            let destinationViewController = segue.destinationViewController as! VTScannedOrSearchedUserProfileTableViewController
+            let destinationViewController = segue.destination as! VTScannedOrSearchedUserProfileTableViewController
             destinationViewController.userObject = self.selectedUser
         }
     }
@@ -91,9 +91,9 @@ class VTNearbyUsersTableViewController: UITableViewController, NSURLConnectionDa
         // submit request to get next page of nearby users
         let coordinateString = "?latitude=\(self.currentUserCoordinate.latitude)&longitude=\(self.currentUserCoordinate.longitude)"
         var url = ""
-        if self.sortedType == .SortByDistance {
+        if self.sortedType == .sortByDistance {
             url = "\(URLGetNearbyUsersForTeam)\(coordinateString)&page=\(self.currentPage + 1)"
-        } else if self.sortedType == .SortByPoint {
+        } else if self.sortedType == .sortByPoint {
             url = "\(URLGetNearbyUsersForTeam)\(coordinateString)&page=\(self.currentPage + 1)&sortedByPoints=1"
         }
         let connection = Toolbox.asyncHttpGetFromURL(url, delegate: self)
@@ -107,11 +107,11 @@ class VTNearbyUsersTableViewController: UITableViewController, NSURLConnectionDa
         }
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.isLoadingNextPage = false
         // set tableView footer to replace activity indicator with next page button
         self.setTableFooterView()
@@ -120,23 +120,23 @@ class VTNearbyUsersTableViewController: UITableViewController, NSURLConnectionDa
         self.responseData = NSMutableData()
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.isLoadingNextPage = false
         
-        let nearbyUsersPaginatedInfo = (try? NSJSONSerialization.JSONObjectWithData(self.responseData!, options: .MutableLeaves)) as? [NSObject: AnyObject]
+        let nearbyUsersPaginatedInfo = (try? JSONSerialization.jsonObject(with: self.responseData! as Data, options: .mutableLeaves)) as? [AnyHashable: Any]
         
         let paginatedNearbyUsers = nearbyUsersPaginatedInfo!["models"] as? [[String: AnyObject]]
-        self.totalNearbyUsers = nearbyUsersPaginatedInfo!["total"]!.integerValue
+        self.totalNearbyUsers = (nearbyUsersPaginatedInfo!["total"]! as AnyObject).intValue
         self.currentPage = self.currentPage + 1
         
         // initialize each user dictionary received in array and add it to self.usersList
         var nearbyUserObject: User
         for nearbyUserDictionary in paginatedNearbyUsers! {
-            nearbyUserObject = User(data: nearbyUserDictionary)
+            nearbyUserObject = User(data: nearbyUserDictionary as [NSObject : AnyObject])
             self.usersList.append(nearbyUserObject)
             // insert row in table view
             self.tableView.beginUpdates()
-            self.tableView.insertRowsAtIndexPaths([NSIndexPath(forRow: self.usersList.count - 1, inSection: 0)], withRowAnimation: .Fade)
+            self.tableView.insertRows(at: [IndexPath(row: self.usersList.count - 1, section: 0)], with: .fade)
             self.tableView.endUpdates()
         }
         // set tableView footer to replace activity indicator with next page button
@@ -156,11 +156,11 @@ class VTNearbyUsersTableViewController: UITableViewController, NSURLConnectionDa
         self.tableView.tableFooterView = Toolbox.setPaginatedTableFooterView(self.totalNearbyUsers, numOfLoaded: self.usersList.count, isLoadingNextPage: self.isLoadingNextPage, buttonTitle: "更多附近球员", buttonActionSelector: "getNextPageOfUsersSearchResult", viewController: self)
     }
 
-    @IBAction func unwindToMembersContainerView(segue: UIStoryboardSegue) {
+    @IBAction func unwindToMembersContainerView(_ segue: UIStoryboardSegue) {
     }
     
     deinit {
-        self.usersList.removeAll(keepCapacity: false)
+        self.usersList.removeAll(keepingCapacity: false)
         self.responseData = nil
         self.selectedUser = nil
         self.sortedType = nil

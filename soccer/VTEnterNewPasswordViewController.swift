@@ -27,19 +27,19 @@ class VTEnterNewPasswordViewController: UIViewController, NSURLConnectionDelegat
         Appearance.customizeTextField(self.input_confirmNewPassword, iconName: "key")
         
         // add right button in navigation bar programmatically
-        self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Stop, target:self, action: "cancelResettingPassword")
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .stop, target:self, action: #selector(VTEnterNewPasswordViewController.cancelResettingPassword))
         // empty bar back button text
         self.navigationController!.navigationBar.topItem!.title = ""
         
-        self.input_newPassword.addTarget(self, action: "validateUserInput", forControlEvents: .EditingChanged)
-        self.input_confirmNewPassword.addTarget(self, action: "validateUserInput", forControlEvents: .EditingChanged)
+        self.input_newPassword.addTarget(self, action: #selector(VTEnterNewPasswordViewController.validateUserInput), for: .editingChanged)
+        self.input_confirmNewPassword.addTarget(self, action: #selector(VTEnterNewPasswordViewController.validateUserInput), for: .editingChanged)
         
         self.input_newPassword.delegate = self
         self.input_confirmNewPassword.delegate = self
     }
     
     func cancelResettingPassword() {
-        self.performSegueWithIdentifier("unwindFromEnterNewPasswordToLoginView", sender: self)
+        self.performSegue(withIdentifier: "unwindFromEnterNewPasswordToLoginView", sender: self)
     }
     
     func validateUserInput() {
@@ -53,15 +53,15 @@ class VTEnterNewPasswordViewController: UIViewController, NSURLConnectionDelegat
         }
     }
     
-    func textFieldShouldReturn(textField: UITextField) -> Bool {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         if textField == self.input_newPassword {
             self.input_newPassword.resignFirstResponder()
             self.input_confirmNewPassword.becomeFirstResponder()
             return true
         } else if textField == self.input_confirmNewPassword {
-            if self.button_submit.enabled {
+            if self.button_submit.isEnabled {
                 self.input_confirmNewPassword.resignFirstResponder()
-                self.button_submit.sendActionsForControlEvents(.TouchUpInside)
+                self.button_submit.sendActions(for: .touchUpInside)
                 return true
             }
             return false
@@ -69,12 +69,12 @@ class VTEnterNewPasswordViewController: UIViewController, NSURLConnectionDelegat
         return false
     }
     
-    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         self.input_newPassword.resignFirstResponder()
         self.input_confirmNewPassword.resignFirstResponder()
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Appearance.customizeNavigationBar(self, title: "重置密码")
     }
@@ -84,7 +84,7 @@ class VTEnterNewPasswordViewController: UIViewController, NSURLConnectionDelegat
         // Dispose of any resources that can be recreated.
     }
     
-    @IBAction func submitNewPassword(sender: AnyObject) {
+    @IBAction func submitNewPassword(_ sender: AnyObject) {
         self.newPassword = Toolbox.trim(self.input_newPassword.text!)
         let connection = Toolbox.asyncHttpPostToURL(
             URLRetrievePassword,
@@ -98,14 +98,14 @@ class VTEnterNewPasswordViewController: UIViewController, NSURLConnectionDelegat
         }
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.HUD?.hide(true)
         self.HUD = nil
-        let userJSON = (try? NSJSONSerialization.JSONObjectWithData(self.responseData!, options: .MutableLeaves)) as? [NSObject: AnyObject]
+        let userJSON = (try? JSONSerialization.jsonObject(with: self.responseData! as Data, options: .mutableLeaves)) as? [AnyHashable: Any]
         if userJSON != nil {
             if (userJSON!["id"] as? String) == self.userId {  // reset password succeeded, server responded with logged in user json object
                 self.input_newPassword.resignFirstResponder()
@@ -113,7 +113,7 @@ class VTEnterNewPasswordViewController: UIViewController, NSURLConnectionDelegat
                 Singleton_CurrentUser.sharedInstance.processUserLogin(userJSON!)
             }
         } else {
-            let responseStr = NSString(data: self.responseData!, encoding: NSUTF8StringEncoding)
+            let responseStr = NSString(data: self.responseData! as Data, encoding: String.Encoding.utf8.rawValue)
             Toolbox.showCustomAlertViewWithImage("unhappy", title: responseStr as! String)
         }
         
@@ -121,7 +121,7 @@ class VTEnterNewPasswordViewController: UIViewController, NSURLConnectionDelegat
         self.responseData = NSMutableData()
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.HUD?.hide(true)
         self.HUD = nil
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络超时")

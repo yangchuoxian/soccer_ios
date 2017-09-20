@@ -9,6 +9,6 @@
 extension NSObject {
     // get class name of instance
     var theClassName: String {
-        return NSStringFromClass(self.dynamicType).componentsSeparatedByString(".").last!
+        return NSStringFromClass(type(of: self)).components(separatedBy: ".").last!
     }
 }

@@ -19,11 +19,11 @@ class VTChangeUsernameViewController: UIViewController {
         Appearance.customizeTextField(self.input_username, iconName: "person")
         self.input_username.text = Singleton_CurrentUser.sharedInstance.username
         // listen to userInfoUpdated message and handles it by unwinding the navigation controller to the previous view controller
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "updateUserInfo:", name: "userInfoUpdated", object: nil)
-        self.input_username.addTarget(self, action: "validateUserInput", forControlEvents: .EditingChanged)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTChangeUsernameViewController.updateUserInfo(_:)), name: NSNotification.Name(rawValue: "userInfoUpdated"), object: nil)
+        self.input_username.addTarget(self, action: #selector(VTChangeUsernameViewController.validateUserInput), for: .editingChanged)
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Appearance.customizeNavigationBar(self, title: "修改用户名")
     }
@@ -37,17 +37,17 @@ class VTChangeUsernameViewController: UIViewController {
         }
     }
     
-    func updateUserInfo(notification: NSNotification) {
+    func updateUserInfo(_ notification: Notification) {
         // unwind navigation controller to the previous view controller
-        self.navigationController?.popViewControllerAnimated(true)
+        self.navigationController?.popViewController(animated: true)
     }
     
-    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         // resign the keyboard when tapped somewhere else other than the text field or the keyboard iteslf
         self.input_username.resignFirstResponder()
     }
     
-    @IBAction func updateUsername(sender: AnyObject) {
+    @IBAction func updateUsername(_ sender: AnyObject) {
         let newUsername = Toolbox.trim(self.input_username.text!)
         Singleton_CurrentUser.sharedInstance.updateUserInfo("username", infoValue: newUsername)
     }

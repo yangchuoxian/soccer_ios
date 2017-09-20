@@ -7,6 +7,17 @@
 //
 
 import UIKit
+fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l < r
+  case (nil, _?):
+    return true
+  default:
+    return false
+  }
+}
+
 
 class VTUserActivitiesForDateTableViewController: UITableViewController, VTUserCalendarViewDelegate {
     
@@ -17,7 +28,7 @@ class VTUserActivitiesForDateTableViewController: UITableViewController, VTUserC
 
         // Uncomment the following line to preserve selection between presentations
         self.clearsSelectionOnViewWillAppear = false
-        self.tableView.tableFooterView = UIView(frame: CGRectZero)
+        self.tableView.tableFooterView = UIView(frame: CGRect.zero)
     }
 
     override func didReceiveMemoryWarning() {
@@ -25,21 +36,21 @@ class VTUserActivitiesForDateTableViewController: UITableViewController, VTUserC
         // Dispose of any resources that can be recreated.
     }
     
-    override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+    override func numberOfSections(in tableView: UITableView) -> Int {
         // Display a message and an image when the table is empty
         let emptyTableBackgroundView:UIView = UIView(frame: CGRect(x: 0, y: self.tableView.frame.origin.y, width: self.tableView.frame.size.width, height: self.tableView.frame.size.height))
-        emptyTableBackgroundView.tag = TagValue.EmptyTableBackgroundView.rawValue
+        emptyTableBackgroundView.tag = TagValue.emptyTableBackgroundView.rawValue
         
         let imageView_noActivityIcon:UIImageView = UIImageView(image: UIImage(named:"tv"))
-        imageView_noActivityIcon.frame = CGRectMake(ScreenSize.width / 2 - 55, 50, 110, 110)
+        imageView_noActivityIcon.frame = CGRect(x: ScreenSize.width / 2 - 55, y: 50, width: 110, height: 110)
         imageView_noActivityIcon.tag = 1
         
-        let label_noActivityHint:UILabel = UILabel(frame: CGRectMake(ScreenSize.width / 2 - 55, 160, self.tableView.frame.size.width, 50))
+        let label_noActivityHint:UILabel = UILabel(frame: CGRect(x: ScreenSize.width / 2 - 55, y: 160, width: self.tableView.frame.size.width, height: 50))
         label_noActivityHint.tag = 2
         label_noActivityHint.text = "今日没有活动"
         label_noActivityHint.textColor = EmptyImageColor
         label_noActivityHint.numberOfLines = 0
-        label_noActivityHint.textAlignment = .Center
+        label_noActivityHint.textAlignment = .center
         label_noActivityHint.sizeToFit()
         
         emptyTableBackgroundView.addSubview(imageView_noActivityIcon)
@@ -50,31 +61,31 @@ class VTUserActivitiesForDateTableViewController: UITableViewController, VTUserC
             
             // remove all subviews in tableView
             for subView in self.tableView.subviews {
-                if subView.tag == TagValue.EmptyTableBackgroundView.rawValue {
+                if subView.tag == TagValue.emptyTableBackgroundView.rawValue {
                     subView.removeFromSuperview()
                 }
             }
         } else {
             self.tableView.addSubview(emptyTableBackgroundView)
-            self.tableView.sendSubviewToBack(emptyTableBackgroundView)
+            self.tableView.sendSubview(toBack: emptyTableBackgroundView)
         }
         
         // return the number of sections
         return 1
     }
     
-    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return self.activitiesOfThisDay.count
     }
     
-    override func tableView(tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+    override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         if self.activitiesOfThisDay.count > 0 {
             return TableSectionHeaderHeight
         }
         return 0
     }
     
-    override func tableView(tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+    override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         if self.activitiesOfThisDay.count > 0 {
             let headerView = UIView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: TableSectionHeaderHeight))
             headerView.addSubview(Appearance.setupTableSectionHeaderTitle("当日活动"))
@@ -84,14 +95,14 @@ class VTUserActivitiesForDateTableViewController: UITableViewController, VTUserC
         return nil
     }
     
-    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        var cell:UITableViewCell? = self.tableView.dequeueReusableCellWithIdentifier("activityRecordCell") as UITableViewCell?
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        var cell:UITableViewCell? = self.tableView.dequeueReusableCell(withIdentifier: "activityRecordCell") as UITableViewCell?
         if cell == nil {
-            cell = UITableViewCell(style: .Default, reuseIdentifier: "activityRecordCell")
+            cell = UITableViewCell(style: .default, reuseIdentifier: "activityRecordCell")
         }
-        let activity = self.activitiesOfThisDay[indexPath.row]
+        let activity = self.activitiesOfThisDay[(indexPath as NSIndexPath).row]
         let imageView_activityTypeIcon = cell?.contentView.viewWithTag(1) as! UIImageView
-        if activity.type == ActivityType.Exercise.rawValue {
+        if activity.type == ActivityType.exercise.rawValue {
             imageView_activityTypeIcon.image = UIImage(named: "exercise")
         } else {
             imageView_activityTypeIcon.image = UIImage(named: "match")
@@ -104,7 +115,7 @@ class VTUserActivitiesForDateTableViewController: UITableViewController, VTUserC
         let label_activityAddress = cell?.contentView.viewWithTag(3) as! UILabel
         label_activityAddress.text = activity.place
         
-        if indexPath.row == 0 { // if the cell is the first row of the section, add a separatorLine
+        if (indexPath as NSIndexPath).row == 0 { // if the cell is the first row of the section, add a separatorLine
             let separatorLineView = UIView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: 1))
             separatorLineView.backgroundColor = ColorBackgroundGray
             cell!.contentView.addSubview(separatorLineView)
@@ -112,26 +123,26 @@ class VTUserActivitiesForDateTableViewController: UITableViewController, VTUserC
         return cell!
     }
     
-    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        self.tableView.deselectRowAtIndexPath(indexPath, animated: true)
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        self.tableView.deselectRow(at: indexPath, animated: true)
         
-        let selectedActivity = self.activitiesOfThisDay[indexPath.row]
+        let selectedActivity = self.activitiesOfThisDay[(indexPath as NSIndexPath).row]
         // post notification to let VTUserCalendarViewController know that an activity record is selected, should go to activity detail view controller to show the activity details
-        NSNotificationCenter.defaultCenter().postNotificationName("userActivitySelected", object: selectedActivity)
+        NotificationCenter.default.post(name: Notification.Name(rawValue: "userActivitySelected"), object: selectedActivity)
     }
     
     // delegate method to update activities data for this date
-    func getActivitiesForThisDate(activities: [Activity]) {
+    func getActivitiesForThisDate(_ activities: [Activity]) {
         // sort the activities so that activities on this day would show up in a time ascending order
         self.activitiesOfThisDay = activities
-        self.activitiesOfThisDay.sortInPlace{
+        self.activitiesOfThisDay.sort{
             $0.0.time < $0.1.time
         }
         self.tableView.reloadData()
     }
 
     deinit {
-        self.activitiesOfThisDay.removeAll(keepCapacity: false)
+        self.activitiesOfThisDay.removeAll(keepingCapacity: false)
     }
     
 }

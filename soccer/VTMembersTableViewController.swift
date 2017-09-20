@@ -26,10 +26,10 @@ class VTMembersTableViewController: UITableViewController, UIActionSheetDelegate
     override func viewDidLoad() {
         super.viewDidLoad()
         self.refreshControl = Appearance.setupRefreshControl()
-        self.refreshControl?.addTarget(self, action: "refreshTeamMembers", forControlEvents: .ValueChanged)
+        self.refreshControl?.addTarget(self, action: #selector(VTMembersTableViewController.refreshTeamMembers), for: .valueChanged)
         self.tableView.addSubview(self.refreshControl!)
         self.clearsSelectionOnViewWillAppear = true
-        self.teamId = NSUserDefaults.standardUserDefaults().stringForKey("teamIdSelectedInTeamsList")
+        self.teamId = UserDefaults.standard.string(forKey: "teamIdSelectedInTeamsList")
         
         // retrieve captain user id of current selected team
         self.captainUserIdOfCurrentSelectedTeam = Team.retrieveCaptainIdFromLocalDatabaseWithTeamId(self.teamId!)
@@ -42,7 +42,7 @@ class VTMembersTableViewController: UITableViewController, UIActionSheetDelegate
         }
         
         // This will remove extra separators from tableView
-        self.tableView.tableFooterView = UIView(frame: CGRectZero)
+        self.tableView.tableFooterView = UIView(frame: CGRect.zero)
         self.tableView.rowHeight = CustomTableRowHeight
         
         // get team members from server
@@ -54,23 +54,23 @@ class VTMembersTableViewController: UITableViewController, UIActionSheetDelegate
             self.HUD = Toolbox.setupCustomProcessingViewWithTitle(title: nil)
         }
         // listen to teamCaptainChangedOnServer
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "updateTeamCaptainLocally:", name: "teamCaptainChangedOnServer", object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTMembersTableViewController.updateTeamCaptainLocally(_:)), name: NSNotification.Name(rawValue: "teamCaptainChangedOnServer"), object: nil)
         // listen to teamMemberDeletedOnServer
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "deleteTeamMemberLocally:", name: "teamMemberDeletedOnServer", object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTMembersTableViewController.deleteTeamMemberLocally(_:)), name: NSNotification.Name(rawValue: "teamMemberDeletedOnServer"), object: nil)
         // after invitation sent, the members tableView should display the users who the team captain has sent invitation to as potential member, until the user has either accept or reject the invitation
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "addUserAsInvitedUser:", name: "invitationSentSuccessfully", object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTMembersTableViewController.addUserAsInvitedUser(_:)), name: NSNotification.Name(rawValue: "invitationSentSuccessfully"), object: nil)
         
         /**
         * system message notification handler
         */
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "refreshCurrentTeamMembers:", name: "receivedSystemMessage_teamMemberRemoved", object: nil)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "refreshCurrentTeamMembers:", name: "receivedSystemMessage_teamCaptainChanged", object: nil)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "refreshCurrentTeamMembers:", name: "receivedSystemMessage_teamDismissed", object: nil)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "refreshCurrentTeamMembers:", name: "receivedSystemMessage_newMemberJoined", object: nil)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "refreshCurrentTeamMembers:", name: "receivedSystemMessage_requestRefused", object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTMembersTableViewController.refreshCurrentTeamMembers(_:)), name: NSNotification.Name(rawValue: "receivedSystemMessage_teamMemberRemoved"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTMembersTableViewController.refreshCurrentTeamMembers(_:)), name: NSNotification.Name(rawValue: "receivedSystemMessage_teamCaptainChanged"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTMembersTableViewController.refreshCurrentTeamMembers(_:)), name: NSNotification.Name(rawValue: "receivedSystemMessage_teamDismissed"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTMembersTableViewController.refreshCurrentTeamMembers(_:)), name: NSNotification.Name(rawValue: "receivedSystemMessage_newMemberJoined"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTMembersTableViewController.refreshCurrentTeamMembers(_:)), name: NSNotification.Name(rawValue: "receivedSystemMessage_requestRefused"), object: nil)
     }
     
-    func refreshCurrentTeamMembers(notification: NSNotification) {
+    func refreshCurrentTeamMembers(_ notification: Notification) {
         let metaData = notification.object as? [String: String]
         if metaData != nil {
             let teamId = metaData!["teamId"]
@@ -89,14 +89,14 @@ class VTMembersTableViewController: UITableViewController, UIActionSheetDelegate
         }
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         // initialize selectedPotentialMemberType with invalid value
         self.selectedPotentialMemberType = nil
         self.selectedTeamMember = nil
     }
     
-    func addUserAsInvitedUser(notification: NSNotification) {
+    func addUserAsInvitedUser(_ notification: Notification) {
         // set up HUD to show that invitation sent successfully
         Toolbox.showCustomAlertViewWithImage("checkmark", title: "发送邀请成功")
         let recipientOfTheInvitation = notification.object as! User
@@ -107,11 +107,11 @@ class VTMembersTableViewController: UITableViewController, UIActionSheetDelegate
         if existedInvitedUsers.count == 0 {
             self.invitedUsersList.append(recipientOfTheInvitation)
             // reload the potential members list section
-            self.tableView.reloadSections(NSIndexSet(index: 1), withRowAnimation: .Top)
+            self.tableView.reloadSections(IndexSet(integer: 1), with: .top)
         }
     }
     
-    func updateTeamCaptainLocally(notification: NSNotification) {
+    func updateTeamCaptainLocally(_ notification: Notification) {
         let newCaptainUserId = notification.object as! String
         
         // update team captain user id
@@ -130,18 +130,18 @@ class VTMembersTableViewController: UITableViewController, UIActionSheetDelegate
      * Team member deleted on server side, now need to update team member info in local database and tableView
      * NOTE: the member user ids are NOT stored in local database, but there's a --- numberOfMembers --- that needs to be updated once team member has been deleted.
      */
-    func deleteTeamMemberLocally(notification: NSNotification) {
-        let teamInfoAfterDeletingTeamMember = notification.object as! [NSObject: AnyObject]
+    func deleteTeamMemberLocally(_ notification: Notification) {
+        let teamInfoAfterDeletingTeamMember = notification.object as! [AnyHashable: Any]
         // find out the table cell that contains the deleted member
         let deletedTeamMember = self.membersList.filter{
             $0.userId == (teamInfoAfterDeletingTeamMember["deletedMemberUserId"] as! String)
         }
         
         // update tableView by removing the entry that contains the deleted team member
-        let indexOfDeletedTeamMember = self.membersList.indexOf(deletedTeamMember[0])
-        self.membersList.removeAtIndex(indexOfDeletedTeamMember!)
+        let indexOfDeletedTeamMember = self.membersList.index(of: deletedTeamMember[0])
+        self.membersList.remove(at: indexOfDeletedTeamMember!)
         
-        self.tableView.deleteRowsAtIndexPaths([NSIndexPath(forRow: indexOfDeletedTeamMember!, inSection: 0)], withRowAnimation: .Top)
+        self.tableView.deleteRows(at: [IndexPath(row: indexOfDeletedTeamMember!, section: 0)], with: .top)
         
         Toolbox.showCustomAlertViewWithImage("checkmark", title: "已成功删除球队成员")
     }
@@ -162,11 +162,11 @@ class VTMembersTableViewController: UITableViewController, UIActionSheetDelegate
      * 1. ONLY THE TEAM CAPTAIN IS ALLOWED TO SEE THE SECOND AND THIRD SECTION, for non-captain users, the second and third section are hidden
      * 2. If there's no potential member, the second section and its header will be hidden, the same rule applies to the third section and its header when there's no application received from any user
      */
-    override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+    override func numberOfSections(in tableView: UITableView) -> Int {
         return 3
     }
     
-    override func tableView(tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+    override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         var possibleHeaderHeight: CGFloat = 0
         if self.isCurrentUserTheCaptainOfThisTeam! {
             possibleHeaderHeight = TableSectionHeaderHeight
@@ -188,8 +188,8 @@ class VTMembersTableViewController: UITableViewController, UIActionSheetDelegate
         }
     }
     
-    override func tableView(tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        let headerView = UIView(frame: CGRectMake(0, 0, ScreenSize.width, TableSectionHeaderHeight))
+    override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let headerView = UIView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: TableSectionHeaderHeight))
         headerView.backgroundColor = ColorBackgroundGray
         if section == 0 {         // header for members list section
             headerView.addSubview(Appearance.setupTableSectionHeaderTitle(" 当前成员"))
@@ -205,7 +205,7 @@ class VTMembersTableViewController: UITableViewController, UIActionSheetDelegate
         return headerView
     }
     
-    override func tableView(tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+    override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
         var possibleFooterHeight: CGFloat = 0
         // only when the current user is the captain of this team, can he/she recruit new team members
         if self.isCurrentUserTheCaptainOfThisTeam! == true {
@@ -221,12 +221,12 @@ class VTMembersTableViewController: UITableViewController, UIActionSheetDelegate
         }
     }
     
-    override func tableView(tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
-        let footerView = UIView(frame: CGRectMake(0, 0, ScreenSize.width, TableSectionFooterHeightWithButton))
+    override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+        let footerView = UIView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: TableSectionFooterHeightWithButton))
         return footerView
     }
 
-    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if section == 0 {             // members list section
             return self.membersList.count
         } else if section == 1 {      // potential members list section
@@ -244,10 +244,10 @@ class VTMembersTableViewController: UITableViewController, UIActionSheetDelegate
         }
     }
     
-    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        var cell = self.tableView.dequeueReusableCellWithIdentifier(self.tableCellIdentifier) as UITableViewCell?
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        var cell = self.tableView.dequeueReusableCell(withIdentifier: self.tableCellIdentifier) as UITableViewCell?
         if cell == nil {
-            cell = UITableViewCell(style: .Default, reuseIdentifier: self.tableCellIdentifier)
+            cell = UITableViewCell(style: .default, reuseIdentifier: self.tableCellIdentifier)
         }
         // set up user avatar image view
         let imageView_userAvatar = cell!.contentView.viewWithTag(1) as! UIImageView
@@ -261,51 +261,51 @@ class VTMembersTableViewController: UITableViewController, UIActionSheetDelegate
         let imageView_captainFlag = cell!.contentView.viewWithTag(4) as! UIImageView
         
         var userInCurrentRow: User
-        if indexPath.section == 0 {           // the members list section
-            userInCurrentRow = self.membersList[indexPath.row]
-        } else if indexPath.section == 1 {    // the potential members list section
-            userInCurrentRow = self.invitedUsersList[indexPath.row]
+        if (indexPath as NSIndexPath).section == 0 {           // the members list section
+            userInCurrentRow = self.membersList[(indexPath as NSIndexPath).row]
+        } else if (indexPath as NSIndexPath).section == 1 {    // the potential members list section
+            userInCurrentRow = self.invitedUsersList[(indexPath as NSIndexPath).row]
         } else {                                // the users list who applied for membership of this team
-            userInCurrentRow = self.appliedUsersList[indexPath.row]
+            userInCurrentRow = self.appliedUsersList[(indexPath as NSIndexPath).row]
         }
         
         // load user avatar
-        Toolbox.loadAvatarImage(userInCurrentRow.userId, toImageView: imageView_userAvatar, avatarType: AvatarType.User)
+        Toolbox.loadAvatarImage(userInCurrentRow.userId, toImageView: imageView_userAvatar, avatarType: AvatarType.user)
         label_username.text = userInCurrentRow.username
         label_position.text = userInCurrentRow.position
         
         // if the user in this table cell is NOT captain of the selected team
         if userInCurrentRow.userId != self.captainUserIdOfCurrentSelectedTeam {
-            imageView_captainFlag.hidden = true
+            imageView_captainFlag.isHidden = true
         } else {
-            imageView_captainFlag.hidden = false
+            imageView_captainFlag.isHidden = false
         }
         
         return cell!
     }
 
-    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        if indexPath.section == 0 {   // team member selected
-            self.selectedTeamMember = self.membersList[indexPath.row]
-            self.performSegueWithIdentifier("teamMemberProfileSegue", sender: self)
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        if (indexPath as NSIndexPath).section == 0 {   // team member selected
+            self.selectedTeamMember = self.membersList[(indexPath as NSIndexPath).row]
+            self.performSegue(withIdentifier: "teamMemberProfileSegue", sender: self)
         } else {                        // potential member selected
-            if indexPath.section == 1 {   // selected invited user
-                self.selectedPotentialMember = self.invitedUsersList[indexPath.row]
-                self.selectedPotentialMemberType = .Invited
+            if (indexPath as NSIndexPath).section == 1 {   // selected invited user
+                self.selectedPotentialMember = self.invitedUsersList[(indexPath as NSIndexPath).row]
+                self.selectedPotentialMemberType = .invited
             } else {                        // selected applied user
-                self.selectedPotentialMember = self.appliedUsersList[indexPath.row]
-                self.selectedPotentialMemberType = .Applied
+                self.selectedPotentialMember = self.appliedUsersList[(indexPath as NSIndexPath).row]
+                self.selectedPotentialMemberType = .applied
             }
-            self.performSegueWithIdentifier("potentialMemberProfileSegue", sender: self)
+            self.performSegue(withIdentifier: "potentialMemberProfileSegue", sender: self)
         }
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "teamMemberProfileSegue" {
-            let destinationViewController = segue.destinationViewController as! VTMemberProfileTableViewController
+            let destinationViewController = segue.destination as! VTMemberProfileTableViewController
             destinationViewController.userObject = self.selectedTeamMember
         } else if segue.identifier == "potentialMemberProfileSegue" {
-            let destinationViewController = segue.destinationViewController as! VTScannedOrSearchedUserProfileTableViewController
+            let destinationViewController = segue.destination as! VTScannedOrSearchedUserProfileTableViewController
             destinationViewController.userObject = self.selectedPotentialMember
             if self.selectedPotentialMemberType != nil {    // if selectedPotentialMemberType is some VALID value
                 destinationViewController.potentialMemberType = self.selectedPotentialMemberType!
@@ -313,11 +313,11 @@ class VTMembersTableViewController: UITableViewController, UIActionSheetDelegate
         }
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.HUD?.hide(true)
         self.HUD = nil
         self.refreshControl?.endRefreshing()
@@ -326,7 +326,7 @@ class VTMembersTableViewController: UITableViewController, UIActionSheetDelegate
         self.responseData = NSMutableData()
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.HUD?.hide(true)
         self.HUD = nil
         self.refreshControl?.endRefreshing()
@@ -340,27 +340,27 @@ class VTMembersTableViewController: UITableViewController, UIActionSheetDelegate
          * models: users
          * potentialMembers: potentialMembers
          */
-        let membersJSON = (try? NSJSONSerialization.JSONObjectWithData(self.responseData!, options: .MutableLeaves)) as? [NSObject: AnyObject]
+        let membersJSON = (try? JSONSerialization.jsonObject(with: self.responseData! as Data, options: .mutableLeaves)) as? [AnyHashable: Any]
         if membersJSON != nil { // http request succeeded
             // clear the old data first
-            self.membersList.removeAll(keepCapacity: false)
-            self.invitedUsersList.removeAll(keepCapacity: false)
-            self.appliedUsersList.removeAll(keepCapacity: false)
+            self.membersList.removeAll(keepingCapacity: false)
+            self.invitedUsersList.removeAll(keepingCapacity: false)
+            self.appliedUsersList.removeAll(keepingCapacity: false)
             // retrieve member user objects
             let members = membersJSON!["models"] as? [AnyObject]
             for member in members! {
-                let memberObject = User(data: member as! [NSObject : AnyObject])
+                let memberObject = User(data: member as! [AnyHashable: Any] as [NSObject : AnyObject])
                 self.membersList.append(memberObject)
             }
             // retrieve potential member user objects
             let invitedUsers = membersJSON!["invitedUsers"] as? [AnyObject]
             for invitedUserDictionary in invitedUsers! {
-                let invitedUserObject = User(data: invitedUserDictionary as! [NSObject : AnyObject])
+                let invitedUserObject = User(data: invitedUserDictionary as! [AnyHashable: Any] as [NSObject : AnyObject])
                 self.invitedUsersList.append(invitedUserObject)
             }
             let appliedUsers = membersJSON!["appliedUsers"] as? [AnyObject]
             for appliedUserDictionary in appliedUsers! {
-                let appliedUserObject = User(data: appliedUserDictionary as! [NSObject: AnyObject])
+                let appliedUserObject = User(data: appliedUserDictionary as! [AnyHashable: Any] as [NSObject : AnyObject])
                 self.appliedUsersList.append(appliedUserObject)
             }
             // data ready, reload tableView
@@ -372,7 +372,7 @@ class VTMembersTableViewController: UITableViewController, UIActionSheetDelegate
         self.responseData = NSMutableData()
     }
     
-    @IBAction func unwindToTeamMembersTableView(segue: UIStoryboardSegue) {
+    @IBAction func unwindToTeamMembersTableView(_ segue: UIStoryboardSegue) {
     }
     
     deinit {
@@ -380,9 +380,9 @@ class VTMembersTableViewController: UITableViewController, UIActionSheetDelegate
         self.captainUserIdOfCurrentSelectedTeam = nil
         self.selectedPotentialMemberType = nil
         self.selectedPotentialMember = nil
-        self.membersList.removeAll(keepCapacity: false)
-        self.invitedUsersList.removeAll(keepCapacity: false)
-        self.appliedUsersList.removeAll(keepCapacity: false)
+        self.membersList.removeAll(keepingCapacity: false)
+        self.invitedUsersList.removeAll(keepingCapacity: false)
+        self.appliedUsersList.removeAll(keepingCapacity: false)
         
         self.HUD = nil
         self.selectedTeamMember = nil

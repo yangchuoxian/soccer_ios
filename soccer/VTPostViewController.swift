@@ -31,10 +31,10 @@ class VTPostViewController: UIViewController, NSURLConnectionDelegate, NSURLConn
         } else {
             self.HUD = Toolbox.setupCustomProcessingViewWithTitle(title: nil)
         }
-        self.webview_post.scrollView.contentSize = CGSizeMake(self.webview_post.frame.size.width, self.webview_post.scrollView.contentSize.height)
+        self.webview_post.scrollView.contentSize = CGSize(width: self.webview_post.frame.size.width, height: self.webview_post.scrollView.contentSize.height)
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         self.navigationController?.setNavigationBarHidden(false, animated: animated)
     }
@@ -44,11 +44,11 @@ class VTPostViewController: UIViewController, NSURLConnectionDelegate, NSURLConn
         // Dispose of any resources that can be recreated.
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.HUD?.hide(true)
         self.HUD = nil
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络超时")
@@ -56,11 +56,11 @@ class VTPostViewController: UIViewController, NSURLConnectionDelegate, NSURLConn
         self.responseData = NSMutableData()
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.HUD?.hide(true)
         self.HUD = nil
         // show the html string in html form in webview
-        let responseStr = NSString(data: self.responseData!, encoding: NSUTF8StringEncoding)
+        let responseStr = NSString(data: self.responseData! as Data, encoding: String.Encoding.utf8.rawValue)
         self.webview_post.loadHTMLString(responseStr! as String, baseURL: nil)
         
         self.responseData = nil

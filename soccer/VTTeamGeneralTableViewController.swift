@@ -40,8 +40,8 @@ class VTTeamGeneralTableViewController: UITableViewController, UIAlertViewDelega
     @IBOutlet weak var view_tiesBackground: UIView!
     
     enum HttpRequestIndex {
-        case DismissOrQuitTeam
-        case ChangeRecruitingStatus
+        case dismissOrQuitTeam
+        case changeRecruitingStatus
     }
     
     override func viewDidLoad() {
@@ -56,11 +56,11 @@ class VTTeamGeneralTableViewController: UITableViewController, UIAlertViewDelega
         Toolbox.removeBottomShadowOfNavigationBar(self.navigationController!.navigationBar)
         
         // add right button in navigation bar programmatically
-        self.navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(named: "menu"), style: .Bordered, target: self, action: "presentLeftMenuViewController:")
-        self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Stop, target: self, action: "goBackToTeamsTableView")
+        self.navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(named: "menu"), style: .bordered, target: self, action: #selector(UIViewController.presentLeftMenuViewController(_:)))
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .stop, target: self, action: #selector(VTTeamGeneralTableViewController.goBackToTeamsTableView))
         
         // make team introduction textView not editable
-        self.textView_teamIntroduction.editable = false
+        self.textView_teamIntroduction.isEditable = false
         
         let verticalSeparatorForFollowersView = UIView(frame: CGRect(x: ScreenSize.width / 4 - 1, y: 6, width: 1, height: 32))
         verticalSeparatorForFollowersView.backgroundColor = ColorBackgroundGray
@@ -77,33 +77,33 @@ class VTTeamGeneralTableViewController: UITableViewController, UIAlertViewDelega
         verticalSeparatorForLosesView.alpha = 0.6
         self.view_losesBackground.addSubview(verticalSeparatorForLosesView)
  
-        self.teamId = NSUserDefaults.standardUserDefaults().stringForKey("teamIdSelectedInTeamsList")
+        self.teamId = UserDefaults.standard.string(forKey: "teamIdSelectedInTeamsList")
         
         self.loadTeamInfoFromDatabase()
         
         // listen to teamRecordSavedOrUpdated message and handles it by updating team info in current view controller
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "showUpdatedTeamInfo", name: "teamRecordSavedOrUpdated", object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTTeamGeneralTableViewController.showUpdatedTeamInfo), name: NSNotification.Name(rawValue: "teamRecordSavedOrUpdated"), object: nil)
         
         if self.isCurrentUserCaptainOfThisTeam! == true {    // if current user is captain of this team, he/she can change team avatar, otherwise, he/she CANNOT
             // add tap gesture event to image_avatar, when image_avatar is tapped, user will be provided with options to whether select image or shoot a photo as avatar to upload
-            let singleTap:UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: "avatarImageTapped")
+            let singleTap:UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(VTTeamGeneralTableViewController.avatarImageTapped))
             singleTap.numberOfTapsRequired = 1
-            self.imageView_teamAvatar.userInteractionEnabled = true
+            self.imageView_teamAvatar.isUserInteractionEnabled = true
             self.imageView_teamAvatar.addGestureRecognizer(singleTap)
         }
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Appearance.customizeNavigationBar(self, title: "球队详情")
     }
     
     func goBackToTeamsTableView() {
-        self.performSegueWithIdentifier("unwindToTeamListSegue", sender: self)
+        self.performSegue(withIdentifier: "unwindToTeamListSegue", sender: self)
     }
     
     func avatarImageTapped() {
-        self.performSegueWithIdentifier("changeTeamAvatarSegue", sender: self)
+        self.performSegue(withIdentifier: "changeTeamAvatarSegue", sender: self)
     }
     
     func showUpdatedTeamInfo() {
@@ -114,10 +114,10 @@ class VTTeamGeneralTableViewController: UITableViewController, UIAlertViewDelega
     func loadTeamInfoFromDatabase() {
         // get team info from local database
         let dbManager = DBManager(databaseFilename: "soccer_ios.sqlite")
-        let teams = dbManager.loadDataFromDB("select * from teams where teamId=?", parameters: [self.teamId!])
-        if teams.count > 0 {
+        let teams = dbManager?.loadData(fromDB: "select * from teams where teamId=?", parameters: [self.teamId!])
+        if (teams?.count)! > 0 {
             // asynchronously load team avatar image
-            Toolbox.loadAvatarImage(self.teamId!, toImageView: self.imageView_teamAvatar, avatarType: AvatarType.Team)
+            Toolbox.loadAvatarImage(self.teamId!, toImageView: self.imageView_teamAvatar, avatarType: AvatarType.team)
             // show team info
             self.teamObject = Team.formatDatabaseRecordToTeamFormat(teams[0] as! [AnyObject])
 
@@ -129,15 +129,15 @@ class VTTeamGeneralTableViewController: UITableViewController, UIAlertViewDelega
             }
             self.label_createTime.text = self.teamObject?.createdAt
             self.label_location.text = self.teamObject?.location
-            self.button_teamName.setTitle(self.teamObject?.teamName, forState: .Normal)
+            self.button_teamName.setTitle(self.teamObject?.teamName, for: UIControlState())
             if Toolbox.isStringValueValid(self.teamObject?.homeCourt) {
                 if self.teamObject?.homeCourt != "EMPTY" {
                     self.label_homeCourt.text = self.teamObject?.homeCourt
                 }
             }
             if self.isCurrentUserCaptainOfThisTeam == false {   // current user is NOT captain of this team, thus he/she has no right to change team name
-                self.button_teamName.setImage(nil, forState: .Normal)
-                self.button_teamName.enabled = false
+                self.button_teamName.setImage(nil, for: UIControlState())
+                self.button_teamName.isEnabled = false
             }
             self.textView_teamIntroduction.text = self.teamObject?.introduction
             self.label_numberOfPoints.text = String(self.teamObject!.points)
@@ -154,46 +154,46 @@ class VTTeamGeneralTableViewController: UITableViewController, UIAlertViewDelega
         }
     }
     
-    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         // access statically created table cells
-        let cell:UITableViewCell? = super.tableView(tableView, cellForRowAtIndexPath: indexPath)
+        let cell:UITableViewCell? = super.tableView(tableView, cellForRowAt: indexPath)
         // make cells in the first section non-selectable
-        if indexPath.section == 0 {
-            cell?.selectionStyle = .None
-        } else if indexPath.section == 1 {
-            if indexPath.row == 0 {
-                cell?.selectionStyle = .None
-            } else if indexPath.row == 1 {  // the cell of team location
+        if (indexPath as NSIndexPath).section == 0 {
+            cell?.selectionStyle = .none
+        } else if (indexPath as NSIndexPath).section == 1 {
+            if (indexPath as NSIndexPath).row == 0 {
+                cell?.selectionStyle = .none
+            } else if (indexPath as NSIndexPath).row == 1 {  // the cell of team location
                 // only team captain can make change to team location
                 if self.isCurrentUserCaptainOfThisTeam! == false {
-                    self.imageView_locationDetailSign.hidden = true
-                    cell?.selectionStyle = .None
+                    self.imageView_locationDetailSign.isHidden = true
+                    cell?.selectionStyle = .none
                 }
-            } else if indexPath.row == 2 {  // the cell of team home court
+            } else if (indexPath as NSIndexPath).row == 2 {  // the cell of team home court
                 // only team captain can make change to team home court
                 // for non captain members, he/she can select home court row to see home court address showing in a mapview
                 if !Toolbox.isStringValueValid(self.teamObject?.homeCourt) {
                     // if the team home court is NOT set up yet, the non captain member still CANNOT see the home court in map view
-                    self.imageView_homeCourtSign.hidden = true
-                    cell?.selectionStyle = .None
+                    self.imageView_homeCourtSign.isHidden = true
+                    cell?.selectionStyle = .none
                 }
-            } else if indexPath.row == 3 {
+            } else if (indexPath as NSIndexPath).row == 3 {
                 if self.isCurrentUserCaptainOfThisTeam! == false {
-                    self.switch_isRecruiting.enabled = false
+                    self.switch_isRecruiting.isEnabled = false
                 }
-                cell?.selectionStyle = .None
-            } else if indexPath.row == 4 {  // the cell of team introduction
+                cell?.selectionStyle = .none
+            } else if (indexPath as NSIndexPath).row == 4 {  // the cell of team introduction
                 // only team captain can make change to team introduction
                 if self.isCurrentUserCaptainOfThisTeam! == false {
-                    self.imageView_introDetailSign.hidden = true
-                    cell?.selectionStyle = .None
+                    self.imageView_introDetailSign.isHidden = true
+                    cell?.selectionStyle = .none
                 }
             }
             // add a separatorLine for each row/cell in the second section
             let separatorLineView = UIView(frame: CGRect(x: 15, y: 0, width: ScreenSize.width, height: 1))
             separatorLineView.backgroundColor = ColorBackgroundGray
             cell?.contentView.addSubview(separatorLineView)
-        } else if indexPath.section == 2 {
+        } else if (indexPath as NSIndexPath).section == 2 {
             // if current user is captain of this team, button title should be "解散球队"
             // otherwise, button title is by default "退出球队"
             if self.isCurrentUserCaptainOfThisTeam! == true {
@@ -204,77 +204,77 @@ class VTTeamGeneralTableViewController: UITableViewController, UIAlertViewDelega
         return cell!
     }
 
-    override func tableView(tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+    override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
         return TableSectionFooterHeight
     }
     
-    override func tableView(tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+    override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let footerView:UIView = UIView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: 70))
         
         return footerView
     }
     
-    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        self.tableView.deselectRowAtIndexPath(indexPath, animated: true)
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        self.tableView.deselectRow(at: indexPath, animated: true)
         // Only team captain is allowed to change team info
-        if indexPath.section == 1 {
-            if indexPath.row == 1 && self.isCurrentUserCaptainOfThisTeam! == true {
+        if (indexPath as NSIndexPath).section == 1 {
+            if (indexPath as NSIndexPath).row == 1 && self.isCurrentUserCaptainOfThisTeam! == true {
                 // change team location cell tapped, only team captain can change team location
-                self.performSegueWithIdentifier("changeTeamLocationSegue", sender: self)
-            } else if indexPath.row == 2 {  // change or view team home court address
+                self.performSegue(withIdentifier: "changeTeamLocationSegue", sender: self)
+            } else if (indexPath as NSIndexPath).row == 2 {  // change or view team home court address
                 if self.isCurrentUserCaptainOfThisTeam! == true {   // team captain can change home court address
-                    self.performSegueWithIdentifier("changeTeamHomeCourtSegue", sender: self)
+                    self.performSegue(withIdentifier: "changeTeamHomeCourtSegue", sender: self)
                 } else {    // non captain member can check home court address in map view but CANNOT change it
                     if Toolbox.isStringValueValid(self.teamObject?.homeCourt) {
                         // if the home court is set up, non captain member is allowed to see it in mapView
-                        self.performSegueWithIdentifier("homeCourtAddressSegue", sender: self)
+                        self.performSegue(withIdentifier: "homeCourtAddressSegue", sender: self)
                     }
                 }
-            } else if indexPath.row == 3 && self.isCurrentUserCaptainOfThisTeam! == true {  // change team recruiting status
-            } else if indexPath.row == 4 && self.isCurrentUserCaptainOfThisTeam! == true {  // change team introduction
-                self.performSegueWithIdentifier("teamIntroductionSegue", sender: self)
+            } else if (indexPath as NSIndexPath).row == 3 && self.isCurrentUserCaptainOfThisTeam! == true {  // change team recruiting status
+            } else if (indexPath as NSIndexPath).row == 4 && self.isCurrentUserCaptainOfThisTeam! == true {  // change team introduction
+                self.performSegue(withIdentifier: "teamIntroductionSegue", sender: self)
             }
-        } else if indexPath.section == 2 {
+        } else if (indexPath as NSIndexPath).section == 2 {
             // quit or dismiss team cell tapped, remove the cell selection style effect
-            self.tableView.deselectRowAtIndexPath(indexPath, animated: true)
+            self.tableView.deselectRow(at: indexPath, animated: true)
             self.quitOrDismissCurrentTeam()
         }
     }
     
-    @IBAction func toggleRecruitingStatus(sender: AnyObject) {
+    @IBAction func toggleRecruitingStatus(_ sender: AnyObject) {
         var isRecruiting = RecruitStatus.NotRecruiting.rawValue // default recruiting string set to not recruiting
-        if self.switch_isRecruiting.on == true {    // recruiting switch set to is recruiting status
+        if self.switch_isRecruiting.isOn == true {    // recruiting switch set to is recruiting status
             isRecruiting = RecruitStatus.IsRecruiting.rawValue
         }
         let connection = Toolbox.asyncHttpPostToURL(URLUpdateTeamRecruitingStatus, parameters: "teamId=\(self.teamId!)&isRecruiting=\(isRecruiting)", delegate: self)
         if connection == nil {
             Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络连接失败")
         } else {
-            self.indexOfCurrentHttpRequest = .ChangeRecruitingStatus
+            self.indexOfCurrentHttpRequest = .changeRecruitingStatus
             self.HUD = Toolbox.setupCustomProcessingViewWithTitle(title: nil)
         }
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "changeTeamNameSegue" {
-            let destinationViewController = segue.destinationViewController as! VTUpdateTeamNameViewController
+            let destinationViewController = segue.destination as! VTUpdateTeamNameViewController
             destinationViewController.teamName = self.teamObject?.teamName
         } else if segue.identifier == "changeTeamHomeCourtSegue" {
-            let destinationViewController = segue.destinationViewController as! VTUpdateTeamHomeCourtViewController
+            let destinationViewController = segue.destination as! VTUpdateTeamHomeCourtViewController
             destinationViewController.homeCourt = self.teamObject?.homeCourt
             destinationViewController.teamLocation = self.teamObject?.location
             destinationViewController.latitude = self.teamObject?.latitude
             destinationViewController.longitude = self.teamObject?.longitude
         } else if segue.identifier == "homeCourtAddressSegue" {
-            let destinationViewController = segue.destinationViewController as! VTGroundInfoViewController
+            let destinationViewController = segue.destination as! VTGroundInfoViewController
             let groundObject = Ground(data: [
-                "latitude": "\(self.teamObject!.latitude)",
-                "longitude": "\(self.teamObject!.longitude)",
-                "address": "\(self.teamObject!.homeCourt)"
+                "latitude": "\(self.teamObject!.latitude)" as AnyObject,
+                "longitude": "\(self.teamObject!.longitude)" as AnyObject,
+                "address": "\(self.teamObject!.homeCourt)" as AnyObject
             ])
             destinationViewController.groundObject = groundObject
         } else if segue.identifier == "teamIntroductionSegue" {
-            let destinationViewController = segue.destinationViewController as! VTUpdateTeamIntroductionViewController
+            let destinationViewController = segue.destination as! VTUpdateTeamIntroductionViewController
             destinationViewController.introduction = self.teamObject?.introduction
         }
     }
@@ -291,14 +291,14 @@ class VTTeamGeneralTableViewController: UITableViewController, UIAlertViewDelega
         }
     }
     
-    func alertView(alertView: UIAlertView, clickedButtonAtIndex buttonIndex: Int) {
+    func alertView(_ alertView: UIAlertView, clickedButtonAt buttonIndex: Int) {
         if buttonIndex == 1 {   // establish button clicked, execute the action to dismiss team or quit team
             var postDataParameters:String?
             var urlToPostRequestTo:String?
             if self.isCurrentUserCaptainOfThisTeam! == true {   // current user is captain, dismiss team
                 // convert team id to array then a json string since server accepts array with team ids as http request parameters
-                let teamIdJSONData = try! NSJSONSerialization.dataWithJSONObject([self.teamId!], options: .PrettyPrinted)
-                let teamIDJSONString = NSString(data: teamIdJSONData, encoding: NSUTF8StringEncoding)!
+                let teamIdJSONData = try! JSONSerialization.data(withJSONObject: [self.teamId!], options: .prettyPrinted)
+                let teamIDJSONString = NSString(data: teamIdJSONData, encoding: String.Encoding.utf8.rawValue)!
                 
                 postDataParameters = "ids=" + (teamIDJSONString as String)
                 urlToPostRequestTo = URLDismissTeam
@@ -312,17 +312,17 @@ class VTTeamGeneralTableViewController: UITableViewController, UIAlertViewDelega
             if connection == nil {
                 Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络连接失败")
             } else {
-                self.indexOfCurrentHttpRequest = .DismissOrQuitTeam
+                self.indexOfCurrentHttpRequest = .dismissOrQuitTeam
                 self.HUD = Toolbox.setupCustomProcessingViewWithTitle(title: nil)
             }
         }
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.HUD?.hide(true)
         self.HUD = nil
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络超时")
@@ -330,14 +330,14 @@ class VTTeamGeneralTableViewController: UITableViewController, UIAlertViewDelega
         self.responseData = NSMutableData()
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.HUD?.hide(true)
         self.HUD = nil
-        let responseStr = NSString(data: self.responseData!, encoding: NSUTF8StringEncoding)!
+        let responseStr = NSString(data: self.responseData! as Data, encoding: String.Encoding.utf8.rawValue)!
         
-        if self.indexOfCurrentHttpRequest == .DismissOrQuitTeam {
+        if self.indexOfCurrentHttpRequest == .dismissOrQuitTeam {
             if responseStr == "OK" {    // dismiss or quit team succeeded
-                var quitOrDismissTeamNotificationDictionary: [NSObject: AnyObject]?
+                var quitOrDismissTeamNotificationDictionary: [AnyHashable: Any]?
                 if self.isCurrentUserCaptainOfThisTeam! == true {   // dismiss team succeeded
                     quitOrDismissTeamNotificationDictionary = ["reasonUserNoLongerBelongsToTeam": "dismiss", "teamId": self.teamId!]
                 } else {    // quit team succeeded
@@ -348,20 +348,20 @@ class VTTeamGeneralTableViewController: UITableViewController, UIAlertViewDelega
                 // when unwind to the teams table view, need to delete the table cell that corresponds to the deleted/quitted team
                 // remove corresponding team for current user in local database
                 Team.deleteTeamsInLocalDatabaseForCurrentUser([self.teamId!])
-                NSNotificationCenter.defaultCenter().postNotificationName(
-                    "userQuittedOrDismissedTeam", object: quitOrDismissTeamNotificationDictionary)
-                self.performSegueWithIdentifier("unwindToTeamListSegue", sender: self)
+                NotificationCenter.default.post(
+                    name: Notification.Name(rawValue: "userQuittedOrDismissedTeam"), object: quitOrDismissTeamNotificationDictionary)
+                self.performSegue(withIdentifier: "unwindToTeamListSegue", sender: self)
             } else {    // dismiss or quit team failed with error message
                 Toolbox.showCustomAlertViewWithImage("unhappy", title: responseStr as String)
             }
-        } else if self.indexOfCurrentHttpRequest == .ChangeRecruitingStatus {
+        } else if self.indexOfCurrentHttpRequest == .changeRecruitingStatus {
             if responseStr == "OK" {    // update team recruiting status  http request succeeded, now update local database
                 var updatedRecruitingStatus = RecruitStatus.NotRecruiting.rawValue
-                if self.switch_isRecruiting.on == true {
+                if self.switch_isRecruiting.isOn == true {
                     updatedRecruitingStatus = RecruitStatus.IsRecruiting.rawValue
                 }
                 let dbManager = DBManager(databaseFilename: "soccer_ios.sqlite")
-                dbManager.modifyDataInDB("update teams set isRecruiting=? where teamId=?", parameters: [updatedRecruitingStatus, self.teamId!])
+                dbManager?.modifyData(inDB: "update teams set isRecruiting=? where teamId=?", parameters: [updatedRecruitingStatus, self.teamId!])
             } else {    // update recruiting status failed with error message
                 Toolbox.showCustomAlertViewWithImage("unhappy", title: responseStr as String)
             }
@@ -384,7 +384,7 @@ class VTTeamGeneralTableViewController: UITableViewController, UIAlertViewDelega
         }
         self.indexOfCurrentHttpRequest = nil
         self.HUD = nil
-        NSNotificationCenter.defaultCenter().removeObserver(self)
+        NotificationCenter.default.removeObserver(self)
     }
 
 }

@@ -20,14 +20,14 @@ class VTTutorialPageViewController: UIPageViewController, UIPageViewControllerDa
         // set up the first tutorial page content view controller
         let startingViewController = self.viewControllerAtIndex(0)
         let viewControllers = [startingViewController]
-        self.setViewControllers(viewControllers, direction: .Forward, animated: false, completion: nil)
+        self.setViewControllers(viewControllers, direction: .forward, animated: false, completion: nil)
     }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
     }
     
-    func pageViewController(pageViewController: UIPageViewController, viewControllerBeforeViewController viewController: UIViewController) -> UIViewController? {
+    func pageViewController(_ pageViewController: UIPageViewController, viewControllerBefore viewController: UIViewController) -> UIViewController? {
         var index = (viewController as! VTTutorialPageContentViewController).pageIndex
         if index == NSNotFound || index == 0 {
             return nil
@@ -37,7 +37,7 @@ class VTTutorialPageViewController: UIPageViewController, UIPageViewControllerDa
         return self.viewControllerAtIndex(index)
     }
     
-    func pageViewController(pageViewController: UIPageViewController, viewControllerAfterViewController viewController: UIViewController) -> UIViewController? {
+    func pageViewController(_ pageViewController: UIPageViewController, viewControllerAfter viewController: UIViewController) -> UIViewController? {
         var index = (viewController as! VTTutorialPageContentViewController).pageIndex
         if index == NSNotFound {
             return nil
@@ -50,9 +50,9 @@ class VTTutorialPageViewController: UIPageViewController, UIPageViewControllerDa
         return self.viewControllerAtIndex(index)
     }
     
-    func viewControllerAtIndex(index: Int) -> VTTutorialPageContentViewController {
+    func viewControllerAtIndex(_ index: Int) -> VTTutorialPageContentViewController {
         // Create a new tutorial page content view controller
-        let tutorialContentViewController = self.storyboard?.instantiateViewControllerWithIdentifier("tutorialPageContentViewController") as! VTTutorialPageContentViewController
+        let tutorialContentViewController = self.storyboard?.instantiateViewController(withIdentifier: "tutorialPageContentViewController") as! VTTutorialPageContentViewController
         tutorialContentViewController.imageName = self.pageImageNames[index]
         tutorialContentViewController.pageIndex = index
         

@@ -42,30 +42,30 @@ class VTTeamProfileTableViewController: UITableViewController {
         Toolbox.removeBottomShadowOfNavigationBar(self.navigationController!.navigationBar)
         
         // make team introductoin textView not editable
-        self.textView_introduction.editable = false
+        self.textView_introduction.isEditable = false
         
-        let verticalSeparatorForFollowersView = UIView(frame: CGRectMake(ScreenSize.width / 4 - 1, 6, 1, 32))
+        let verticalSeparatorForFollowersView = UIView(frame: CGRect(x: ScreenSize.width / 4 - 1, y: 6, width: 1, height: 32))
         verticalSeparatorForFollowersView.backgroundColor = ColorBackgroundGray
         verticalSeparatorForFollowersView.alpha = 0.6
         self.view_followersBackground.addSubview(verticalSeparatorForFollowersView)
         
-        let verticalSeparatorForWinsView = UIView(frame: CGRectMake(ScreenSize.width / 4 - 1, 6, 1, 32))
+        let verticalSeparatorForWinsView = UIView(frame: CGRect(x: ScreenSize.width / 4 - 1, y: 6, width: 1, height: 32))
         verticalSeparatorForWinsView.backgroundColor = ColorBackgroundGray
         verticalSeparatorForWinsView.alpha = 0.6
         self.view_winsBackground.addSubview(verticalSeparatorForWinsView)
         
-        let verticalSeparatorForLosesView = UIView(frame: CGRectMake(ScreenSize.width / 4 - 1, 6, 1, 32))
+        let verticalSeparatorForLosesView = UIView(frame: CGRect(x: ScreenSize.width / 4 - 1, y: 6, width: 1, height: 32))
         verticalSeparatorForLosesView.backgroundColor = ColorBackgroundGray
         verticalSeparatorForLosesView.alpha = 0.6
         self.view_losesBackground.addSubview(verticalSeparatorForLosesView)
         
-        let verticalSeparatorForTiesView = UIView(frame: CGRectMake(ScreenSize.width / 4 - 1, 6, 1, 32))
+        let verticalSeparatorForTiesView = UIView(frame: CGRect(x: ScreenSize.width / 4 - 1, y: 6, width: 1, height: 32))
         verticalSeparatorForTiesView.backgroundColor = ColorBackgroundGray
         verticalSeparatorForTiesView.alpha = 0.6
         self.view_tiesBackground.addSubview(verticalSeparatorForTiesView)
         
         // Load team information
-        Toolbox.loadAvatarImage(self.teamObject.teamId, toImageView: self.imageView_avatar, avatarType: AvatarType.Team)
+        Toolbox.loadAvatarImage(self.teamObject.teamId, toImageView: self.imageView_avatar, avatarType: AvatarType.team)
         
         self.label_numberOfPoints.text = String(self.teamObject.points)
         self.label_wins.text = String(self.teamObject.wins)
@@ -74,7 +74,7 @@ class VTTeamProfileTableViewController: UITableViewController {
         
         self.label_teamName.text = self.teamObject.teamName
         
-        let teamCreationDate = NSDate(dateTimeString: self.teamObject.createdAt)
+        let teamCreationDate = Date(dateTimeString: self.teamObject.createdAt)
         self.label_createdAt.text = teamCreationDate.getDateString()
         
         self.label_city.text = self.teamObject.location

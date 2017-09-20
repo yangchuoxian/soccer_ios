@@ -21,11 +21,11 @@ class VTChangePhoneViewController: UIViewController {
             self.input_phoneNumber.text = Singleton_CurrentUser.sharedInstance.phoneNumber
         }
         // listen to userInfoUpdated message and handles it by unwinding the navigation controller to the previous view controller
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "updateUserInfo:", name: "userInfoUpdated", object: nil)
-        self.input_phoneNumber.addTarget(self, action: "validateUserInput", forControlEvents: .EditingChanged)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTChangePhoneViewController.updateUserInfo(_:)), name: NSNotification.Name(rawValue: "userInfoUpdated"), object: nil)
+        self.input_phoneNumber.addTarget(self, action: #selector(VTChangePhoneViewController.validateUserInput), for: .editingChanged)
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Appearance.customizeNavigationBar(self, title: "更新手机号码")
     }
@@ -44,15 +44,15 @@ class VTChangePhoneViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
-    func updateUserInfo(notification: NSNotification) {
-        self.navigationController?.popViewControllerAnimated(true)
+    func updateUserInfo(_ notification: Notification) {
+        self.navigationController?.popViewController(animated: true)
     }
 
-    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         self.input_phoneNumber.resignFirstResponder()
     }
     
-    @IBAction func updatePhoneNumber(sender: AnyObject) {
+    @IBAction func updatePhoneNumber(_ sender: AnyObject) {
         let newPhoneNumber = Toolbox.trim(self.input_phoneNumber.text!)
         Singleton_CurrentUser.sharedInstance.updateUserInfo("phoneNumber", infoValue: newPhoneNumber)
     }

@@ -11,11 +11,11 @@ import UIKit
 class VTAttendeesTableViewController: UITableViewController, NSURLConnectionDelegate, NSURLConnectionDataDelegate, UIAlertViewDelegate {
     
     enum HttpRequest {
-        case GetActivityPersonnel
-        case SetupActivityAttendeesStatus
+        case getActivityPersonnel
+        case setupActivityAttendeesStatus
     }
     
-    var hasAttendeesSettled = ActivityAttendeesStatus.NotSettled.rawValue
+    var hasAttendeesSettled = ActivityAttendeesStatus.notSettled.rawValue
     var currentHttpRequest: HttpRequest?
     var acceptedMembers = [User]()
     var rejectedMembers = [User]()
@@ -35,17 +35,17 @@ class VTAttendeesTableViewController: UITableViewController, NSURLConnectionDele
         Appearance.customizeNavigationBar(self, title: "参与人员")
         // add the UIRefreshControl to tableView
         self.refreshControl = Appearance.setupRefreshControl()
-        self.refreshControl?.addTarget(self, action: "refreshAttendees", forControlEvents: UIControlEvents.ValueChanged)
+        self.refreshControl?.addTarget(self, action: #selector(VTAttendeesTableViewController.refreshAttendees), for: UIControlEvents.valueChanged)
         self.tableView.addSubview(self.refreshControl!)
         
         // remove separators of cells for static table view
         self.clearsSelectionOnViewWillAppear = true
-        self.tableView.tableFooterView = UIView(frame: CGRectZero)
+        self.tableView.tableFooterView = UIView(frame: CGRect.zero)
 
         self.tableView.rowHeight = CustomTableRowHeight
         self.navigationController!.navigationBar.topItem!.title = ""
         
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "postActivityAttendeesStatusToServer", name: "establishedRecordActivityAttendeesStatus", object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTAttendeesTableViewController.postActivityAttendeesStatusToServer), name: NSNotification.Name(rawValue: "establishedRecordActivityAttendeesStatus"), object: nil)
         // get team attendees for this activity from server
         self.refreshAttendees()
     }
@@ -57,13 +57,13 @@ class VTAttendeesTableViewController: UITableViewController, NSURLConnectionDele
             // inform the user that the connection failed
             Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络连接失败")
         }
-        self.currentHttpRequest = .GetActivityPersonnel
+        self.currentHttpRequest = .getActivityPersonnel
     }
     
-    override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+    override func numberOfSections(in tableView: UITableView) -> Int {
         // Display a message and an image when the table is empty
         let emptyTableBackgroundView:UIView = UIView(frame: CGRect(x: 0, y: self.tableView.frame.origin.y, width: self.tableView.frame.size.width, height: self.tableView.frame.size.height))
-        emptyTableBackgroundView.tag = TagValue.EmptyTableBackgroundView.rawValue
+        emptyTableBackgroundView.tag = TagValue.emptyTableBackgroundView.rawValue
         
         let imageView_noAttendeeIcon = UIImageView(image: UIImage(named: "no_team"))
         imageView_noAttendeeIcon.frame = CGRect(
@@ -83,7 +83,7 @@ class VTAttendeesTableViewController: UITableViewController, NSURLConnectionDele
         label_noAttendeeHint.text = "暂无参与人员"
         label_noAttendeeHint.textColor = EmptyImageColor
         label_noAttendeeHint.numberOfLines = 0
-        label_noAttendeeHint.textAlignment = .Center
+        label_noAttendeeHint.textAlignment = .center
         label_noAttendeeHint.sizeToFit()
         
         emptyTableBackgroundView.addSubview(imageView_noAttendeeIcon)
@@ -94,20 +94,20 @@ class VTAttendeesTableViewController: UITableViewController, NSURLConnectionDele
             
             // remove all subviews in tableView
             for subView in self.tableView.subviews {
-                if subView.tag == TagValue.EmptyTableBackgroundView.rawValue {
+                if subView.tag == TagValue.emptyTableBackgroundView.rawValue {
                     subView.removeFromSuperview()
                 }
             }
         } else {
             self.tableView.addSubview(emptyTableBackgroundView)
-            self.tableView.sendSubviewToBack(emptyTableBackgroundView)
+            self.tableView.sendSubview(toBack: emptyTableBackgroundView)
         }
         
         // return the number of sections
         return 2
     }
     
-    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if section == 0 {
             return self.acceptedMembers.count
         } else if section == 1 {
@@ -116,7 +116,7 @@ class VTAttendeesTableViewController: UITableViewController, NSURLConnectionDele
         return 0
     }
     
-    override func tableView(tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+    override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         if section == 0 {
             if self.acceptedMembers.count > 0 {
                 return TableSectionHeaderHeight
@@ -129,7 +129,7 @@ class VTAttendeesTableViewController: UITableViewController, NSURLConnectionDele
         return 0
     }
     
-    override func tableView(tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+    override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
         if section == 1 {
             if self.shouldAllowChangeAttendeesParticipatingStatus() {
                 // if current user is captain of the team, and if the activity is already done, 
@@ -144,23 +144,23 @@ class VTAttendeesTableViewController: UITableViewController, NSURLConnectionDele
         }
     }
     
-    override func tableView(tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+    override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         if section == 1 {
-            if self.shouldAllowChangeAttendeesParticipatingStatus() == true && self.hasAttendeesSettled == ActivityAttendeesStatus.NotSettled.rawValue {
-                let footerView = UIView(frame: CGRectMake(0, 0, ScreenSize.width, TableSectionFooterHeightWithButton))
+            if self.shouldAllowChangeAttendeesParticipatingStatus() == true && self.hasAttendeesSettled == ActivityAttendeesStatus.notSettled.rawValue {
+                let footerView = UIView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: TableSectionFooterHeightWithButton))
                 self.button_submitAttendeesParticipatingStatus = Appearance.setupTableFooterButtonWithTitle("提交参与人员名单", backgroundColor: ColorSettledGreen)
-                self.button_submitAttendeesParticipatingStatus?.addTarget(self, action: "submitMembersParticipatingStatus", forControlEvents: .TouchUpInside)
+                self.button_submitAttendeesParticipatingStatus?.addTarget(self, action: #selector(VTAttendeesTableViewController.submitMembersParticipatingStatus), for: .touchUpInside)
                 footerView.addSubview(self.button_submitAttendeesParticipatingStatus!)
                 
                 return footerView
             }
         }
-        let emptyFooterView = UIView(frame: CGRectMake(0, 0, ScreenSize.width, 0))
-        emptyFooterView.backgroundColor = UIColor.clearColor()
+        let emptyFooterView = UIView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: 0))
+        emptyFooterView.backgroundColor = UIColor.clear
         return emptyFooterView
     }
     
-    override func tableView(tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+    override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         if section == 0 {
             if self.acceptedMembers.count > 0 {
                 let view_header = UIView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: TableSectionHeaderHeight))
@@ -181,20 +181,20 @@ class VTAttendeesTableViewController: UITableViewController, NSURLConnectionDele
         return nil
     }
     
-    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        var cell = self.tableView.dequeueReusableCellWithIdentifier("attendeeCell") as UITableViewCell?
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        var cell = self.tableView.dequeueReusableCell(withIdentifier: "attendeeCell") as UITableViewCell?
         if cell == nil {
-            cell = UITableViewCell(style: .Default, reuseIdentifier: "attendeeCell")
+            cell = UITableViewCell(style: .default, reuseIdentifier: "attendeeCell")
         }
         var member: User
-        if indexPath.section == 0 {
-            member = self.acceptedMembers[indexPath.row]
+        if (indexPath as NSIndexPath).section == 0 {
+            member = self.acceptedMembers[(indexPath as NSIndexPath).row]
         } else {
-            member = self.rejectedMembers[indexPath.row]
+            member = self.rejectedMembers[(indexPath as NSIndexPath).row]
         }
         
         let imageView_userAvatar = cell?.contentView.viewWithTag(1) as! UIImageView
-        Toolbox.loadAvatarImage(member.userId, toImageView: imageView_userAvatar, avatarType: AvatarType.Team)
+        Toolbox.loadAvatarImage(member.userId, toImageView: imageView_userAvatar, avatarType: AvatarType.team)
         let label_username = cell?.contentView.viewWithTag(2) as! UILabel
         label_username.text = member.username
         let label_position = cell?.contentView.viewWithTag(3) as! UILabel
@@ -206,17 +206,17 @@ class VTAttendeesTableViewController: UITableViewController, NSURLConnectionDele
             if view.theClassName == "UISwitch" {
                 let switch_attendedOrNot = view as! UISwitch
                 if !self.shouldAllowChangeAttendeesParticipatingStatus() {
-                    label_attendedOrNotHint!.hidden = true
-                    switch_attendedOrNot.hidden = true
+                    label_attendedOrNotHint!.isHidden = true
+                    switch_attendedOrNot.isHidden = true
                 }
-                if self.hasAttendeesSettled == ActivityAttendeesStatus.Settled.rawValue {
-                    label_attendedOrNotHint!.hidden = false
+                if self.hasAttendeesSettled == ActivityAttendeesStatus.settled.rawValue {
+                    label_attendedOrNotHint!.isHidden = false
                     if self.participatedMemberIds.contains(member.userId) {
                         label_attendedOrNotHint!.text = "已参加"
                     } else {
                         label_attendedOrNotHint!.text = "未参加"
                     }
-                    switch_attendedOrNot.hidden = true
+                    switch_attendedOrNot.isHidden = true
                 }
             }
         }
@@ -231,7 +231,7 @@ class VTAttendeesTableViewController: UITableViewController, NSURLConnectionDele
     * If cell is in the rejected members section, hide the hint label and toggle switch as well
     */
     func shouldAllowChangeAttendeesParticipatingStatus() -> Bool {
-        if self.activityStatus != ActivityStatus.Done.rawValue || self.teamCaptainId != Singleton_CurrentUser.sharedInstance.userId {
+        if self.activityStatus != ActivityStatus.done.rawValue || self.teamCaptainId != Singleton_CurrentUser.sharedInstance.userId {
             return false
         } else {
             return true
@@ -240,28 +240,28 @@ class VTAttendeesTableViewController: UITableViewController, NSURLConnectionDele
     
     func submitMembersParticipatingStatus() {
         if #available(iOS 8.0, *) {
-            let alertController = UIAlertController(title: "", message: "参与人员确定后，即无法更改，是否继续？", preferredStyle: .Alert)
-            let actionCancel = UIAlertAction(title: "取消", style: .Cancel) {
+            let alertController = UIAlertController(title: "", message: "参与人员确定后，即无法更改，是否继续？", preferredStyle: .alert)
+            let actionCancel = UIAlertAction(title: "取消", style: .cancel) {
                 ACTION in return
             }
-            let actionOk = UIAlertAction(title: "确定", style: .Default) {
+            let actionOk = UIAlertAction(title: "确定", style: .default) {
                 ACTION in
-                NSNotificationCenter.defaultCenter().postNotificationName(
-                    "establishedRecordActivityAttendeesStatus", object: nil
+                NotificationCenter.default.post(
+                    name: Notification.Name(rawValue: "establishedRecordActivityAttendeesStatus"), object: nil
                 )
                 return
             }
             
             alertController.addAction(actionCancel)
             alertController.addAction(actionOk)
-            presentViewController(alertController, animated: true, completion: nil)
+            present(alertController, animated: true, completion: nil)
         } else {
             Appearance.showAlertView("参与人员确定后，即无法更改，是否继续？", delegate: self)
         }
     }
     
-    func alertView(alertView: UIAlertView, clickedButtonAtIndex buttonIndex: Int) {
-        alertView.dismissWithClickedButtonIndex(buttonIndex, animated: true)
+    func alertView(_ alertView: UIAlertView, clickedButtonAt buttonIndex: Int) {
+        alertView.dismiss(withClickedButtonIndex: buttonIndex, animated: true)
         if buttonIndex == 1 {
             self.postActivityAttendeesStatusToServer()
         }
@@ -269,15 +269,15 @@ class VTAttendeesTableViewController: UITableViewController, NSURLConnectionDele
     
     func postActivityAttendeesStatusToServer() {
         // iterate all table cells to check UISwitch on/off value
-        let numOfRowsInAcceptedMembersSection = self.tableView.numberOfRowsInSection(0)
-        let numOfRowsInRejectedMembersSection = self.tableView.numberOfRowsInSection(1)
+        let numOfRowsInAcceptedMembersSection = self.tableView.numberOfRows(inSection: 0)
+        let numOfRowsInRejectedMembersSection = self.tableView.numberOfRows(inSection: 1)
         if numOfRowsInAcceptedMembersSection > 0 {
             for i in 0...(numOfRowsInAcceptedMembersSection - 1) {
-                let tableCell = self.tableView.cellForRowAtIndexPath(NSIndexPath(forRow: i, inSection: 0))
+                let tableCell = self.tableView.cellForRow(at: IndexPath(row: i, section: 0))
                 for view in tableCell!.contentView.subviews {
                     if view.theClassName == "UISwitch" {
                         let switch_attendedOrNot = view as! UISwitch
-                        if switch_attendedOrNot.on {
+                        if switch_attendedOrNot.isOn {
                             self.participatedMemberIds.append(self.acceptedMembers[i].userId)
                         } else {
                             self.bailedMemberIds.append(self.acceptedMembers[i].userId)
@@ -289,11 +289,11 @@ class VTAttendeesTableViewController: UITableViewController, NSURLConnectionDele
         }
         if numOfRowsInRejectedMembersSection > 0 {
             for i in 0...(numOfRowsInRejectedMembersSection - 1) {
-                let tableCell = self.tableView.cellForRowAtIndexPath(NSIndexPath(forRow: i, inSection: 1))
+                let tableCell = self.tableView.cellForRow(at: IndexPath(row: i, section: 1))
                 for view in tableCell!.contentView.subviews {
                     if view.theClassName == "UISwitch" {
                         let switch_attendedOrNot = view as! UISwitch
-                        if switch_attendedOrNot.on {
+                        if switch_attendedOrNot.isOn {
                             self.participatedMemberIds.append(self.rejectedMembers[i].userId)
                         }
                         break
@@ -314,14 +314,14 @@ class VTAttendeesTableViewController: UITableViewController, NSURLConnectionDele
         } else {
             self.HUD = Toolbox.setupCustomProcessingViewWithTitle(title: nil)
         }
-        self.currentHttpRequest = .SetupActivityAttendeesStatus
+        self.currentHttpRequest = .setupActivityAttendeesStatus
     }
 
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.refreshControl?.endRefreshing()
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络超时")
         self.responseData = nil
@@ -330,23 +330,23 @@ class VTAttendeesTableViewController: UITableViewController, NSURLConnectionDele
         self.HUD = nil
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.refreshControl?.endRefreshing()
         self.HUD?.hide(true)
         self.HUD = nil
-        if self.currentHttpRequest == .GetActivityPersonnel {   // get activity personnel http request
-            let attendeesDictionary = (try? NSJSONSerialization.JSONObjectWithData(self.responseData!, options: .MutableLeaves)) as? [NSObject: AnyObject]
+        if self.currentHttpRequest == .getActivityPersonnel {   // get activity personnel http request
+            let attendeesDictionary = (try? JSONSerialization.jsonObject(with: self.responseData! as Data, options: .mutableLeaves)) as? [AnyHashable: Any]
             if attendeesDictionary != nil { // http request succeeded
                 self.hasAttendeesSettled = attendeesDictionary!["hasAttendeesSettled"] as! Int
                 self.acceptedMembers.removeAll()
                 self.rejectedMembers.removeAll()
                 self.participatedMemberIds.removeAll()
                 self.bailedMemberIds.removeAll()
-                for acceptedMemberDictionary in (attendeesDictionary!["acceptedMembers"] as! [[NSObject: AnyObject]]) {
-                    self.acceptedMembers.append(User(data: acceptedMemberDictionary))
+                for acceptedMemberDictionary in (attendeesDictionary!["acceptedMembers"] as! [[AnyHashable: Any]]) {
+                    self.acceptedMembers.append(User(data: acceptedMemberDictionary as [NSObject : AnyObject]))
                 }
-                for rejectedMemberDictionary in (attendeesDictionary!["rejectedMembers"] as! [[NSObject: AnyObject]]) {
-                    self.rejectedMembers.append(User(data: rejectedMemberDictionary))
+                for rejectedMemberDictionary in (attendeesDictionary!["rejectedMembers"] as! [[AnyHashable: Any]]) {
+                    self.rejectedMembers.append(User(data: rejectedMemberDictionary as [NSObject : AnyObject]))
                 }
                 for participatedMemberId in (attendeesDictionary!["participatedMemberIds"] as! [String]) {
                     self.participatedMemberIds.append(participatedMemberId)
@@ -357,13 +357,13 @@ class VTAttendeesTableViewController: UITableViewController, NSURLConnectionDele
                 self.teamCaptainId = attendeesDictionary!["teamCaptain"] as? String
                 self.tableView.reloadData()
             } else {    // http request failed with error
-                let errorMessage = NSString(data: self.responseData!, encoding: NSUTF8StringEncoding)
+                let errorMessage = NSString(data: self.responseData! as Data, encoding: String.Encoding.utf8.rawValue)
                 Toolbox.showCustomAlertViewWithImage("unhappy", title: errorMessage as! String)
             }
-        } else if self.currentHttpRequest == .SetupActivityAttendeesStatus {    // set up activity attendees status http request
-            let responseStr = NSString(data: self.responseData!, encoding: NSUTF8StringEncoding)
+        } else if self.currentHttpRequest == .setupActivityAttendeesStatus {    // set up activity attendees status http request
+            let responseStr = NSString(data: self.responseData! as Data, encoding: String.Encoding.utf8.rawValue)
             if responseStr == "OK" {
-                self.hasAttendeesSettled = ActivityAttendeesStatus.Settled.rawValue
+                self.hasAttendeesSettled = ActivityAttendeesStatus.settled.rawValue
                 self.tableView.reloadData()
             } else {
                 Toolbox.showCustomAlertViewWithImage("unhappy", title: responseStr as! String)

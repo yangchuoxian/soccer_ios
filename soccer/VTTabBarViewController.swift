@@ -30,28 +30,28 @@ class VTTabBarViewController: UITabBarController {
         self.viewControllers = [tabDiscoverNavigationViewController, tabMessageNavigationViewController, tabTeamNavigationViewController, tabMeNavigationViewController]
         
         tabDiscoverNavigationViewController.tabBarItem = UITabBarItem(title: "发现", image: UIImage(named: "tab_discover"), selectedImage: UIImage(named: "tab_discover"))
-        tabDiscoverNavigationViewController.tabBarItem.tag = TabIndex.Discover.rawValue
+        tabDiscoverNavigationViewController.tabBarItem.tag = TabIndex.discover.rawValue
         tabMessageNavigationViewController.tabBarItem = UITabBarItem(title: "消息", image: UIImage(named: "tab_chat_outline"), selectedImage: UIImage(named: "tab_chat"))
-        tabMessageNavigationViewController.tabBarItem.tag = TabIndex.Message.rawValue
+        tabMessageNavigationViewController.tabBarItem.tag = TabIndex.message.rawValue
         tabTeamNavigationViewController.tabBarItem = UITabBarItem(title: "球队", image: UIImage(named: "tab_football_outline"), selectedImage: UIImage(named: "tab_football"))
-        tabTeamNavigationViewController.tabBarItem.tag = TabIndex.Team.rawValue
+        tabTeamNavigationViewController.tabBarItem.tag = TabIndex.team.rawValue
         tabMeNavigationViewController.tabBarItem = UITabBarItem(title: "我的", image: UIImage(named: "tab_person_outline"), selectedImage: UIImage(named: "tab_person"))
-        tabMeNavigationViewController.tabBarItem.tag = TabIndex.Me.rawValue
+        tabMeNavigationViewController.tabBarItem.tag = TabIndex.me.rawValue
         
         self.totalNumOfUnreadMessages = 0
         let dbManager = DBManager(databaseFilename: "soccer_ios.sqlite")
-        let numOfUnreads = dbManager.loadDataFromDB(
-            "select count(id) from messages where status=? and recipientId=?",
-            parameters: [MessageStatus.Unread.rawValue, Singleton_CurrentUser.sharedInstance.userId!]
+        let numOfUnreads = dbManager?.loadData(
+            fromDB: "select count(id) from messages where status=? and recipientId=?",
+            parameters: [MessageStatus.unread.rawValue, Singleton_CurrentUser.sharedInstance.userId!]
         )
 
-        self.totalNumOfUnreadMessages = numOfUnreads[0][0].integerValue
+        self.totalNumOfUnreadMessages = numOfUnreads[0][0].intValue
         if self.totalNumOfUnreadMessages > 0 {
-            (self.tabBar.items![TabIndex.Message.rawValue] ).badgeValue = "\(Int(self.totalNumOfUnreadMessages))"
+            (self.tabBar.items![TabIndex.message.rawValue] ).badgeValue = "\(Int(self.totalNumOfUnreadMessages))"
         }
         
         // listen to totalNumOfUnreadMessagesChanged message and handles it by updating the badge value on top of tabbar icon
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "updateTotalNumOfUnreadMessages:", name: "totalNumOfUnreadMessagesChanged", object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTTabBarViewController.updateTotalNumOfUnreadMessages(_:)), name: NSNotification.Name(rawValue: "totalNumOfUnreadMessagesChanged"), object: nil)
         self.tabBar.barTintColor = ColorLighterGray
         // set up the tab bar icon color when selected
         UITabBar.appearance().tintColor = ColorSettledGreen
@@ -62,25 +62,25 @@ class VTTabBarViewController: UITabBarController {
         // Dispose of any resources that can be recreated.
     }
 
-    func updateTotalNumOfUnreadMessages(notification: NSNotification) {
-        let actionInfo = notification.object as! [NSObject: AnyObject]
+    func updateTotalNumOfUnreadMessages(_ notification: Notification) {
+        let actionInfo = notification.object as! [AnyHashable: Any]
         if (actionInfo["action"] as! String) == "+" {
-            self.totalNumOfUnreadMessages = self.totalNumOfUnreadMessages + actionInfo["quantity"]!.integerValue
+            self.totalNumOfUnreadMessages = self.totalNumOfUnreadMessages + (actionInfo["quantity"]! as AnyObject).intValue
         } else {
-            self.totalNumOfUnreadMessages = self.totalNumOfUnreadMessages - actionInfo["quantity"]!.integerValue
+            self.totalNumOfUnreadMessages = self.totalNumOfUnreadMessages - (actionInfo["quantity"]! as AnyObject).intValue
         }
         if self.totalNumOfUnreadMessages > 0 {
-            (self.tabBar.items![TabIndex.Message.rawValue] ).badgeValue = "\(self.totalNumOfUnreadMessages)"
+            (self.tabBar.items![TabIndex.message.rawValue] ).badgeValue = "\(self.totalNumOfUnreadMessages)"
         } else {
-            (self.tabBar.items![TabIndex.Message.rawValue] ).badgeValue = nil
+            (self.tabBar.items![TabIndex.message.rawValue] ).badgeValue = nil
         }
     }
     
-    override func tabBar(tabBar: UITabBar, didSelectItem item: UITabBarItem) {
+    override func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
     }
     
-    override func viewControllerForUnwindSegueAction(action: Selector, fromViewController: UIViewController, withSender sender: AnyObject?) -> UIViewController? {
-        return self.selectedViewController?.viewControllerForUnwindSegueAction(action, fromViewController: fromViewController, withSender: sender)
+    override func forUnwindSegueAction(_ action: Selector, from fromViewController: UIViewController, withSender sender: Any?) -> UIViewController? {
+        return self.selectedViewController?.forUnwindSegueAction(action, from: fromViewController, withSender: sender)
     }
     
 }

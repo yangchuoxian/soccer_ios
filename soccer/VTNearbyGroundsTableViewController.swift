@@ -28,7 +28,7 @@ class VTNearbyGroundsTableViewController: UITableViewController, NSURLConnection
         self.tableView.rowHeight = CustomTableRowHeight
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Appearance.customizeNavigationBar(self, title: "附近球场")
     }
@@ -39,16 +39,16 @@ class VTNearbyGroundsTableViewController: UITableViewController, NSURLConnection
 
     // MARK: - Table view data source
 
-    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return self.groundsList.count
     }
     
-    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        var cell = self.tableView.dequeueReusableCellWithIdentifier(self.tableCellIdentifier) as UITableViewCell?
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        var cell = self.tableView.dequeueReusableCell(withIdentifier: self.tableCellIdentifier) as UITableViewCell?
         if cell == nil {
-            cell = UITableViewCell(style: .Default, reuseIdentifier: self.tableCellIdentifier)
+            cell = UITableViewCell(style: .default, reuseIdentifier: self.tableCellIdentifier)
         }
-        let groundInCurrentRow = self.groundsList[indexPath.row]
+        let groundInCurrentRow = self.groundsList[(indexPath as NSIndexPath).row]
         // set up the ground info labels
         let label_groundName = cell!.contentView.viewWithTag(1) as! UILabel
         let label_groundAddress = cell!.contentView.viewWithTag(2) as! UILabel
@@ -64,14 +64,14 @@ class VTNearbyGroundsTableViewController: UITableViewController, NSURLConnection
         return cell!
     }
     
-    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        self.selectedGround = self.groundsList[indexPath.row]
-        self.performSegueWithIdentifier("groundInfoSegue", sender: self)
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        self.selectedGround = self.groundsList[(indexPath as NSIndexPath).row]
+        self.performSegue(withIdentifier: "groundInfoSegue", sender: self)
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "groundInfoSegue" {
-            let destinationViewController = segue.destinationViewController as! VTGroundInfoViewController
+            let destinationViewController = segue.destination as! VTGroundInfoViewController
             destinationViewController.groundObject = self.selectedGround
         }
     }
@@ -88,11 +88,11 @@ class VTNearbyGroundsTableViewController: UITableViewController, NSURLConnection
         }
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.isLoadingNextPage = false
         // set tableView footer to replace activity indicator with next page button
         self.setTableFooterView()
@@ -101,9 +101,9 @@ class VTNearbyGroundsTableViewController: UITableViewController, NSURLConnection
         self.responseData = NSMutableData()
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.isLoadingNextPage = false
-        let responseDictionary = (try? NSJSONSerialization.JSONObjectWithData(self.responseData!, options: .MutableLeaves)) as? [NSObject: AnyObject]
+        let responseDictionary = (try? JSONSerialization.jsonObject(with: self.responseData! as Data, options: .mutableLeaves)) as? [AnyHashable: Any]
         self.responseData = nil
         self.responseData = NSMutableData()
         
@@ -111,19 +111,19 @@ class VTNearbyGroundsTableViewController: UITableViewController, NSURLConnection
             Toolbox.showCustomAlertViewWithImage("unhappy", title: "获取失败")
             return
         }
-        self.totalNearbyGrounds = responseDictionary!["total"]!.integerValue
+        self.totalNearbyGrounds = (responseDictionary!["total"]! as AnyObject).intValue
         let models = responseDictionary!["models"] as? [[String: AnyObject]]
         if self.totalNearbyGrounds == 0 || models == nil {
             Toolbox.showCustomAlertViewWithImage("unhappy", title: "没有找到更多球场")
             return
         }
-        self.currentPage++
+        self.currentPage += 1
         for groundModel in models! {
             let groundObject = Ground(data: groundModel)
             self.groundsList.append(groundObject)
             // insert row in table view
             self.tableView.beginUpdates()
-            self.tableView.insertRowsAtIndexPaths([NSIndexPath(forRow: self.groundsList.count - 1, inSection: 0)], withRowAnimation: .Fade)
+            self.tableView.insertRows(at: [IndexPath(row: self.groundsList.count - 1, section: 0)], with: .fade)
             self.tableView.endUpdates()
         }
         // set tableView footer to replace activity indicator with next page button

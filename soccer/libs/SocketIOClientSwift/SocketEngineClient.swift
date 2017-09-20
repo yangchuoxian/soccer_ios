@@ -29,8 +29,8 @@ import Foundation
     var socketURL: String {get}
     var secure: Bool {get}
     
-    func didError(reason: AnyObject)
-    func engineDidClose(reason: String)
-    func parseSocketMessage(msg: String)
-    func parseBinaryData(data: NSData)
+    func didError(_ reason: AnyObject)
+    func engineDidClose(_ reason: String)
+    func parseSocketMessage(_ msg: String)
+    func parseBinaryData(_ data: Data)
 }

@@ -73,12 +73,12 @@ class Message: NSObject {
     
     - returns: the decided message group id
     */
-    static func decideMessageGroupId(senderUserId: String, receiverUserId: String, messageType: Int) -> Int {
+    static func decideMessageGroupId(_ senderUserId: String, receiverUserId: String, messageType: Int) -> Int {
         // conversation id starts with 13, bigger than all message type values
-        var messageGroupId = MessageType.UserFeedback.rawValue + 1
+        var messageGroupId = MessageType.userFeedback.rawValue + 1
         
         let dbManager = DBManager(databaseFilename: "soccer_ios.sqlite")
-        if messageType == MessageType.OneToOneMessage.rawValue {
+        if messageType == MessageType.oneToOneMessage.rawValue {
             /**
              * Each conversation is a message group and takes a unique message group id
              */
@@ -89,33 +89,33 @@ class Message: NSObject {
                 secondUserId = senderUserId
             }
             // one to one message, see if this message belongs to any existing conversation
-            let conversationMessage = dbManager.loadDataFromDB(
-                "select * from messages where type=? and (senderId=? or recipientId=?) limit 1",
+            let conversationMessage = dbManager?.loadData(
+                fromDB: "select * from messages where type=? and (senderId=? or recipientId=?) limit 1",
                 parameters: [messageType, secondUserId, secondUserId]
             )
             
-            if conversationMessage.count > 0 {  // conversation message exists
-                messageGroupId = conversationMessage[0][MessageTableIndex.MessageGroupId.rawValue].integerValue
+            if (conversationMessage?.count)! > 0 {  // conversation message exists
+                messageGroupId = conversationMessage[0][MessageTableIndex.messageGroupId.rawValue].intValue
             } else {    // this is a new conversation, try to find the maximum messageGroupId of conversation exists in messages table
-                let maxMessageGroupIdResult = dbManager.loadDataFromDB(
-                    "select max(messageGroupId) from messages where type=?",
+                let maxMessageGroupIdResult = dbManager?.loadData(
+                    fromDB: "select max(messageGroupId) from messages where type=?",
                     parameters: [messageType]
                 )
-                if maxMessageGroupIdResult.count > 0 {  // max messageGroupId found
-                    messageGroupId = maxMessageGroupIdResult[0][0].integerValue + 1
+                if (maxMessageGroupIdResult?.count)! > 0 {  // max messageGroupId found
+                    messageGroupId = maxMessageGroupIdResult[0][0].intValue + 1
                 } else {    // no conversation in messages table yet, set messageGroupId to 8
                     messageGroupId = messageGroupId + 1
                 }
             }
-        } else if messageType == MessageType.Invitation.rawValue ||
-            messageType == MessageType.Application.rawValue ||
-            messageType == MessageType.ActivityRequest.rawValue ||
-            messageType == MessageType.Challenge.rawValue {
+        } else if messageType == MessageType.invitation.rawValue ||
+            messageType == MessageType.application.rawValue ||
+            messageType == MessageType.activityRequest.rawValue ||
+            messageType == MessageType.challenge.rawValue {
             // request messages that require user response to either accept or reject
-            messageGroupId = MessageGroupIndex.Request.rawValue
+            messageGroupId = MessageGroupIndex.request.rawValue
         } else {
             // system messages just to notify user of something happened
-            messageGroupId = MessageGroupIndex.SystemMessage.rawValue
+            messageGroupId = MessageGroupIndex.systemMessage.rawValue
         }
         return messageGroupId
     }
@@ -127,18 +127,18 @@ class Message: NSObject {
     
     - returns: 0 for success, database error code for failure
     */
-    static func saveMessageInDatabase(message: Message) -> Int {
+    static func saveMessageInDatabase(_ message: Message) -> Int {
         // first off, check if such message with the messageId exists in local database already, if so, DO NOT insert it into database, simply return its messageGroupId
         let dbManager = DBManager(databaseFilename: "soccer_ios.sqlite")
-        let existedMessage = dbManager.loadDataFromDB(
-            "select * from messages where messageId=?",
+        let existedMessage = dbManager?.loadData(
+            fromDB: "select * from messages where messageId=?",
             parameters: [message.messageId]
         )
-        if existedMessage.count > 0 {   // message already exists
+        if (existedMessage?.count)! > 0 {   // message already exists
             return 0
         }
-        dbManager.modifyDataInDB(
-            "insert into messages(senderId, recipientId, type, content, status, teamSenderId, forActivityId, senderName, receiverName, createdAt, messageGroupId, messageId, teamReceiverId) values(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        dbManager?.modifyData(
+            inDB: "insert into messages(senderId, recipientId, type, content, status, teamSenderId, forActivityId, senderName, receiverName, createdAt, messageGroupId, messageId, teamReceiverId) values(?,?,?,?,?,?,?,?,?,?,?,?,?)",
             parameters: [
                 message.from,
                 message.to,
@@ -155,24 +155,24 @@ class Message: NSObject {
                 message.toTeam
             ]
         )
-        if dbManager.affectedRows == 0 {    // query failed, no database row affected
+        if dbManager?.affectedRows == 0 {    // query failed, no database row affected
             // get current view controller
-            return ErrorCode.LocalDatabaseError.rawValue
+            return ErrorCode.localDatabaseError.rawValue
         } else {
             if Singleton_CurrentUser.sharedInstance.userId == message.to {    // This new saved message in database is sent TO me, NOT sent BY me, i.e. I'm the receiver
                 message.numOfUnreadMessagesInTheGroup = message.numOfUnreadMessagesInTheGroup + 1
-                NSNotificationCenter.defaultCenter().postNotificationName(
-                    "receivedNewMessageAndSavedInLocalDatabase",
+                NotificationCenter.default.post(
+                    name: Notification.Name(rawValue: "receivedNewMessageAndSavedInLocalDatabase"),
                     object: message
                 )
                 // notify VTMainTabBarViewController that the number of total unread messages should increase 1
-                NSNotificationCenter.defaultCenter().postNotificationName(
-                    "totalNumOfUnreadMessagesChanged",
+                NotificationCenter.default.post(
+                    name: Notification.Name(rawValue: "totalNumOfUnreadMessagesChanged"),
                     object: ["action": "+", "quantity": "1"]
                 )
             } else {    // This new saved message in local database was sent BY me, i.e. I'm the sender
-                NSNotificationCenter.defaultCenter().postNotificationName(
-                    "sentMessageAndSavedInLocalDatabase",
+                NotificationCenter.default.post(
+                    name: Notification.Name(rawValue: "sentMessageAndSavedInLocalDatabase"),
                     object: message
                 )
             }
@@ -186,29 +186,29 @@ class Message: NSObject {
     - parameter messageIds: ids of messages that needs to change status
     - parameter status:     the status index to change to
     */
-    static func changeMessagesStatus(messageIds: [String], status: Int) {
+    static func changeMessagesStatus(_ messageIds: [String], status: Int) {
         let dbManager = DBManager(databaseFilename: "soccer_ios.sqlite")
         if messageIds.count == 0 {  // no messages need to be changed
             return
         }
         var queryParams: [AnyObject] = []
-        queryParams.append(status)
+        queryParams.append(status as AnyObject)
         var messageIdsDatabaseParamString = ""
         for i in 0...(messageIds.count - 1) {
             messageIdsDatabaseParamString += "?"
             if i != (messageIds.count - 1) {
                 messageIdsDatabaseParamString += ","
             }
-            queryParams.append(messageIds[i])
+            queryParams.append(messageIds[i] as AnyObject)
         }
-        dbManager.modifyDataInDB(
-            "update messages set status=? where messageId in (\(messageIdsDatabaseParamString))",
+        dbManager?.modifyData(
+            inDB: "update messages set status=? where messageId in (\(messageIdsDatabaseParamString))",
             parameters: queryParams
         )
         // notify VTMainTabBarViewController that the number of total unread messages should decrease by dbManager.affectedRows
-        NSNotificationCenter.defaultCenter().postNotificationName(
-            "totalNumOfUnreadMessagesChanged",
-            object: ["action": "-", "quantity": "\(Int(dbManager.affectedRows))"]
+        NotificationCenter.default.post(
+            name: Notification.Name(rawValue: "totalNumOfUnreadMessagesChanged"),
+            object: ["action": "-", "quantity": "\(Int((dbManager?.affectedRows)!))"]
         )
         // ask server to change all messages in this message group to already read
         let postDataParams = "messageIds=" + Toolbox.convertDictionaryOrArrayToJSONString(messageIds) + "&status=\(status)"
@@ -223,21 +223,21 @@ class Message: NSObject {
     
     - returns: the instantiated message object
     */
-    static func formatDatabaseRecordToMessageFormat(databaseRecord: [String]) -> Message {
+    static func formatDatabaseRecordToMessageFormat(_ databaseRecord: [String]) -> Message {
         let messageDictionary = [
-            "from": databaseRecord[MessageTableIndex.From.rawValue],
-            "to": databaseRecord[MessageTableIndex.To.rawValue],
-            "type": databaseRecord[MessageTableIndex.MessageType.rawValue],
-            "content": databaseRecord[MessageTableIndex.Content.rawValue],
-            "status": databaseRecord[MessageTableIndex.Status.rawValue],
-            "fromTeam": databaseRecord[MessageTableIndex.FromTeam.rawValue],
-            "forActivity": databaseRecord[MessageTableIndex.ForActivity.rawValue],
-            "senderName": databaseRecord[MessageTableIndex.SenderName.rawValue],
-            "receiverName": databaseRecord[MessageTableIndex.ReceiverName.rawValue],
-            "createdAt": databaseRecord[MessageTableIndex.CreatedAt.rawValue],
-            "messageGroupId": databaseRecord[MessageTableIndex.MessageGroupId.rawValue],
-            "messageId": databaseRecord[MessageTableIndex.MessageId.rawValue],
-            "toTeam": databaseRecord[MessageTableIndex.ToTeam.rawValue]
+            "from": databaseRecord[MessageTableIndex.from.rawValue],
+            "to": databaseRecord[MessageTableIndex.to.rawValue],
+            "type": databaseRecord[MessageTableIndex.messageType.rawValue],
+            "content": databaseRecord[MessageTableIndex.content.rawValue],
+            "status": databaseRecord[MessageTableIndex.status.rawValue],
+            "fromTeam": databaseRecord[MessageTableIndex.fromTeam.rawValue],
+            "forActivity": databaseRecord[MessageTableIndex.forActivity.rawValue],
+            "senderName": databaseRecord[MessageTableIndex.senderName.rawValue],
+            "receiverName": databaseRecord[MessageTableIndex.receiverName.rawValue],
+            "createdAt": databaseRecord[MessageTableIndex.createdAt.rawValue],
+            "messageGroupId": databaseRecord[MessageTableIndex.messageGroupId.rawValue],
+            "messageId": databaseRecord[MessageTableIndex.messageId.rawValue],
+            "toTeam": databaseRecord[MessageTableIndex.toTeam.rawValue]
         ]
         
         return Message(messageInfo: messageDictionary)
@@ -250,14 +250,14 @@ class Message: NSObject {
     
     - returns: the count of unread messages in that message group
     */
-    static func getNumberOfUnreadMessagesForMessageGroup(messageGroupId: Int) -> Int {
+    static func getNumberOfUnreadMessagesForMessageGroup(_ messageGroupId: Int) -> Int {
         // count number of unread messages in this message gruop
         let dbManager = DBManager(databaseFilename: "soccer_ios.sqlite")
-        let numOfUnreadMessagesInThisMessageGroup = dbManager.loadDataFromDB(
-            "select count(id) from messages where messageGroupId=? and status=? and recipientId=?",
-            parameters: [messageGroupId, MessageStatus.Unread.rawValue, Singleton_CurrentUser.sharedInstance.userId!]
+        let numOfUnreadMessagesInThisMessageGroup = dbManager?.loadData(
+            fromDB: "select count(id) from messages where messageGroupId=? and status=? and recipientId=?",
+            parameters: [messageGroupId, MessageStatus.unread.rawValue, Singleton_CurrentUser.sharedInstance.userId!]
         )
-        return numOfUnreadMessagesInThisMessageGroup[0][0].integerValue
+        return numOfUnreadMessagesInThisMessageGroup[0][0].intValue
     }
     
     /**
@@ -266,33 +266,33 @@ class Message: NSObject {
     
     - parameter messageInfo: the attached message info comes with the system message
     */
-    static func sendLocalNotificationRegardingSystemMessage(messageInfo: [String: AnyObject]) {
-        let metaData = messageInfo["metaData"] as? [NSObject: AnyObject]
+    static func sendLocalNotificationRegardingSystemMessage(_ messageInfo: [String: AnyObject]) {
+        let metaData = messageInfo["metaData"] as? [AnyHashable: Any]
         let message = Message(messageInfo: messageInfo)
         switch message.type {
-        case MessageType.TeamMemberRemoved.rawValue:
-            NSNotificationCenter.defaultCenter().postNotificationName(
-                "receivedSystemMessage_teamMemberRemoved", object: metaData
+        case MessageType.teamMemberRemoved.rawValue:
+            NotificationCenter.default.post(
+                name: Notification.Name(rawValue: "receivedSystemMessage_teamMemberRemoved"), object: metaData
             )
             break
-        case MessageType.TeamCaptainChanged.rawValue:
-            NSNotificationCenter.defaultCenter().postNotificationName(
-                "receivedSystemMessage_teamCaptainChanged", object: metaData
+        case MessageType.teamCaptainChanged.rawValue:
+            NotificationCenter.default.post(
+                name: Notification.Name(rawValue: "receivedSystemMessage_teamCaptainChanged"), object: metaData
             )
             break
-        case MessageType.TeamDismissed.rawValue:
-            NSNotificationCenter.defaultCenter().postNotificationName(
-                "receivedSystemMessage_teamDismissed", object: metaData
+        case MessageType.teamDismissed.rawValue:
+            NotificationCenter.default.post(
+                name: Notification.Name(rawValue: "receivedSystemMessage_teamDismissed"), object: metaData
             )
             break
-        case MessageType.NewTeamMemberJoined.rawValue:
-            NSNotificationCenter.defaultCenter().postNotificationName(
-                "receivedSystemMessage_newMemberJoined", object: metaData
+        case MessageType.newTeamMemberJoined.rawValue:
+            NotificationCenter.default.post(
+                name: Notification.Name(rawValue: "receivedSystemMessage_newMemberJoined"), object: metaData
             )
             break
-        case MessageType.RequestRefused.rawValue:
-            NSNotificationCenter.defaultCenter().postNotificationName(
-                "receivedSystemMessage_requestRefused", object: metaData)
+        case MessageType.requestRefused.rawValue:
+            NotificationCenter.default.post(
+                name: Notification.Name(rawValue: "receivedSystemMessage_requestRefused"), object: metaData)
         default:
             break
         }

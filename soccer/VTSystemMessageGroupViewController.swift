@@ -21,35 +21,35 @@ class VTSystemMessageGroupViewController: UIViewController, UIScrollViewDelegate
     override func viewDidLoad() {
         super.viewDidLoad()
         // listen to the system notificatoin that says new message received
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "handleSavedMessageInDatabase:", name: "receivedNewMessageAndSavedInLocalDatabase", object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTSystemMessageGroupViewController.handleSavedMessageInDatabase(_:)), name: NSNotification.Name(rawValue: "receivedNewMessageAndSavedInLocalDatabase"), object: nil)
         
-        self.scrollView.userInteractionEnabled = true
-        self.scrollView.exclusiveTouch = true
+        self.scrollView.isUserInteractionEnabled = true
+        self.scrollView.isExclusiveTouch = true
         self.scrollView.canCancelContentTouches = true
         self.scrollView.delaysContentTouches = true
         self.scrollView.delegate = self
 
-        self.topActivityIndicator = UIActivityIndicatorView(activityIndicatorStyle: .Gray)
-        self.topActivityIndicator?.frame = CGRectMake(ScreenSize.width / 2 - 10, 0, 20, 20)
+        self.topActivityIndicator = UIActivityIndicatorView(activityIndicatorStyle: .gray)
+        self.topActivityIndicator?.frame = CGRect(x: ScreenSize.width / 2 - 10, y: 0, width: 20, height: 20)
         self.topActivityIndicator?.hidesWhenStopped = true
         self.scrollView.addSubview(self.topActivityIndicator!)
         
         // start activityIndicator animation indicating fetcing database and rendering UI in progress
-        self.topActivityIndicator!.hidden = false
+        self.topActivityIndicator!.isHidden = false
         self.topActivityIndicator!.startAnimating()
         
         let dbManager = DBManager(databaseFilename: "soccer_ios.sqlite")
-        let countTotalMessagesInThisGroup = dbManager.loadDataFromDB(
-            "select count(id) from messages where messageGroupId=? and recipientId=?", parameters: [self.messageGroupId, Singleton_CurrentUser.sharedInstance.userId!])
-        self.numberOfTotalSystemMessages = countTotalMessagesInThisGroup[0][0].integerValue
+        let countTotalMessagesInThisGroup = dbManager?.loadData(
+            fromDB: "select count(id) from messages where messageGroupId=? and recipientId=?", parameters: [self.messageGroupId, Singleton_CurrentUser.sharedInstance.userId!])
+        self.numberOfTotalSystemMessages = countTotalMessagesInThisGroup?[0][0].intValue
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Appearance.customizeNavigationBar(self, title: "系统消息")
     }
     
-    func handleSavedMessageInDatabase(notification: NSNotification) {
+    func handleSavedMessageInDatabase(_ notification: Notification) {
         let newSystemMessage = notification.object as! Message
         if self.messageGroupId == newSystemMessage.messageGroupId {
             // play message receive sound
@@ -63,16 +63,16 @@ class VTSystemMessageGroupViewController: UIViewController, UIScrollViewDelegate
             self.numberOfTotalSystemMessages = self.numberOfTotalSystemMessages + 1
             
             // mark these messages as read in local database and server database
-            Message.changeMessagesStatus([newSystemMessage.messageId], status: MessageStatus.Read.rawValue)
+            Message.changeMessagesStatus([newSystemMessage.messageId], status: MessageStatus.read.rawValue)
             // notify VTMessageGroupsTableViewController that the number of unread messages for this message group should be updated
-            NSNotificationCenter.defaultCenter().postNotificationName(
-                "numOfUnreadMessagesInOneMessageGroupChanged",
+            NotificationCenter.default.post(
+                name: Notification.Name(rawValue: "numOfUnreadMessagesInOneMessageGroupChanged"),
                 object: String(self.messageGroupId)
             )
         }
     }
     
-    func addSystemMessageSequentially(message: Message) {
+    func addSystemMessageSequentially(_ message: Message) {
         let currentSystemMessageIndex = self.systemMessages.count
         let systemMessageView = self.addMessageView(message, index: currentSystemMessageIndex)
         // add the message and its view height together as a dictionary object into requests
@@ -83,7 +83,7 @@ class VTSystemMessageGroupViewController: UIViewController, UIScrollViewDelegate
         self.systemMessages.append(systemMessageInfo)
     }
     
-    func addMessageView(message: Message, index: Int) -> VTSystemMessageView {
+    func addMessageView(_ message: Message, index: Int) -> VTSystemMessageView {
         var topOffset = ActivityIndicatorViewHeight
         // calculate the top offset. i.e. the vertical position where this request view should be added
         var existingSystemMessageView: VTSystemMessageView?
@@ -102,34 +102,34 @@ class VTSystemMessageGroupViewController: UIViewController, UIScrollViewDelegate
         self.isLoadingMessageFromLocalDatabase = true
         let dbManager = DBManager(databaseFilename: "soccer_ios.sqlite")
         // get messages from database based on message group index
-        let paginatedMessageResults = dbManager.loadDataFromDB(
-            "select * from messages where messageGroupId=? and recipientId=? order by createdAt desc limit ? offset ?",
+        let paginatedMessageResults = dbManager?.loadData(
+            fromDB: "select * from messages where messageGroupId=? and recipientId=? order by createdAt desc limit ? offset ?",
             parameters: [
                 self.messageGroupId,
                 Singleton_CurrentUser.sharedInstance.userId!,
-                Pagination.NumOfMessagesPerPage.rawValue,
+                Pagination.numOfMessagesPerPage.rawValue,
                 self.systemMessages.count
             ]
         )
         var unreadMessageIds = [String]()
         var tempSystemMessages = [Message]()
-        for messageDatabaseRecord in Array(paginatedMessageResults.reverse()) {    // iterate the paginatedMessagesResults REVERSELY
+        for messageDatabaseRecord in Array(paginatedMessageResults.reversed()) {    // iterate the paginatedMessagesResults REVERSELY
             let currentMessage = Message.formatDatabaseRecordToMessageFormat(messageDatabaseRecord as! [String])
             tempSystemMessages.append(currentMessage)
             
             // add the unread message id into unreadMessageIds
             // since these unread messages are now read
             // and should be marked as READ in both local database and server database
-            if currentMessage.status == MessageStatus.Unread.rawValue {
+            if currentMessage.status == MessageStatus.unread.rawValue {
                 unreadMessageIds.append(currentMessage.messageId)
             }
         }
         if unreadMessageIds.count > 0 {
             // mark these messages as read in local database and server database
-            Message.changeMessagesStatus(unreadMessageIds, status: MessageStatus.Read.rawValue)
+            Message.changeMessagesStatus(unreadMessageIds, status: MessageStatus.read.rawValue)
             // notify VTGroupsOfMessagesTableViewController taht the number of unread messages for specific message group should be updated
-            NSNotificationCenter.defaultCenter().postNotificationName(
-                "numOfUnreadMessagesInOneMessageGroupChanged",
+            NotificationCenter.default.post(
+                name: Notification.Name(rawValue: "numOfUnreadMessagesInOneMessageGroupChanged"),
                 object: String(self.messageGroupId)
             )
         }
@@ -149,25 +149,25 @@ class VTSystemMessageGroupViewController: UIViewController, UIScrollViewDelegate
             // inserting the new fetched message results
             // before the existing ones in REVERSE order
             var totalOffset = -NavigationbarHeight - ToolbarHeight
-            for tempSystemMessage in Array(tempSystemMessages.reverse()) {
+            for tempSystemMessage in Array(tempSystemMessages.reversed()) {
                 // show the system message
                 let systemMessageView = self.addMessageView(tempSystemMessage, index: 0)
                 let systemMessageInfo = [
                     "message": tempSystemMessage,
                     "systemMessageView": systemMessageView
                 ]
-                self.systemMessages.insert(systemMessageInfo, atIndex: 0)
+                self.systemMessages.insert(systemMessageInfo, at: 0)
                 totalOffset = totalOffset + systemMessageView.viewHeight! + RequestViewVerticalMargin
                 
                 // move down the existing request views with the calculated offset
                 var existingSystemMessageView: VTSystemMessageView?
                 for i in 1...(self.systemMessages.count - 1) {
                     existingSystemMessageView = self.systemMessages[i]["systemMessageView"] as? VTSystemMessageView
-                    existingSystemMessageView!.frame = CGRectMake(
-                        existingSystemMessageView!.frame.origin.x,
-                        existingSystemMessageView!.frame.origin.y + systemMessageView.viewHeight! + RequestViewVerticalMargin,
-                        existingSystemMessageView!.frame.size.width,
-                        existingSystemMessageView!.frame.size.height
+                    existingSystemMessageView!.frame = CGRect(
+                        x: existingSystemMessageView!.frame.origin.x,
+                        y: existingSystemMessageView!.frame.origin.y + systemMessageView.viewHeight! + RequestViewVerticalMargin,
+                        width: existingSystemMessageView!.frame.size.width,
+                        height: existingSystemMessageView!.frame.size.height
                     )
                 }
             }
@@ -191,7 +191,7 @@ class VTSystemMessageGroupViewController: UIViewController, UIScrollViewDelegate
             totalHeight = totalHeight + existingSystemMessageView!.viewHeight! + RequestViewVerticalMargin
         }
         if self.scrollView.contentSize.height < totalHeight {
-            self.scrollView.contentSize = CGSizeMake(ScreenSize.width, totalHeight)
+            self.scrollView.contentSize = CGSize(width: ScreenSize.width, height: totalHeight)
         }
     }
     
@@ -200,7 +200,7 @@ class VTSystemMessageGroupViewController: UIViewController, UIScrollViewDelegate
         self.scrollView.setContentOffset(bottomOffset, animated: true)
     }
     
-    func scrollViewDidScroll(scrollView: UIScrollView) {
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
         if scrollView.contentOffset.y == (-NavigationbarHeight - ToolbarHeight) && !self.isLoadingMessageFromLocalDatabase {
             // scrollView has scrolled to top AND not currently FETCHING messages from database/render UI
             if self.systemMessages.count < self.numberOfTotalSystemMessages {  // still more earlier messages
@@ -220,7 +220,7 @@ class VTSystemMessageGroupViewController: UIViewController, UIScrollViewDelegate
         if self.scrollView != nil {
             self.scrollView.delegate = nil
         }
-        self.systemMessages.removeAll(keepCapacity: false)
+        self.systemMessages.removeAll(keepingCapacity: false)
         self.topActivityIndicator = nil
     }
 

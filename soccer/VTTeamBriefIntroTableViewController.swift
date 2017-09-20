@@ -37,30 +37,30 @@ import UIKit
         Toolbox.removeBottomShadowOfNavigationBar(self.navigationController!.navigationBar)
         
         // make team introduction textView not editable
-        self.textView_introduction.editable = false
+        self.textView_introduction.isEditable = false
         
-        let verticalSeparatorForFollowersView = UIView(frame: CGRectMake(ScreenSize.width / 4 - 1, 6, 1, 32))
+        let verticalSeparatorForFollowersView = UIView(frame: CGRect(x: ScreenSize.width / 4 - 1, y: 6, width: 1, height: 32))
         verticalSeparatorForFollowersView.backgroundColor = ColorBackgroundGray
         verticalSeparatorForFollowersView.alpha = 0.6
         self.view_followersBackground.addSubview(verticalSeparatorForFollowersView)
         
-        let verticalSeparatorForWinsView = UIView(frame: CGRectMake(ScreenSize.width / 4 - 1, 6, 1, 32))
+        let verticalSeparatorForWinsView = UIView(frame: CGRect(x: ScreenSize.width / 4 - 1, y: 6, width: 1, height: 32))
         verticalSeparatorForWinsView.backgroundColor = ColorBackgroundGray
         verticalSeparatorForWinsView.alpha = 0.6
         self.view_winsBackground.addSubview(verticalSeparatorForWinsView)
         
-        let verticalSeparatorForLosesView = UIView(frame: CGRectMake(ScreenSize.width / 4 - 1, 6, 1, 32))
+        let verticalSeparatorForLosesView = UIView(frame: CGRect(x: ScreenSize.width / 4 - 1, y: 6, width: 1, height: 32))
         verticalSeparatorForLosesView.backgroundColor = ColorBackgroundGray
         verticalSeparatorForLosesView.alpha = 0.6
         self.view_losesBackground.addSubview(verticalSeparatorForLosesView)
         
-        let verticalSeparatorForTiesView = UIView(frame: CGRectMake(ScreenSize.width / 4 - 1, 6, 1, 32))
+        let verticalSeparatorForTiesView = UIView(frame: CGRect(x: ScreenSize.width / 4 - 1, y: 6, width: 1, height: 32))
         verticalSeparatorForTiesView.backgroundColor = ColorBackgroundGray
         verticalSeparatorForTiesView.alpha = 0.6
         self.view_tiesBackground.addSubview(verticalSeparatorForTiesView)
         
         // Load team information
-        Toolbox.loadAvatarImage(self.teamObject.teamId, toImageView: self.imageView_avatar, avatarType: AvatarType.Team)
+        Toolbox.loadAvatarImage(self.teamObject.teamId, toImageView: self.imageView_avatar, avatarType: AvatarType.team)
         
         self.label_wins.text = String(self.teamObject.wins)
         self.label_loses.text = String(self.teamObject.loses)
@@ -69,7 +69,7 @@ import UIKit
        
         self.label_teamName.text = self.teamObject.teamName
         
-        let teamCreationDate = NSDate(dateTimeString: self.teamObject.createdAt)
+        let teamCreationDate = Date(dateTimeString: self.teamObject.createdAt)
         self.label_createdAt.text = teamCreationDate.getDateString()
         
         self.label_city.text = self.teamObject.location
@@ -78,25 +78,25 @@ import UIKit
             self.label_homeCourt.text = self.teamObject.homeCourt
         }
         
-        if self.teamInteractionOption == .SendApplication {
+        if self.teamInteractionOption == .sendApplication {
             self.label_teamInteractionTitle.text = "申请加入球队"
-        } else if self.teamInteractionOption == .SendChallenge {
+        } else if self.teamInteractionOption == .sendChallenge {
             self.label_teamInteractionTitle.text = "发起挑战"
         }
         // add notification observer to watch if new match challenge was published
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "notifyChallengeInitiated:", name: "newActivityPublished", object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTTeamBriefIntroTableViewController.notifyChallengeInitiated(_:)), name: NSNotification.Name(rawValue: "newActivityPublished"), object: nil)
     }
     
-    func notifyChallengeInitiated(notification: NSNotification) {
+    func notifyChallengeInitiated(_ notification: Notification) {
         Toolbox.showCustomAlertViewWithImage("checkmark", title: "比赛邀请发送成功")
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Appearance.customizeNavigationBar(self, title: "球队详情")
     }
     
-    override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+    override func numberOfSections(in tableView: UITableView) -> Int {
         // if the current user has already applied for membership of this team, the table section that has '申请加入球队' should be hidden
         // also if the current user is a captain of another team, he/she can challenge this team
         let currentUserOwnedTeamId = Singleton_UserOwnedTeam.sharedInstance.teamId
@@ -107,7 +107,7 @@ import UIKit
         }
     }
     
-    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // if the current user has already applied for membership of this team, the table section that has '申请加入球队' should be hidden
         // if the current user is a team captain and this team is not the team that the current user owns, then he/she can send challenge request to this team
         var rowsInSection = 0
@@ -132,38 +132,38 @@ import UIKit
         return rowsInSection
     }
     
-    override func tableView(tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+    override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
         return DefaultTableSectionFooterHeight
     }
     
-    override func tableView(tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
-        let footerView = UIView(frame: CGRectMake(0, 0, ScreenSize.width, DefaultTableSectionFooterHeight))
-        footerView.backgroundColor = UIColor.clearColor()
+    override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+        let footerView = UIView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: DefaultTableSectionFooterHeight))
+        footerView.backgroundColor = UIColor.clear
         return footerView
     }
     
-    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        if indexPath.section == 2 && indexPath.row == 0 {
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        if (indexPath as NSIndexPath).section == 2 && (indexPath as NSIndexPath).row == 0 {
             // clicked team interaction action, which can be either
             // 1. send application to team, or
             // 2. send challenge to team
-            if self.teamInteractionOption == .SendApplication {
-                self.performSegueWithIdentifier("sendApplicationSegue", sender: self)
-            } else if self.teamInteractionOption == .SendChallenge {
-                self.performSegueWithIdentifier("initiateMatchSegue", sender: self)
+            if self.teamInteractionOption == .sendApplication {
+                self.performSegue(withIdentifier: "sendApplicationSegue", sender: self)
+            } else if self.teamInteractionOption == .sendChallenge {
+                self.performSegue(withIdentifier: "initiateMatchSegue", sender: self)
             }
         }
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "sendApplicationSegue" {
-            let destinationViewController = segue.destinationViewController as! VTSendApplicationViewController
+            let destinationViewController = segue.destination as! VTSendApplicationViewController
             destinationViewController.teamObject = self.teamObject
             destinationViewController.teamCaptainUserId = self.teamObject.captainUserId
         } else if segue.identifier == "initiateMatchSegue" {
-            let destinationNavigationViewController = segue.destinationViewController as? UINavigationController
+            let destinationNavigationViewController = segue.destination as? UINavigationController
             let newActivityTableViewController = destinationNavigationViewController?.viewControllers[0] as? VTNewActivityTableViewController
-            newActivityTableViewController?.selectedActivityType = .Match
+            newActivityTableViewController?.selectedActivityType = .match
             newActivityTableViewController?.rivalTeamId = self.teamObject.teamId
             newActivityTableViewController?.isNewActivityMatchInitiatedFromDiscoverTab = true
         }
@@ -173,7 +173,7 @@ import UIKit
         super.didReceiveMemoryWarning()
     }
     
-    @IBAction func unwindToTeamBriefIntroView(segue: UIStoryboardSegue) {
+    @IBAction func unwindToTeamBriefIntroView(_ segue: UIStoryboardSegue) {
     }
     
     deinit {

@@ -25,26 +25,26 @@ class VTChangeUserLocationTableViewController: UITableViewController, LocationSe
         self.clearsSelectionOnViewWillAppear = true
         
         let dbManager = DBManager(databaseFilename: "soccer_ios.sqlite")
-        let provinceRecords = dbManager.loadDataFromDB("select name from provinces", parameters: nil)
-        for anyObject in provinceRecords {
+        let provinceRecords = dbManager?.loadData(fromDB: "select name from provinces", parameters: nil)
+        for anyObject in provinceRecords! {
             let provinceRecord = anyObject as? NSArray
             if provinceRecord != nil {
                 self.provinceNames.append(provinceRecord![0] as! String)
             }
         }
-        self.navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .Plain, target: nil, action: nil)
+        self.navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
         
         // listen to userInfoUpdated message and handles it by unwinding the navigation controller to the previous view controller
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "updateUserInfo:", name: "userInfoUpdated", object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTChangeUserLocationTableViewController.updateUserInfo(_:)), name: NSNotification.Name(rawValue: "userInfoUpdated"), object: nil)
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Appearance.customizeNavigationBar(self, title: "用户所在地")
     }
     
-    func updateUserInfo(notification: NSNotification) {
-        self.navigationController?.popViewControllerAnimated(true)
+    func updateUserInfo(_ notification: Notification) {
+        self.navigationController?.popViewController(animated: true)
     }
     
     deinit {
@@ -63,7 +63,7 @@ class VTChangeUserLocationTableViewController: UITableViewController, LocationSe
         self.locationService = nil
         
         if self.button_submitUserLocation != nil {
-            self.button_submitUserLocation?.removeTarget(nil, action: nil, forControlEvents: .AllEvents)
+            self.button_submitUserLocation?.removeTarget(nil, action: nil, for: .allEvents)
         }
         self.button_submitUserLocation = nil
     }
@@ -73,12 +73,12 @@ class VTChangeUserLocationTableViewController: UITableViewController, LocationSe
         // Dispose of any resources that can be recreated.
     }
     
-    override func viewDidAppear(animated: Bool) {
+    override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         if self.completeLocation != nil {  // user has manually select the user city
             // update the complete location
-            let potentialLocationSectionRow: NSIndexPath = NSIndexPath(forItem: 0, inSection: 0)
-            self.tableView.reloadRowsAtIndexPaths([potentialLocationSectionRow], withRowAnimation: .Fade)
+            let potentialLocationSectionRow: IndexPath = IndexPath(item: 0, section: 0)
+            self.tableView.reloadRows(at: [potentialLocationSectionRow], with: .fade)
             Toolbox.toggleButton(self.button_submitUserLocation!, enabled: true)
             
             self.isLocationHandPickedByUser = true
@@ -91,7 +91,7 @@ class VTChangeUserLocationTableViewController: UITableViewController, LocationSe
         }
     }
     
-    override func viewDidDisappear(animated: Bool) {
+    override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         if self.locationService != nil {
             self.locationService?.delegate = nil
@@ -114,7 +114,7 @@ class VTChangeUserLocationTableViewController: UITableViewController, LocationSe
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "定位失败")
     }
     
-    func didFinishFindingLocationAndAddress(locationInfo: [NSObject : AnyObject]) {
+    func didFinishFindingLocationAndAddress(_ locationInfo: [AnyHashable: Any]) {
         let geoResult = locationInfo["geoCodeResult"] as? BMKReverseGeoCodeResult
         self.HUD?.hide(true)
         self.HUD = nil
@@ -126,8 +126,8 @@ class VTChangeUserLocationTableViewController: UITableViewController, LocationSe
                     var locatedProvinceName:String? = Toolbox.removeSuffixOfProvinceAndCity(geoResult!.addressDetail.province)
                     self.completeLocation = locatedProvinceName
                     // update the complete location
-                    let potentialLocationSectionRow:NSIndexPath = NSIndexPath(forRow: 0, inSection: 0)
-                    self.tableView.reloadRowsAtIndexPaths([potentialLocationSectionRow], withRowAnimation: .Fade)
+                    let potentialLocationSectionRow:IndexPath = IndexPath(row: 0, section: 0)
+                    self.tableView.reloadRows(at: [potentialLocationSectionRow], with: .fade)
                     
                     locatedProvinceName = nil
                 } else {
@@ -136,8 +136,8 @@ class VTChangeUserLocationTableViewController: UITableViewController, LocationSe
                     
                     self.completeLocation = "" + locatedProvinceName! + "" + locatedCityName!
                     // update the complete location
-                    let potentialLocationSectionRow = NSIndexPath(forRow: 0, inSection: 0)
-                    self.tableView.reloadRowsAtIndexPaths([potentialLocationSectionRow], withRowAnimation: .Fade)
+                    let potentialLocationSectionRow = IndexPath(row: 0, section: 0)
+                    self.tableView.reloadRows(at: [potentialLocationSectionRow], with: .fade)
                     
                     locatedCityName = nil
                     locatedProvinceName = nil
@@ -159,13 +159,13 @@ class VTChangeUserLocationTableViewController: UITableViewController, LocationSe
         }
     }
     
-    func didFinishFindingGeoCodeResult(geoCodeInfo: [NSObject : AnyObject]) {
+    func didFinishFindingGeoCodeResult(_ geoCodeInfo: [AnyHashable: Any]) {
         // hide spinner to indicate geoSearch is done
         self.HUD?.hide(true)
         self.HUD = nil
         
         let result = geoCodeInfo["geoCodeResult"] as? BMKGeoCodeResult
-        if geoCodeInfo["error"]?.integerValue == 0 {
+        if (geoCodeInfo["error"] as AnyObject).intValue == 0 {
             let currentUser = Singleton_CurrentUser.sharedInstance
             let locationInfo = ["latitude": "\(Double(result!.location.latitude))", "longitude": "\(Double(result!.location.longitude))", "location": self.completeLocation!]
             currentUser.updateUserInfo("location", infoValue: locationInfo)
@@ -177,11 +177,11 @@ class VTChangeUserLocationTableViewController: UITableViewController, LocationSe
         self.locationService = nil
     }
     
-    override func tableView(tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+    override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         return TableSectionHeaderHeight
     }
     
-    override func tableView(tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+    override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
         if section == 0 {   // for the first section, there is a submit button that needs to be added to its footer
             return TableSectionFooterHeightWithButton
             
@@ -189,7 +189,7 @@ class VTChangeUserLocationTableViewController: UITableViewController, LocationSe
         return 0
     }
     
-    override func tableView(tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+    override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let headerView: UIView? = UIView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: TableSectionHeaderHeight))
         if section == 1 {
             headerView?.addSubview(Appearance.setupTableSectionHeaderTitle(" 选择省份"))
@@ -197,11 +197,11 @@ class VTChangeUserLocationTableViewController: UITableViewController, LocationSe
         return headerView
     }
     
-    override func tableView(tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+    override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         if section == 0 {   // add button to the footer for third table section only
             let footerView: UIView? = UIView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: 70))
             self.button_submitUserLocation = Appearance.setupTableFooterButtonWithTitle("提交", backgroundColor: ColorSettledGreen)
-            self.button_submitUserLocation?.addTarget(self, action: "submitUserLocation", forControlEvents: .TouchUpInside)
+            self.button_submitUserLocation?.addTarget(self, action: #selector(VTChangeUserLocationTableViewController.submitUserLocation), for: .touchUpInside)
             footerView?.addSubview(self.button_submitUserLocation!)
             if !Toolbox.isStringValueValid(self.completeLocation) {
                 Toolbox.toggleButton(self.button_submitUserLocation!, enabled: false)
@@ -212,11 +212,11 @@ class VTChangeUserLocationTableViewController: UITableViewController, LocationSe
         return nil
     }
     
-    override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+    override func numberOfSections(in tableView: UITableView) -> Int {
         return 2
     }
     
-    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if section == 0 {
             return 1
         } else if section == 1 {
@@ -225,53 +225,53 @@ class VTChangeUserLocationTableViewController: UITableViewController, LocationSe
         return 0
     }
     
-    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         var tableCellIdentifier: String?
-        if indexPath.section == 0 {
+        if (indexPath as NSIndexPath).section == 0 {
             tableCellIdentifier = "userLocationCell"
         } else {
             tableCellIdentifier = "provinceNameCell"
         }
-        var cell: UITableViewCell? = self.tableView.dequeueReusableCellWithIdentifier(tableCellIdentifier!) as UITableViewCell?
+        var cell: UITableViewCell? = self.tableView.dequeueReusableCell(withIdentifier: tableCellIdentifier!) as UITableViewCell?
         if cell == nil {
-            cell = UITableViewCell(style: .Default, reuseIdentifier: tableCellIdentifier)
+            cell = UITableViewCell(style: .default, reuseIdentifier: tableCellIdentifier)
         }
-        if indexPath.section == 0 { // section to display current location or selected province/city by user
+        if (indexPath as NSIndexPath).section == 0 { // section to display current location or selected province/city by user
             let label_potentialUserLocation: UILabel = cell?.contentView.viewWithTag(1) as! UILabel
             label_potentialUserLocation.text = self.completeLocation
             
             // make this table cell NOT selectable
-            cell?.selectionStyle = .None
-        } else if indexPath.section == 1 {  // section to display Chinese province list
+            cell?.selectionStyle = .none
+        } else if (indexPath as NSIndexPath).section == 1 {  // section to display Chinese province list
             let label_provinceName: UILabel = cell?.contentView.viewWithTag(1) as! UILabel
-            label_provinceName.text = self.provinceNames[indexPath.row]
+            label_provinceName.text = self.provinceNames[(indexPath as NSIndexPath).row]
         }
         
         return cell!
     }
     
-    @IBAction func unwindToUpdatedUserLocationTableView(segue: UIStoryboardSegue) {
+    @IBAction func unwindToUpdatedUserLocationTableView(_ segue: UIStoryboardSegue) {
     }
     
-    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        if indexPath.section == 1 {
-            self.selectedProvinceName = self.provinceNames[indexPath.row]
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        if (indexPath as NSIndexPath).section == 1 {
+            self.selectedProvinceName = self.provinceNames[(indexPath as NSIndexPath).row]
             
             let dbManager: DBManager = DBManager(databaseFilename: "soccer_ios.sqlite")
-            let cityRecordsForSelectedProvince: NSArray = dbManager.loadDataFromDB(
-                "select name from cities where province=?",
-                parameters: [self.selectedProvinceName!])
+            let cityRecordsForSelectedProvince: NSArray = dbManager.loadData(
+                fromDB: "select name from cities where province=?",
+                parameters: [self.selectedProvinceName!]) as NSArray
             
             if cityRecordsForSelectedProvince.count > 1 {   // if there is only one city in selected province, there is NO NEED to make user select city, provinces with this situation are 北京，上海，天津，重庆，香港 and so on
                 
-                self.performSegueWithIdentifier("setUserCitySegue", sender: self)
+                self.performSegue(withIdentifier: "setUserCitySegue", sender: self)
             } else {
                 // remove the cell selection style effect
-                self.tableView.deselectRowAtIndexPath(indexPath, animated: true)
+                self.tableView.deselectRow(at: indexPath, animated: true)
                 self.completeLocation = self.selectedProvinceName
                 // update the complete location
-                let potentialLocationSectionRow: NSIndexPath = NSIndexPath(forRow: 0, inSection: 0)
-                self.tableView.reloadRowsAtIndexPaths([potentialLocationSectionRow], withRowAnimation: .Fade)
+                let potentialLocationSectionRow: IndexPath = IndexPath(row: 0, section: 0)
+                self.tableView.reloadRows(at: [potentialLocationSectionRow], with: .fade)
                 Toolbox.toggleButton(self.button_submitUserLocation!, enabled: true)
                 
                 self.isLocationHandPickedByUser = true
@@ -279,9 +279,9 @@ class VTChangeUserLocationTableViewController: UITableViewController, LocationSe
         }
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "setUserCitySegue" {
-            let destinationViewController = segue.destinationViewController as! VTSelectUserCityTableViewController
+            let destinationViewController = segue.destination as! VTSelectUserCityTableViewController
             destinationViewController.selectedProvinceName = self.selectedProvinceName
         }
     }

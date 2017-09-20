@@ -36,7 +36,7 @@ class VTNewActivityAddressViewController: UIViewController, UITextFieldDelegate,
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        self.button_nextStep.hidden = true
+        self.button_nextStep.isHidden = true
         Appearance.dropShadowForView(self.view_searchBar)
         self.view_searchBar.alpha = 0.9
         
@@ -47,23 +47,23 @@ class VTNewActivityAddressViewController: UIViewController, UITextFieldDelegate,
         self.input_groundName.delegate = self
         
         // add right button in navigation bar to cancel new activity publication
-        self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Stop, target: self, action: "cancelPublishingNewActivity")
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .stop, target: self, action: #selector(VTNewActivityAddressViewController.cancelPublishingNewActivity))
     }
     
     func cancelPublishingNewActivity() {
         if self.isNewActivityMatchInitiatedFromDiscoverTab == true {
-            self.performSegueWithIdentifier("unwindToTeamBriefIntroSegue", sender: self)
+            self.performSegue(withIdentifier: "unwindToTeamBriefIntroSegue", sender: self)
         } else {
-            self.performSegueWithIdentifier("unwindToTeamCalendarSegue", sender: self)
+            self.performSegue(withIdentifier: "unwindToTeamCalendarSegue", sender: self)
         }
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(true)
         Appearance.customizeNavigationBar(self, title: "活动地址")
         
-        self.mapView = BMKMapView(frame: CGRectMake(0, 0, ScreenSize.width, ScreenSize.height))
-        self.mapView?.zoomLevel = BaiduMapZoomLevel.Default.rawValue
+        self.mapView = BMKMapView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: ScreenSize.height))
+        self.mapView?.zoomLevel = BaiduMapZoomLevel.default.rawValue
         let userOwnedTeam = Singleton_UserOwnedTeam.sharedInstance
         if Toolbox.isStringValueValid(userOwnedTeam.latitude) && Toolbox.isStringValueValid(userOwnedTeam.longitude) {
             let teamCoordinate = CLLocationCoordinate2D(latitude: Double(userOwnedTeam.latitude)!, longitude: Double(userOwnedTeam.longitude)!)
@@ -79,17 +79,17 @@ class VTNewActivityAddressViewController: UIViewController, UITextFieldDelegate,
             }
         }
         self.view.addSubview(self.mapView!)
-        self.view.bringSubviewToFront(self.view_searchBar)
-        self.view.bringSubviewToFront(self.button_locateUser)
-        self.view.bringSubviewToFront(self.button_zoomIn)
-        self.view.bringSubviewToFront(self.button_zoomOut)
-        self.view.bringSubviewToFront(self.button_nextStep)
+        self.view.bringSubview(toFront: self.view_searchBar)
+        self.view.bringSubview(toFront: self.button_locateUser)
+        self.view.bringSubview(toFront: self.button_zoomIn)
+        self.view.bringSubview(toFront: self.button_zoomOut)
+        self.view.bringSubview(toFront: self.button_nextStep)
         
         self.mapView?.viewWillAppear()
         self.mapView?.delegate = self
     }
     
-    override func viewWillDisappear(animated: Bool) {
+    override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(true)
         self.mapView?.viewWillDisappear()
         self.mapView?.delegate = nil
@@ -112,17 +112,17 @@ class VTNewActivityAddressViewController: UIViewController, UITextFieldDelegate,
         }
     }
     
-    func mapView(mapView: BMKMapView!, onClickedMapBlank coordinate: CLLocationCoordinate2D) {
+    func mapView(_ mapView: BMKMapView!, onClickedMapBlank coordinate: CLLocationCoordinate2D) {
         self.input_groundName.resignFirstResponder()
     }
     
-    func textFieldShouldReturn(textField: UITextField) -> Bool {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         self.input_groundName.resignFirstResponder()
         self.launchPOISearchBasedOnUserInputKeyword(self)
         return true
     }
     
-    @IBAction func launchPOISearchBasedOnUserInputKeyword(sender: AnyObject) {
+    @IBAction func launchPOISearchBasedOnUserInputKeyword(_ sender: AnyObject) {
         let searchKeyword = self.input_groundName.text
         if searchKeyword?.characters.count == 0 || searchKeyword == nil {
             return
@@ -141,7 +141,7 @@ class VTNewActivityAddressViewController: UIViewController, UITextFieldDelegate,
     
     - parameter poiResult: the poi search result, contains poiList
     */
-    func didFinishSearchingPOIResult(poiResult: BMKPoiResult) {
+    func didFinishSearchingPOIResult(_ poiResult: BMKPoiResult) {
         self.HUD?.hide(true)
         self.HUD = nil
         let poiInfoList = poiResult.poiInfoList
@@ -153,8 +153,8 @@ class VTNewActivityAddressViewController: UIViewController, UITextFieldDelegate,
         } else {
             self.mapView?.removeAnnotations(self.poiAnnotations)
             self.poiAnnotations?.removeAll()
-            self.mapView?.centerCoordinate = poiInfoList[0].pt
-            for element in poiInfoList {
+            self.mapView?.centerCoordinate = (poiInfoList![0] as AnyObject).pt
+            for element in poiInfoList! {
                 if let poiInfo = element as? BMKPoiInfo {
                     let poiAnnotation = BMKPointAnnotation()
                     poiAnnotation.title = poiInfo.address
@@ -173,15 +173,15 @@ class VTNewActivityAddressViewController: UIViewController, UITextFieldDelegate,
     - parameter mapView: the map view
     - parameter view:    the annotation view
     */
-    func mapView(mapView: BMKMapView!, didSelectAnnotationView view: BMKAnnotationView!) {
+    func mapView(_ mapView: BMKMapView!, didSelect view: BMKAnnotationView!) {
         self.selectedActivityAddress = view.annotation.title!()
         self.selectedCoordinates = view.annotation.coordinate
         
         // show the submit button with animation
-        self.button_nextStep.enabled = true
+        self.button_nextStep.isEnabled = true
         self.button_nextStep.alpha = 0.0
-        self.button_nextStep.hidden = false
-        UIView.animateWithDuration(0.2, animations: {
+        self.button_nextStep.isHidden = false
+        UIView.animate(withDuration: 0.2, animations: {
             self.button_nextStep.alpha = 1.0
         })
     }
@@ -192,13 +192,13 @@ class VTNewActivityAddressViewController: UIViewController, UITextFieldDelegate,
     - parameter mapView: the map view
     - parameter view:    the annotation view
     */
-    func mapView(mapView: BMKMapView!, didDeselectAnnotationView view: BMKAnnotationView!) {
+    func mapView(_ mapView: BMKMapView!, didDeselect view: BMKAnnotationView!) {
         self.selectedActivityAddress = nil
         self.selectedCoordinates = nil
         
         // hide the submit button with animation
-        self.button_nextStep.enabled = false
-        self.button_nextStep.hidden = true
+        self.button_nextStep.isEnabled = false
+        self.button_nextStep.isHidden = true
     }
     
     /**
@@ -209,21 +209,21 @@ class VTNewActivityAddressViewController: UIViewController, UITextFieldDelegate,
     
     - returns: the generated annotation view
     */
-    func mapView(mapView: BMKMapView!, viewForAnnotation annotation: BMKAnnotation!) -> BMKAnnotationView! {
-        if annotation.isKindOfClass(BMKPointAnnotation) {
+    func mapView(_ mapView: BMKMapView!, viewFor annotation: BMKAnnotation!) -> BMKAnnotationView! {
+        if annotation.isKind(of: BMKPointAnnotation.self) {
             let newAnnotationView = BMKPinAnnotationView(annotation: annotation, reuseIdentifier: "POIAnnotation")
-            newAnnotationView.animatesDrop = true
-            newAnnotationView.canShowCallout = true
+            newAnnotationView?.animatesDrop = true
+            newAnnotationView?.canShowCallout = true
             if annotation.subtitle?() == "当前位置" {
-                newAnnotationView.image = UIImage(named: "user_location")
-                newAnnotationView.animatesDrop = false
+                newAnnotationView?.image = UIImage(named: "user_location")
+                newAnnotationView?.animatesDrop = false
             }
             return newAnnotationView
         }
         return nil
     }
     
-    @IBAction func locateUser(sender: AnyObject) {
+    @IBAction func locateUser(_ sender: AnyObject) {
         if self.locationService == nil {
             self.locationService = LocationService()
             self.locationService?.delegate = self
@@ -246,7 +246,7 @@ class VTNewActivityAddressViewController: UIViewController, UITextFieldDelegate,
         self.HUD = Toolbox.setupCustomProcessingViewWithTitle(title: "正在定位中...")
     }
     
-    func didGetUserCoordinates(coordinate: CLLocationCoordinate2D) {
+    func didGetUserCoordinates(_ coordinate: CLLocationCoordinate2D) {
         self.HUD?.hide(true)
         self.HUD = nil
         self.mapView?.centerCoordinate = coordinate
@@ -267,36 +267,36 @@ class VTNewActivityAddressViewController: UIViewController, UITextFieldDelegate,
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "定位失败")
     }
     
-    @IBAction func zoomInMap(sender: AnyObject) {
+    @IBAction func zoomInMap(_ sender: AnyObject) {
         var currentZoomLevel = self.mapView!.zoomLevel
-        if currentZoomLevel < BaiduMapZoomLevel.Max.rawValue {
+        if currentZoomLevel < BaiduMapZoomLevel.max.rawValue {
             currentZoomLevel = currentZoomLevel + 1
             self.mapView?.zoomLevel = currentZoomLevel
         }
-        if self.button_zoomOut.enabled == false {
+        if self.button_zoomOut.isEnabled == false {
             Toolbox.toggleButton(self.button_zoomOut, enabled: true)
         }
-        if currentZoomLevel == BaiduMapZoomLevel.Max.rawValue {
+        if currentZoomLevel == BaiduMapZoomLevel.max.rawValue {
             Toolbox.toggleButton(self.button_zoomIn, enabled: false)
         }
     }
     
-    @IBAction func zoomOutMap(sender: AnyObject) {
+    @IBAction func zoomOutMap(_ sender: AnyObject) {
         var currentZoomLevel = self.mapView!.zoomLevel
-        if currentZoomLevel > BaiduMapZoomLevel.Min.rawValue {
+        if currentZoomLevel > BaiduMapZoomLevel.min.rawValue {
             currentZoomLevel = currentZoomLevel - 1
             self.mapView?.zoomLevel = currentZoomLevel - 1
         }
-        if self.button_zoomIn.enabled == false {
+        if self.button_zoomIn.isEnabled == false {
             Toolbox.toggleButton(self.button_zoomIn, enabled: true)
         }
-        if currentZoomLevel == BaiduMapZoomLevel.Min.rawValue {
+        if currentZoomLevel == BaiduMapZoomLevel.min.rawValue {
             Toolbox.toggleButton(self.button_zoomOut, enabled: false)
         }
     }
     
-    @IBAction func nextStepOfPublishNewActivity(sender: AnyObject) {
-        var activityInfo = NSUserDefaults.standardUserDefaults().objectForKey("activityInfo") as! [String: String]
+    @IBAction func nextStepOfPublishNewActivity(_ sender: AnyObject) {
+        var activityInfo = UserDefaults.standard.object(forKey: "activityInfo") as! [String: String]
         // add the activity place and coordinates info and then save back to userDefaults
         let teamCity = Toolbox.removeProvinceNameFromString(Singleton_UserOwnedTeam.sharedInstance.location)
         activityInfo["city"] = teamCity
@@ -304,22 +304,22 @@ class VTNewActivityAddressViewController: UIViewController, UITextFieldDelegate,
         activityInfo["address"] = self.selectedActivityAddress
         activityInfo["latitude"] = "\(self.selectedCoordinates!.latitude)"
         activityInfo["longitude"] = "\(self.selectedCoordinates!.longitude)"
-        NSUserDefaults.standardUserDefaults().setObject(activityInfo, forKey: "activityInfo")
+        UserDefaults.standard.set(activityInfo, forKey: "activityInfo")
         
-        if activityInfo["type"] == "\(ActivityType.Match.rawValue)" && !Toolbox.isStringValueValid(activityInfo["idOfTeamB"]) {
+        if activityInfo["type"] == "\(ActivityType.match.rawValue)" && !Toolbox.isStringValueValid(activityInfo["idOfTeamB"]) {
             // new activity is a match and team rival has not been defined, next we should establish the rival of the match
-            self.performSegueWithIdentifier("establishRivalSegue", sender: self)
+            self.performSegue(withIdentifier: "establishRivalSegue", sender: self)
         } else {
             // either the new activity is an exercise, 
             // or the team rival has already been decided,
             // next step would be enter activity note
-            self.performSegueWithIdentifier("activityNoteSegue", sender: self)
+            self.performSegue(withIdentifier: "activityNoteSegue", sender: self)
         }
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "activityNoteSegue" {
-            let destinationViewController = segue.destinationViewController as! VTActivityNoteViewController
+            let destinationViewController = segue.destination as! VTActivityNoteViewController
             destinationViewController.isNewActivityMatchInitiatedFromDiscoverTab = self.isNewActivityMatchInitiatedFromDiscoverTab
         }
     }

@@ -21,11 +21,11 @@ class VTChangeUserAvatarViewController: UIViewController, UINavigationController
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        Toolbox.loadAvatarImage(Singleton_CurrentUser.sharedInstance.userId!, toImageView: self.imageView_userAvatar, avatarType: AvatarType.User)
+        Toolbox.loadAvatarImage(Singleton_CurrentUser.sharedInstance.userId!, toImageView: self.imageView_userAvatar, avatarType: AvatarType.user)
         Appearance.customizeAvatarImage(self.imageView_userAvatar)
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Appearance.customizeNavigationBar(self, title: "设置头像")
     }
@@ -35,7 +35,7 @@ class VTChangeUserAvatarViewController: UIViewController, UINavigationController
         // Dispose of any resources that can be recreated.
     }
 
-    @IBAction func chooseImage(sender: AnyObject) {
+    @IBAction func chooseImage(_ sender: AnyObject) {
         // release self.picker memory first
         if self.picker != nil {
             self.picker?.delegate = nil
@@ -45,11 +45,11 @@ class VTChangeUserAvatarViewController: UIViewController, UINavigationController
         self.picker = UIImagePickerController()
         self.picker?.delegate = self
         self.picker?.allowsEditing = true
-        self.picker?.sourceType = .PhotoLibrary
-        self.presentViewController(self.picker!, animated: true, completion: nil)
+        self.picker?.sourceType = .photoLibrary
+        self.present(self.picker!, animated: true, completion: nil)
     }
     
-    @IBAction func takePhoto(sender: AnyObject) {
+    @IBAction func takePhoto(_ sender: AnyObject) {
         if self.picker != nil {
             self.picker?.delegate = nil
         }
@@ -58,27 +58,27 @@ class VTChangeUserAvatarViewController: UIViewController, UINavigationController
         self.picker = UIImagePickerController()
         self.picker?.delegate = self
         self.picker?.allowsEditing = true
-        self.picker?.sourceType = .Camera
-        self.presentViewController(self.picker!, animated: true, completion: nil)
+        self.picker?.sourceType = .camera
+        self.present(self.picker!, animated: true, completion: nil)
     }
     
-    func imagePickerController(picker: UIImagePickerController, didFinishPickingImage image: UIImage!, editingInfo: [NSObject : AnyObject]!) {
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingImage image: UIImage!, editingInfo: [AnyHashable: Any]!) {
         self.imageView_userAvatar.image = image
         self.uploadAvatar(image)
-        picker.dismissViewControllerAnimated(true, completion: nil)
+        picker.dismiss(animated: true, completion: nil)
         
         self.picker?.delegate = nil
         self.picker = nil
     }
     
-    func imagePickerControllerDidCancel(picker: UIImagePickerController) {
-        picker.dismissViewControllerAnimated(true, completion: nil)
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        picker.dismiss(animated: true, completion: nil)
         
         self.picker?.delegate = nil
         self.picker = nil
     }
     
-    func uploadAvatar(image: UIImage) {
+    func uploadAvatar(_ image: UIImage) {
         self.userId = Singleton_CurrentUser.sharedInstance.userId
         let postParamsDictionary = ["modelId": self.userId!]
         var connection = Toolbox.uploadImageToURL(URLUploadUserAvatar, image: image, parameters: postParamsDictionary, delegate: self)
@@ -92,11 +92,11 @@ class VTChangeUserAvatarViewController: UIViewController, UINavigationController
         connection = nil
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.HUD?.hide(true)
         self.HUD = nil
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "加载失败")
@@ -104,7 +104,7 @@ class VTChangeUserAvatarViewController: UIViewController, UINavigationController
         self.responseData = NSMutableData()
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.HUD?.hide(true)
         self.HUD = nil
         // save successfully uploaded user avatar to local app directory
@@ -114,10 +114,10 @@ class VTChangeUserAvatarViewController: UIViewController, UINavigationController
             Toolbox.showCustomAlertViewWithImage("unhappy", title: "头像文件本地存储失败")
         } else {
             // send message to notify that user avatar is updated
-            let param: NSDictionary = NSDictionary(object: "userAvatar", forKey: "userInfoIndex")
-            NSNotificationCenter.defaultCenter().postNotificationName("userInfoUpdated", object: param)
+            let param: NSDictionary = NSDictionary(object: "userAvatar", forKey: "userInfoIndex" as NSCopying)
+            NotificationCenter.default.post(name: Notification.Name(rawValue: "userInfoUpdated"), object: param)
             // unwind segue, go back to previous view controller
-            self.navigationController?.popViewControllerAnimated(true)
+            self.navigationController?.popViewController(animated: true)
         }
         self.responseData = nil
         self.responseData = NSMutableData()

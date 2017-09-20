@@ -29,11 +29,11 @@ class VTNewTeamAvatarViewController: UIViewController, UINavigationControllerDel
         // Dispose of any resources that can be recreated.
     }
     
-    @IBAction func nextStepOfCreatingNewTeam(sender: AnyObject) {
-        self.performSegueWithIdentifier("setNewTeamNameSegue", sender: self)
+    @IBAction func nextStepOfCreatingNewTeam(_ sender: AnyObject) {
+        self.performSegue(withIdentifier: "setNewTeamNameSegue", sender: self)
     }
     
-    @IBAction func chooseImage(sender: AnyObject) {
+    @IBAction func chooseImage(_ sender: AnyObject) {
         if self.picker != nil {
             self.picker?.delegate = nil
             self.picker = nil
@@ -41,11 +41,11 @@ class VTNewTeamAvatarViewController: UIViewController, UINavigationControllerDel
         self.picker = UIImagePickerController()
         self.picker?.delegate = self
         self.picker?.allowsEditing = true
-        self.picker?.sourceType = .PhotoLibrary
-        self.presentViewController(self.picker!, animated: true, completion: nil)
+        self.picker?.sourceType = .photoLibrary
+        self.present(self.picker!, animated: true, completion: nil)
     }
     
-    @IBAction func takePhoto(sender: AnyObject) {
+    @IBAction func takePhoto(_ sender: AnyObject) {
         if self.picker != nil {
             self.picker?.delegate = nil
             self.picker = nil
@@ -54,25 +54,25 @@ class VTNewTeamAvatarViewController: UIViewController, UINavigationControllerDel
         self.picker = UIImagePickerController()
         self.picker?.delegate = self
         self.picker?.allowsEditing = true
-        self.picker?.sourceType = .Camera
-        self.presentViewController(self.picker!, animated: true, completion: nil)
+        self.picker?.sourceType = .camera
+        self.present(self.picker!, animated: true, completion: nil)
     }
     
-    func imagePickerController(picker: UIImagePickerController, didFinishPickingImage image: UIImage!, editingInfo: [NSObject : AnyObject]!) {
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingImage image: UIImage!, editingInfo: [AnyHashable: Any]!) {
         self.image_teamAvatar.image = image
         self.uploadAvatar(image)
-        picker.dismissViewControllerAnimated(true, completion: nil)
+        picker.dismiss(animated: true, completion: nil)
         self.picker?.delegate = nil
         self.picker = nil
     }
     
-    func imagePickerControllerDidCancel(picker: UIImagePickerController) {
-        picker.dismissViewControllerAnimated(true, completion: nil)
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        picker.dismiss(animated: true, completion: nil)
         self.picker?.delegate = nil
         self.picker = nil
     }
     
-    func uploadAvatar(image: UIImage) {
+    func uploadAvatar(_ image: UIImage) {
         let connection = Toolbox.uploadImageToURL(URLUploadTeamAvatar, image: image, parameters: nil, delegate: self)
         if connection == nil {
             Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络连接失败")
@@ -83,11 +83,11 @@ class VTNewTeamAvatarViewController: UIViewController, UINavigationControllerDel
         }
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.HUD?.hide(true)
         self.HUD = nil
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络超时")
@@ -95,12 +95,12 @@ class VTNewTeamAvatarViewController: UIViewController, UINavigationControllerDel
         self.responseData = NSMutableData()
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.HUD?.hide(true)
         self.HUD = nil
         
         // response for team avatar upload
-        let responseStr = NSString(data: self.responseData!, encoding: NSUTF8StringEncoding)
+        let responseStr = NSString(data: self.responseData! as Data, encoding: String.Encoding.utf8.rawValue)
         if responseStr != "OK" {    // upload avatar failed with error message
             Toolbox.showCustomAlertViewWithImage("unhappy", title: responseStr as! String)
         }

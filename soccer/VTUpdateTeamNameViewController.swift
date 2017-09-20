@@ -20,9 +20,9 @@ class VTUpdateTeamNameViewController: UIViewController, NSURLConnectionDelegate,
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.teamId = NSUserDefaults.standardUserDefaults().objectForKey("teamIdSelectedInTeamsList") as? String
+        self.teamId = UserDefaults.standard.object(forKey: "teamIdSelectedInTeamsList") as? String
         self.input_teamName.text = self.teamName
-        self.input_teamName.addTarget(self, action: "validateUserInput", forControlEvents: .EditingChanged)
+        self.input_teamName.addTarget(self, action: #selector(VTUpdateTeamNameViewController.validateUserInput), for: .editingChanged)
         self.input_teamName.delegate = self
         
         Appearance.customizeTextField(self.input_teamName, iconName: "jersey")
@@ -38,11 +38,11 @@ class VTUpdateTeamNameViewController: UIViewController, NSURLConnectionDelegate,
         }
     }
     
-    func textFieldShouldReturn(textField: UITextField) -> Bool {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         if textField == self.input_teamName {
-            if self.button_submit.enabled {
+            if self.button_submit.isEnabled {
                 self.input_teamName.resignFirstResponder()
-                self.button_submit.sendActionsForControlEvents(.TouchUpInside)
+                self.button_submit.sendActions(for: .touchUpInside)
                 return true
             }
             return false
@@ -50,7 +50,7 @@ class VTUpdateTeamNameViewController: UIViewController, NSURLConnectionDelegate,
         return false
     }
     
-    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         // resign the keyboard when tapped somewhere else other than the text field or the keyboard itself
         self.input_teamName.resignFirstResponder()
     }
@@ -59,7 +59,7 @@ class VTUpdateTeamNameViewController: UIViewController, NSURLConnectionDelegate,
         super.didReceiveMemoryWarning()
     }
     
-    @IBAction func updateTeamName(sender: AnyObject) {
+    @IBAction func updateTeamName(_ sender: AnyObject) {
         let newTeamName = Toolbox.trim(self.input_teamName.text!)
         let connection = Toolbox.asyncHttpPostToURL(URLChangeTeamName, parameters: "teamId=\(self.teamId!)&teamName=\(newTeamName)", delegate: self)
         if connection == nil {
@@ -71,11 +71,11 @@ class VTUpdateTeamNameViewController: UIViewController, NSURLConnectionDelegate,
         }
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.HUD?.hide(true)
         self.HUD = nil
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络超时")
@@ -83,27 +83,27 @@ class VTUpdateTeamNameViewController: UIViewController, NSURLConnectionDelegate,
         self.responseData = NSMutableData()
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.HUD?.hide(true)
         self.HUD = nil
         
-        let responseStr:NSString = NSString(data: self.responseData!, encoding: NSUTF8StringEncoding)!
+        let responseStr:NSString = NSString(data: self.responseData! as Data, encoding: String.Encoding.utf8.rawValue)!
         
         if responseStr == "OK" {    // team name update successfully
             // update the team name in local database
             let dbManager = DBManager(databaseFilename: "soccer_ios.sqlite")
-            var correspondingTeams = dbManager.loadDataFromDB(
-                "select * from teams where teamId=?",
+            var correspondingTeams = dbManager?.loadData(
+                fromDB: "select * from teams where teamId=?",
                 parameters: [self.teamId!]
             )
-            if correspondingTeams.count > 0 {   // team with such team id found in local database
+            if (correspondingTeams?.count)! > 0 {   // team with such team id found in local database
                 let team = Team.formatDatabaseRecordToTeamFormat(correspondingTeams[0] as! [AnyObject])
                 // update team name in dictionary and then save it in local database
                 team.teamName = self.teamName!
                 // save the updated team in local database
                 team.saveOrUpdateTeamInDatabase()
                 // unwind navigation controller to the previous view controller
-                self.navigationController?.popViewControllerAnimated(true)
+                self.navigationController?.popViewController(animated: true)
             } else {    // team with the team id NOT found in local database
                 Toolbox.showCustomAlertViewWithImage("unhappy", title: "本地球队不存在")
             }

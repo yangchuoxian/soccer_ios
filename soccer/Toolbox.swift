@@ -7,10 +7,21 @@
 //
 
 import UIKit
+fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l < r
+  case (nil, _?):
+    return true
+  default:
+    return false
+  }
+}
+
 
 class Toolbox: NSObject, MBProgressHUDDelegate {
     
-    static func isStringValueValid(value: String?) -> Bool {
+    static func isStringValueValid(_ value: String?) -> Bool {
         if value == nil {
             return false
         }
@@ -26,10 +37,10 @@ class Toolbox: NSObject, MBProgressHUDDelegate {
     /**
      * Given a date string, check to see if it is the format of "yyyy-MM-dd'T'HH:mm:ss.SSSz"
      */
-    static func isDateStringServerDateFormat(dateString: String) -> Bool {
-        let dateFormatter = NSDateFormatter()
+    static func isDateStringServerDateFormat(_ dateString: String) -> Bool {
+        let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSz"
-        let dateTimeString = dateFormatter.dateFromString(dateString)
+        let dateTimeString = dateFormatter.date(from: dateString)
         if dateTimeString != nil {
             return true
         }
@@ -41,13 +52,13 @@ class Toolbox: NSObject, MBProgressHUDDelegate {
      * and if the date is today and shouldGetHourAndMinute is YES, then show 04:19 instead
      * otherwise just return 2015-03-26
      */
-    static func formatTimeString(timeString: String, shouldGetHourAndMinute getHourAndMinute: Bool) -> String {
+    static func formatTimeString(_ timeString: String, shouldGetHourAndMinute getHourAndMinute: Bool) -> String {
         if !Toolbox.isDateStringServerDateFormat(timeString) {
             return timeString
         }
-        let date = NSDate(dateTimeString: timeString)
+        let date = Date(dateTimeString: timeString)
         // get today's date
-        let todayDate = NSDate()
+        let todayDate = Date()
         if date.isTheSameDayAs(todayDate) && getHourAndMinute {
             return date.getTimeString()
         } else {
@@ -55,27 +66,27 @@ class Toolbox: NSObject, MBProgressHUDDelegate {
         }
     }
     
-    static func showCustomAlertViewWithImage(imageName: String, title t: String) {
+    static func showCustomAlertViewWithImage(_ imageName: String, title t: String) {
         var HUD = MBProgressHUD(view: Toolbox.getCurrentViewController()?.view)
-        Toolbox.getCurrentViewController()?.view.addSubview(HUD)
-        HUD.customView = UIImageView(image: UIImage(named: imageName))
+        Toolbox.getCurrentViewController()?.view.addSubview(HUD!)
+        HUD?.customView = UIImageView(image: UIImage(named: imageName))
         // Set custom view mode
-        HUD.mode = .CustomView
-        HUD.labelText = t
-        HUD.show(true)
+        HUD?.mode = .customView
+        HUD?.labelText = t
+        HUD?.show(true)
         // hide and remove HUD view a while after
-        HUD.hide(true, afterDelay: 1)
+        HUD?.hide(true, afterDelay: 1)
         HUD = nil
     }
     
     static func setupCustomProcessingViewWithTitle(title t: String?) -> MBProgressHUD {
         let HUD = MBProgressHUD(view: Toolbox.getCurrentViewController()?.view)
         if Toolbox.isStringValueValid(t) {
-            HUD.labelText = t
+            HUD?.labelText = t
         }
-        Toolbox.getCurrentViewController()?.view.addSubview(HUD)
-        HUD.show(true)
-        return HUD
+        Toolbox.getCurrentViewController()?.view.addSubview(HUD!)
+        HUD?.show(true)
+        return HUD!
     }
     
     /**
@@ -83,7 +94,7 @@ class Toolbox: NSObject, MBProgressHUDDelegate {
      * the request is sent by logged in user by checking the login token and user id,
      * if it matches, the request can go through, otherwise, it is an illegal request
      */
-    static func addLoginTokenAndCurrentUserIdToHttpRequestParameters(urlOrPostParameters: String) -> String {
+    static func addLoginTokenAndCurrentUserIdToHttpRequestParameters(_ urlOrPostParameters: String) -> String {
         let userCredential = Toolbox.getUserCredential()
         if userCredential != nil {
             let loginToken = userCredential!["loginToken"]
@@ -98,54 +109,54 @@ class Toolbox: NSObject, MBProgressHUDDelegate {
      * Add device token and device type parameter to http request parameter string if they exist, 
      * otherwise, add NOTHING
      */
-    static func addDeviceIDAndDeviceTypeToHttpRequestParameters(urlOrPostParameters: String) -> String {
-        let deviceTokenString = NSUserDefaults.standardUserDefaults().stringForKey("deviceToken")
+    static func addDeviceIDAndDeviceTypeToHttpRequestParameters(_ urlOrPostParameters: String) -> String {
+        let deviceTokenString = UserDefaults.standard.string(forKey: "deviceToken")
         if Toolbox.isStringValueValid(deviceTokenString) {
-            return urlOrPostParameters + "&deviceID=\(deviceTokenString!)&deviceType=\(DeviceType.IOS.rawValue)"
+            return urlOrPostParameters + "&deviceID=\(deviceTokenString!)&deviceType=\(DeviceType.ios.rawValue)"
         } else {
             return urlOrPostParameters
         }
     }
     
     /* ASYNCHRONOUS http get request */
-    static func asyncHttpGetFromURL(url: String, delegate d: AnyObject) -> NSURLConnection? {
+    static func asyncHttpGetFromURL(_ url: String, delegate d: AnyObject) -> NSURLConnection? {
         let completeUrl = Toolbox.addLoginTokenAndCurrentUserIdToHttpRequestParameters(url)
-        let url_encoded = completeUrl.stringByAddingPercentEncodingWithAllowedCharacters(NSCharacterSet.URLQueryAllowedCharacterSet())
+        let url_encoded = completeUrl.addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryAllowed)
 
-        let request = NSMutableURLRequest(URL: NSURL(string: url_encoded!)!, cachePolicy: .UseProtocolCachePolicy, timeoutInterval: TimeIntervals.HttpRequestTimeout.rawValue)
-        request.HTTPMethod = "GET"
+        let request = NSMutableURLRequest(url: URL(string: url_encoded!)!, cachePolicy: .useProtocolCachePolicy, timeoutInterval: TimeIntervals.httpRequestTimeout.rawValue)
+        request.httpMethod = "GET"
         return NSURLConnection(request: request, delegate: d)
     }
     
     /* ASYNCHRONOUS http post request */
-    static func asyncHttpPostToURL(url: String, parameters postParametersString: String, delegate d: AnyObject?) -> NSURLConnection? {
+    static func asyncHttpPostToURL(_ url: String, parameters postParametersString: String, delegate d: AnyObject?) -> NSURLConnection? {
         let completePostParamsString = Toolbox.addLoginTokenAndCurrentUserIdToHttpRequestParameters(postParametersString)
-        let postParametersStringThatEscapedSpecialCharacters = completePostParamsString.stringByAddingPercentEncodingWithAllowedCharacters(NSCharacterSet.URLQueryAllowedCharacterSet())
+        let postParametersStringThatEscapedSpecialCharacters = completePostParamsString.addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryAllowed)
         // set post parameters
-        let postParametersData = postParametersStringThatEscapedSpecialCharacters!.dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: true)
+        let postParametersData = postParametersStringThatEscapedSpecialCharacters!.data(using: String.Encoding.utf8, allowLossyConversion: true)
         let postParametersLength = "\((postParametersStringThatEscapedSpecialCharacters!).characters.count)"
         // http request to get service agreement content from server
-        let url_encoded = url.stringByAddingPercentEncodingWithAllowedCharacters(NSCharacterSet.URLQueryAllowedCharacterSet())
-        let request = NSMutableURLRequest(URL: NSURL(string: url_encoded!)!, cachePolicy: .UseProtocolCachePolicy, timeoutInterval: TimeIntervals.HttpRequestTimeout.rawValue)
-        request.HTTPMethod = "POST"
+        let url_encoded = url.addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryAllowed)
+        let request = NSMutableURLRequest(url: URL(string: url_encoded!)!, cachePolicy: .useProtocolCachePolicy, timeoutInterval: TimeIntervals.httpRequestTimeout.rawValue)
+        request.httpMethod = "POST"
         request.setValue(postParametersLength, forHTTPHeaderField: "Content-Length")
-        request.HTTPBody = postParametersData
+        request.httpBody = postParametersData
         
         // start asynchronous http request
         return NSURLConnection(request: request, delegate: d)
     }
     
     /* SYNCHRONOUS http get request */
-    static func syncHttpGetFromURL(url: String) -> NSData? {
+    static func syncHttpGetFromURL(_ url: String) -> Data? {
         let completeUrl = Toolbox.addLoginTokenAndCurrentUserIdToHttpRequestParameters(url)
-        let url_encoded = completeUrl.stringByAddingPercentEncodingWithAllowedCharacters(NSCharacterSet.URLQueryAllowedCharacterSet())
-        let request = NSMutableURLRequest(URL: NSURL(string: url_encoded!)!, cachePolicy: .UseProtocolCachePolicy, timeoutInterval: TimeIntervals.HttpRequestTimeout.rawValue)
-        request.HTTPMethod = "GET"
-        var response: NSURLResponse?
+        let url_encoded = completeUrl.addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryAllowed)
+        let request = NSMutableURLRequest(url: URL(string: url_encoded!)!, cachePolicy: .useProtocolCachePolicy, timeoutInterval: TimeIntervals.httpRequestTimeout.rawValue)
+        request.httpMethod = "GET"
+        var response: URLResponse?
         var error: NSError?
-        let responseData: NSData?
+        let responseData: Data?
         do {
-            responseData = try NSURLConnection.sendSynchronousRequest(request, returningResponse: &response)
+            responseData = try NSURLConnection.sendSynchronousRequest(request, returning: &response)
         } catch let error1 as NSError {
             error = error1
             responseData = nil
@@ -158,23 +169,23 @@ class Toolbox: NSObject, MBProgressHUDDelegate {
     }
     
     /* SYNCHRONOUS http post request */
-    static func syncHttpPost(url: String, parameters postParametersString: String) -> NSData? {
+    static func syncHttpPost(_ url: String, parameters postParametersString: String) -> Data? {
         let completePostParamsString = Toolbox.addLoginTokenAndCurrentUserIdToHttpRequestParameters(postParametersString)
-        let postParametersStringThatEscapedSpecialCharacters = completePostParamsString.stringByAddingPercentEncodingWithAllowedCharacters(NSCharacterSet.URLQueryAllowedCharacterSet())
-        let postParametersData = postParametersStringThatEscapedSpecialCharacters!.dataUsingEncoding(NSASCIIStringEncoding, allowLossyConversion: true)
+        let postParametersStringThatEscapedSpecialCharacters = completePostParamsString.addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryAllowed)
+        let postParametersData = postParametersStringThatEscapedSpecialCharacters!.data(using: String.Encoding.ascii, allowLossyConversion: true)
         let postParametersLength = "\(completePostParamsString.characters.count)"
         // http request to get service agreement content from server
-        let url_encoded = url.stringByAddingPercentEncodingWithAllowedCharacters(NSCharacterSet.URLQueryAllowedCharacterSet())
-        let request = NSMutableURLRequest(URL: NSURL(string: url_encoded!)!, cachePolicy: .UseProtocolCachePolicy, timeoutInterval: TimeIntervals.HttpRequestTimeout.rawValue)
-        request.HTTPMethod = "POST"
+        let url_encoded = url.addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryAllowed)
+        let request = NSMutableURLRequest(url: URL(string: url_encoded!)!, cachePolicy: .useProtocolCachePolicy, timeoutInterval: TimeIntervals.httpRequestTimeout.rawValue)
+        request.httpMethod = "POST"
         request.setValue(postParametersLength, forHTTPHeaderField: "Content-Length")
-        request.HTTPBody = postParametersData
+        request.httpBody = postParametersData
         
-        var response: NSURLResponse?
+        var response: URLResponse?
         var error: NSError?
-        let responseData: NSData?
+        let responseData: Data?
         do {
-            responseData = try NSURLConnection.sendSynchronousRequest(request, returningResponse: &response)
+            responseData = try NSURLConnection.sendSynchronousRequest(request, returning: &response)
         } catch let error1 as NSError {
             error = error1
             responseData = nil
@@ -190,20 +201,20 @@ class Toolbox: NSObject, MBProgressHUDDelegate {
      * Asynchronously download avatar image from url and save it as a file locally.
      * The name of avatar file is always <user id>.png
      */
-    static func asyncDownloadAvatarImageForModelId(modelId: String, avatarType aType: AvatarType, completionBlock: ((Bool, UIImage?) -> Void)?) {
+    static func asyncDownloadAvatarImageForModelId(_ modelId: String, avatarType aType: AvatarType, completionBlock: ((Bool, UIImage?) -> Void)?) {
         var urlWithParams: String
-        if aType == .User {   // the avatar is for user
+        if aType == .user {   // the avatar is for user
             urlWithParams = Toolbox.addLoginTokenAndCurrentUserIdToHttpRequestParameters(URLUserAvatar + modelId)
         } else {                                // the avatar is for team
             urlWithParams = Toolbox.addLoginTokenAndCurrentUserIdToHttpRequestParameters(URLTeamAvatar + modelId)
         }
-        let request = NSMutableURLRequest(URL: NSURL(string: urlWithParams)!)
+        let request = NSMutableURLRequest(url: URL(string: urlWithParams)!)
         
-        NSURLConnection.sendAsynchronousRequest(request, queue: NSOperationQueue.mainQueue(), completionHandler: {
+        NSURLConnection.sendAsynchronousRequest(request as URLRequest, queue: OperationQueue.main, completionHandler: {
             response, data, error in
-            let httpResponse = response as? NSHTTPURLResponse
+            let httpResponse = response as? HTTPURLResponse
             if httpResponse != nil {
-                if httpResponse?.statusCode == HttpStatusCode.OK.rawValue {  // avatar download succeeded
+                if httpResponse?.statusCode == HttpStatusCode.ok.rawValue {  // avatar download succeeded
                     let image = UIImage(data: data!)
                     // save successfully downloaded user avatar to local app directory with name <user id>.png
                     if image != nil {
@@ -221,7 +232,7 @@ class Toolbox: NSObject, MBProgressHUDDelegate {
         })
     }
     
-    static func uploadImageToURL(url: String, image i: UIImage, parameters pDictionary: [NSObject: AnyObject]?, delegate d: AnyObject) -> NSURLConnection? {
+    static func uploadImageToURL(_ url: String, image i: UIImage, parameters pDictionary: [AnyHashable: Any]?, delegate d: AnyObject) -> NSURLConnection? {
         let httpDataBoundary = "---------------------------14737809831466499882746641449"
 
         let imageData = UIImageJPEGRepresentation(i, 1.0)
@@ -231,9 +242,9 @@ class Toolbox: NSObject, MBProgressHUDDelegate {
         let body = NSMutableData()
         if pDictionary != nil {
             for (name, value) in pDictionary! {
-                body.appendData("--\(httpDataBoundary)\r\n".dataUsingEncoding(NSUTF8StringEncoding)!)
-                body.appendData("Content-Disposition: form-data; name=\"\(name)\"\r\n\r\n".dataUsingEncoding(NSUTF8StringEncoding)!)
-                body.appendData("\(value)\r\n\r\n".dataUsingEncoding(NSUTF8StringEncoding)!)
+                body.append("--\(httpDataBoundary)\r\n".data(using: String.Encoding.utf8)!)
+                body.append("Content-Disposition: form-data; name=\"\(name)\"\r\n\r\n".data(using: String.Encoding.utf8)!)
+                body.append("\(value)\r\n\r\n".data(using: String.Encoding.utf8)!)
             }
         }
         
@@ -241,28 +252,28 @@ class Toolbox: NSObject, MBProgressHUDDelegate {
         let credentialInfo = Toolbox.getUserCredential()
         if credentialInfo != nil {
             for (name, value) in credentialInfo! {
-                body.appendData("--\(httpDataBoundary)\r\n".dataUsingEncoding(NSUTF8StringEncoding)!)
-                body.appendData("Content-Disposition: form-data; name=\"\(name)\"\r\n\r\n".dataUsingEncoding(NSUTF8StringEncoding)!)
-                body.appendData("\(value)\r\n\r\n".dataUsingEncoding(NSUTF8StringEncoding)!)
+                body.append("--\(httpDataBoundary)\r\n".data(using: String.Encoding.utf8)!)
+                body.append("Content-Disposition: form-data; name=\"\(name)\"\r\n\r\n".data(using: String.Encoding.utf8)!)
+                body.append("\(value)\r\n\r\n".data(using: String.Encoding.utf8)!)
             }
         }
         
-        body.appendData("\r\n--\(httpDataBoundary)\r\n".dataUsingEncoding(NSUTF8StringEncoding)!)
-        body.appendData("Content-Disposition: form-data; name=\"avatar\"; filename=\"user_avatar\(imageExtension)\"\r\n".dataUsingEncoding(NSUTF8StringEncoding)!)
-        body.appendData("Content-Type: application/octet-stream\r\n\r\n".dataUsingEncoding(NSUTF8StringEncoding)!)
+        body.append("\r\n--\(httpDataBoundary)\r\n".data(using: String.Encoding.utf8)!)
+        body.append("Content-Disposition: form-data; name=\"avatar\"; filename=\"user_avatar\(imageExtension)\"\r\n".data(using: String.Encoding.utf8)!)
+        body.append("Content-Type: application/octet-stream\r\n\r\n".data(using: String.Encoding.utf8)!)
         
-        body.appendData(NSData(data: imageData!))
-        body.appendData("\r\n--\(httpDataBoundary)--\r\n".dataUsingEncoding(NSUTF8StringEncoding)!)
+        body.append(NSData(data: imageData!) as Data)
+        body.append("\r\n--\(httpDataBoundary)--\r\n".data(using: String.Encoding.utf8)!)
         
-        let url_encoded = url.stringByAddingPercentEncodingWithAllowedCharacters(NSCharacterSet.URLQueryAllowedCharacterSet())
-        let request = NSMutableURLRequest(URL: NSURL(string: url_encoded!)!, cachePolicy: .UseProtocolCachePolicy, timeoutInterval: TimeIntervals.ImageUploadTimeout.rawValue)
-        request.HTTPMethod = "POST"
+        let url_encoded = url.addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryAllowed)
+        let request = NSMutableURLRequest(url: URL(string: url_encoded!)!, cachePolicy: .useProtocolCachePolicy, timeoutInterval: TimeIntervals.imageUploadTimeout.rawValue)
+        request.httpMethod = "POST"
         request.addValue(contentType, forHTTPHeaderField: "Content-Type")
         // set the content-length
         let postLength = "\(body.length)"
         
         request.setValue(postLength, forHTTPHeaderField: "Content-Length")
-        request.HTTPBody = body
+        request.httpBody = body
         // start asynchronous http request
         return NSURLConnection(request: request, delegate: d)
     }
@@ -276,7 +287,7 @@ class Toolbox: NSObject, MBProgressHUDDelegate {
     - parameter imageView: the imageView to show the avatar
     - parameter aType:     whether the avatar is for team or user
     */
-    static func loadAvatarImage(modelId: String, toImageView imageView: UIImageView, avatarType aType: AvatarType) {
+    static func loadAvatarImage(_ modelId: String, toImageView imageView: UIImageView, avatarType aType: AvatarType) {
         // load avatar image
         let avatarPath = Toolbox.getAvatarImagePathForModelId(modelId)
         if avatarPath != nil {    // current user avatar image file exists locally
@@ -304,10 +315,10 @@ class Toolbox: NSObject, MBProgressHUDDelegate {
      * it could represents either a user or a team, since both user and team are allowed
      * to have an avatar
      */
-    static func getAvatarImagePathForModelId(modelId: String) -> String? {
-        let documentsPath = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0] 
+    static func getAvatarImagePathForModelId(_ modelId: String) -> String? {
+        let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] 
         let avatarFilePath = "\(documentsPath)/\(modelId).png"
-        let avatarFileExists = NSFileManager.defaultManager().fileExistsAtPath(avatarFilePath)
+        let avatarFileExists = FileManager.default.fileExists(atPath: avatarFilePath)
         if avatarFileExists {
             return avatarFilePath
         } else {
@@ -315,36 +326,36 @@ class Toolbox: NSObject, MBProgressHUDDelegate {
         }
     }
     
-    static func saveAvatarImageLocally(avatarImage: UIImage, modelId mId: String) -> Bool {
+    static func saveAvatarImageLocally(_ avatarImage: UIImage, modelId mId: String) -> Bool {
         let imageData = UIImagePNGRepresentation(avatarImage)
-        let documentsDirectory = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0]
+        let documentsDirectory = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
         let imagePath = "\(documentsDirectory)/\(mId).png"
         
-        return imageData!.writeToFile(imagePath, atomically: false)
+        return ((try? imageData!.write(to: URL(fileURLWithPath: imagePath), options: [])) != nil)
     }
     
     /**
      * With dictionary or array data structure, this function converts it to JSON string as http post parameters
      */
-    static func convertDictionaryOrArrayToJSONString(arrayOrDictionary: AnyObject) -> String {
-        let JSONData: NSData?
+    static func convertDictionaryOrArrayToJSONString(_ arrayOrDictionary: AnyObject) -> String {
+        let JSONData: Data?
         do {
-            JSONData = try NSJSONSerialization.dataWithJSONObject(arrayOrDictionary, options: NSJSONWritingOptions.PrettyPrinted)
+            JSONData = try JSONSerialization.data(withJSONObject: arrayOrDictionary, options: JSONSerialization.WritingOptions.prettyPrinted)
         } catch {
             JSONData = nil
         }
-        let JSONString = NSString(data: JSONData!, encoding: NSUTF8StringEncoding)
+        let JSONString = NSString(data: JSONData!, encoding: String.Encoding.utf8.rawValue)
         return JSONString as! String
     }
     
     /**
      * Function to store username and password in keychain
      */
-    static func saveUserCredential(currentUserId: String, loginToken token: String) {
+    static func saveUserCredential(_ currentUserId: String, loginToken token: String) {
         // store username and password in keychain
         var keychainItem = KeychainItemWrapper(identifier: "SoccerAppLogin", accessGroup: nil)
-        keychainItem.setObject(currentUserId, forKey: kSecAttrAccount)
-        keychainItem.setObject(token, forKey: kSecValueData)
+        keychainItem?.setObject(currentUserId, forKey: kSecAttrAccount)
+        keychainItem?.setObject(token, forKey: kSecValueData)
         keychainItem = nil
     }
     
@@ -353,11 +364,11 @@ class Toolbox: NSObject, MBProgressHUDDelegate {
      */
     static func getUserCredential() -> [String: String]? {
         let keychainItem = KeychainItemWrapper(identifier: "SoccerAppLogin", accessGroup: nil)
-        let currentUserId = keychainItem.objectForKey(kSecAttrAccount) as? String
-        let loginTokenData = keychainItem.objectForKey(kSecValueData) as? NSData
+        let currentUserId = keychainItem?.object(forKey: kSecAttrAccount) as? String
+        let loginTokenData = keychainItem?.object(forKey: kSecValueData) as? Data
         var loginToken: NSString?
         if Toolbox.isStringValueValid(currentUserId) && loginTokenData != nil {
-            loginToken = NSString(data: loginTokenData!, encoding: NSUTF8StringEncoding)
+            loginToken = NSString(data: loginTokenData!, encoding: String.Encoding.utf8.rawValue)
             return [
                 "currentUserId": currentUserId!,
                 "loginToken": loginToken as! String
@@ -368,39 +379,39 @@ class Toolbox: NSObject, MBProgressHUDDelegate {
     }
     
     /* Create an image with given color */
-    static func imageWithColor(color: UIColor) -> UIImage {
-        let rect = CGRectMake(0.0, 0.0, 1.0, 1.0)
+    static func imageWithColor(_ color: UIColor) -> UIImage {
+        let rect = CGRect(x: 0.0, y: 0.0, width: 1.0, height: 1.0)
         UIGraphicsBeginImageContext(rect.size)
         let context = UIGraphicsGetCurrentContext()
         
-        CGContextSetFillColorWithColor(context, color.CGColor)
-        CGContextFillRect(context, rect)
+        context?.setFillColor(color.cgColor)
+        context?.fill(rect)
         
         let image = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
-        return image
+        return image!
     }
     
-    static func generateQRCodeWithString(string: String, scale s: CGFloat) -> UIImage? {
-        let stringData = string.dataUsingEncoding(NSUTF8StringEncoding)
+    static func generateQRCodeWithString(_ string: String, scale s: CGFloat) -> UIImage? {
+        let stringData = string.data(using: String.Encoding.utf8)
         
         let filter = CIFilter(name: "CIQRCodeGenerator")
         filter!.setValue(stringData, forKey: "inputMessage")
         filter!.setValue("M", forKey: "inputCorrectionLevel")
         
         // Render the image into a CoreGraphics image
-        let cgImage = CIContext(options: nil).createCGImage(filter!.outputImage!, fromRect: filter!.outputImage!.extent)
+        let cgImage = CIContext(options: nil).createCGImage(filter!.outputImage!, from: filter!.outputImage!.extent)
         
         //Scale the image usign CoreGraphics
-        UIGraphicsBeginImageContext(CGSizeMake(filter!.outputImage!.extent.size.width * s, filter!.outputImage!.extent.size.width * s))
+        UIGraphicsBeginImageContext(CGSize(width: filter!.outputImage!.extent.size.width * s, height: filter!.outputImage!.extent.size.width * s))
         let context = UIGraphicsGetCurrentContext()
-        CGContextSetInterpolationQuality(context, CGInterpolationQuality.None)
-        CGContextDrawImage(context, CGContextGetClipBoundingBox(context), cgImage)
+        context!.interpolationQuality = CGInterpolationQuality.none
+        context?.draw(cgImage!, in: (context?.boundingBoxOfClipPath)!)
         let preImage = UIGraphicsGetImageFromCurrentImageContext()
         //Cleaning up
         UIGraphicsEndImageContext()
         // Rotate the image
-        return UIImage(CGImage: preImage.CGImage!, scale: preImage.scale, orientation: .DownMirrored)
+        return UIImage(cgImage: (preImage?.cgImage!)!, scale: (preImage?.scale)!, orientation: .downMirrored)
     }
     
     /**
@@ -408,18 +419,18 @@ class Toolbox: NSObject, MBProgressHUDDelegate {
      */
     static func getCurrentViewController() -> UIViewController? {
         // get current view controller
-        if var topController = UIApplication.sharedApplication().keyWindow?.rootViewController {
+        if var topController = UIApplication.shared.keyWindow?.rootViewController {
             while let presentedViewController = topController.presentedViewController {
                 topController = presentedViewController
             }
             // topController should now be your topmost view controller
             return topController
         }
-        return UIApplication.sharedApplication().delegate?.window??.rootViewController
+        return UIApplication.shared.delegate?.window??.rootViewController
     }
     
-    static func toggleButton(button: UIButton, enabled e: Bool) {
-        button.enabled = e
+    static func toggleButton(_ button: UIButton, enabled e: Bool) {
+        button.isEnabled = e
         if e {
             button.alpha = 1.0
         } else {
@@ -431,19 +442,19 @@ class Toolbox: NSObject, MBProgressHUDDelegate {
      * Get rid of blank and new line characters at the front and end of strings, 
      * also remove special character '&'
      */
-    static func trim(string: String) -> String {
+    static func trim(_ string: String) -> String {
         // trim string
-        let trimmedString = string.stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceAndNewlineCharacterSet())
-        return trimmedString.stringByReplacingOccurrencesOfString("&", withString: "", options: .LiteralSearch, range: nil)
+        let trimmedString = string.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        return trimmedString.replacingOccurrences(of: "&", with: "", options: .literal, range: nil)
     }
     
-    static func isValidEmail(testStr: String) -> Bool {
+    static func isValidEmail(_ testStr: String) -> Bool {
         let emailRegEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}"
         let emailTest = NSPredicate(format:"SELF MATCHES %@", emailRegEx)
-        return emailTest.evaluateWithObject(testStr)
+        return emailTest.evaluate(with: testStr)
     }
     
-    static func getValidStringValue(s: AnyObject?) -> String {
+    static func getValidStringValue(_ s: AnyObject?) -> String {
         if s != nil {
             if let string = s as? String {
                 return string
@@ -455,7 +466,7 @@ class Toolbox: NSObject, MBProgressHUDDelegate {
         }
     }
     
-    static func getValidIntValue(s: AnyObject?) -> Int {
+    static func getValidIntValue(_ s: AnyObject?) -> Int {
         if s == nil {
             return 0
         }
@@ -470,39 +481,39 @@ class Toolbox: NSObject, MBProgressHUDDelegate {
     static func switchToLoginViewController() {
         // change rootViewController to loginViewController
         let storyboard = UIStoryboard(name: StoryboardNames.Account.rawValue, bundle: nil)
-        let rootViewController = storyboard.instantiateViewControllerWithIdentifier("accountNavigationViewController") 
+        let rootViewController = storyboard.instantiateViewController(withIdentifier: "accountNavigationViewController") 
         
-        if UIApplication.sharedApplication().keyWindow != nil {
-            UIApplication.sharedApplication().keyWindow!.rootViewController = rootViewController
+        if UIApplication.shared.keyWindow != nil {
+            UIApplication.shared.keyWindow!.rootViewController = rootViewController
         } else {
-            UIApplication.sharedApplication().delegate?.window??.rootViewController = rootViewController
+            UIApplication.shared.delegate?.window??.rootViewController = rootViewController
         }
     }
     
     static func clearLocalAndRemoteNotificationCount() {
         // clear push notification badge
-        UIApplication.sharedApplication().applicationIconBadgeNumber = 0
+        UIApplication.shared.applicationIconBadgeNumber = 0
         // send request to server to clear number of push notification badges for this user
         Toolbox.asyncHttpPostToURL(URLClearNumberOfBadgesForPushNotification, parameters: "", delegate: nil)
     }
     
-    static func isSystemVersionGreaterThanOrEqualTo(version: String) -> Bool {
-        return UIDevice.currentDevice().systemVersion.compare(version, options: .NumericSearch) != NSComparisonResult.OrderedAscending
+    static func isSystemVersionGreaterThanOrEqualTo(_ version: String) -> Bool {
+        return UIDevice.current.systemVersion.compare(version, options: .numeric) != ComparisonResult.orderedAscending
     }
     
-    static func showAlertView(title: String) {
+    static func showAlertView(_ title: String) {
         let alertView = UIAlertView(title: title, message: title, delegate: nil, cancelButtonTitle: "确定")
         alertView.show()
     }
     
-    static func removeSuffixOfProvinceAndCity(place: String) -> String {
-        return place.stringByReplacingOccurrencesOfString("省", withString: "").stringByReplacingOccurrencesOfString("市", withString: "")
+    static func removeSuffixOfProvinceAndCity(_ place: String) -> String {
+        return place.replacingOccurrences(of: "省", with: "").replacingOccurrences(of: "市", with: "")
     }
     
-    static func removeBottomShadowOfNavigationBar(navigationBar: UINavigationBar) {
+    static func removeBottomShadowOfNavigationBar(_ navigationBar: UINavigationBar) {
         // the following 2 lines of code removes the bottom border of navigation bar
         navigationBar.shadowImage = UIImage()
-        navigationBar.setBackgroundImage(Toolbox.imageWithColor(ColorSettledGreen), forBarMetrics: .Default)
+        navigationBar.setBackgroundImage(Toolbox.imageWithColor(ColorSettledGreen), for: .default)
     }
     
     /**
@@ -512,10 +523,10 @@ class Toolbox: NSObject, MBProgressHUDDelegate {
     - parameter storyboardIdentifier:        destination storyboard identifier
     - parameter destinationViewController:   destination view controller in the destination storyboard, when passed in as empty string, meaning that the destination view controller is the initial view controller of the destination storyboard
     */
-    static func navigationToViewControllerInDifferentStoryboard(currentNavigationController: UINavigationController?, storyboardIdentifier: String, destinationViewControllerIdentifier: String?) {
+    static func navigationToViewControllerInDifferentStoryboard(_ currentNavigationController: UINavigationController?, storyboardIdentifier: String, destinationViewControllerIdentifier: String?) {
         let destinationStoryboard = UIStoryboard(name: storyboardIdentifier, bundle: nil)
         if Toolbox.isStringValueValid(destinationViewControllerIdentifier) {
-            let destinationVC = destinationStoryboard.instantiateViewControllerWithIdentifier(destinationViewControllerIdentifier!)
+            let destinationVC = destinationStoryboard.instantiateViewController(withIdentifier: destinationViewControllerIdentifier!)
             currentNavigationController?.pushViewController(destinationVC, animated: true)
         } else {
             let destinationVC = destinationStoryboard.instantiateInitialViewController()
@@ -528,7 +539,7 @@ class Toolbox: NSObject, MBProgressHUDDelegate {
     
     - parameter label: the label that needs to change its text color
     */
-    static func setLabelColorBasedOnAttributeValue(label: UILabel) {
+    static func setLabelColorBasedOnAttributeValue(_ label: UILabel) {
         let labelTextValue = Float(label.text!)
         if labelTextValue == nil {
             return
@@ -540,7 +551,7 @@ class Toolbox: NSObject, MBProgressHUDDelegate {
         } else {
             label.backgroundColor = ColorSolidGreen
         }
-        label.textColor = UIColor.whiteColor()
+        label.textColor = UIColor.white
     }
     
     /**
@@ -548,81 +559,81 @@ class Toolbox: NSObject, MBProgressHUDDelegate {
     
     - parameter location: location string such as "湖南长沙"
     */
-    static func removeProvinceNameFromString(location: String) -> String {
-        if location.containsString("河北") {
-            return location.stringByReplacingOccurrencesOfString("河北", withString: "", options: .LiteralSearch, range: nil)
-        } else if location.containsString("山西") {
-            return location.stringByReplacingOccurrencesOfString("山西", withString: "", options: .LiteralSearch, range: nil)
-        } else if location.containsString("辽宁") {
-            return location.stringByReplacingOccurrencesOfString("辽宁", withString: "", options: .LiteralSearch, range: nil)
-        } else if location.containsString("吉林") {
-            return location.stringByReplacingOccurrencesOfString("吉林", withString: "", options: .LiteralSearch, range: nil)
-        } else if location.containsString("黑龙江") {
-            return location.stringByReplacingOccurrencesOfString("黑龙江", withString: "", options: .LiteralSearch, range: nil)
-        } else if location.containsString("江苏") {
-            return location.stringByReplacingOccurrencesOfString("江苏", withString: "", options: .LiteralSearch, range: nil)
-        } else if location.containsString("浙江") {
-            return location.stringByReplacingOccurrencesOfString("浙江", withString: "", options: .LiteralSearch, range: nil)
-        } else if location.containsString("安徽") {
-            return location.stringByReplacingOccurrencesOfString("安徽", withString: "", options: .LiteralSearch, range: nil)
-        } else if location.containsString("福建") {
-            return location.stringByReplacingOccurrencesOfString("福建", withString: "", options: .LiteralSearch, range: nil)
-        } else if location.containsString("江西") {
-            return location.stringByReplacingOccurrencesOfString("江西", withString: "", options: .LiteralSearch, range: nil)
-        } else if location.containsString("山东") {
-            return location.stringByReplacingOccurrencesOfString("山东", withString: "", options: .LiteralSearch, range: nil)
-        } else if location.containsString("河南") {
-            return location.stringByReplacingOccurrencesOfString("河南", withString: "", options: .LiteralSearch, range: nil)
-        } else if location.containsString("湖北") {
-            return location.stringByReplacingOccurrencesOfString("湖北", withString: "", options: .LiteralSearch, range: nil)
-        } else if location.containsString("内蒙古") {
-            return location.stringByReplacingOccurrencesOfString("内蒙古", withString: "", options: .LiteralSearch, range: nil)
-        } else if location.containsString("宁夏") {
-            return location.stringByReplacingOccurrencesOfString("宁夏", withString: "", options: .LiteralSearch, range: nil)
-        } else if location.containsString("湖南") {
-            return location.stringByReplacingOccurrencesOfString("湖南", withString: "", options: .LiteralSearch, range: nil)
-        } else if location.containsString("广东") {
-            return location.stringByReplacingOccurrencesOfString("广东", withString: "", options: .LiteralSearch, range: nil)
-        } else if location.containsString("广西") {
-            return location.stringByReplacingOccurrencesOfString("广西", withString: "", options: .LiteralSearch, range: nil)
-        } else if location.containsString("海南") {
-            return location.stringByReplacingOccurrencesOfString("海南", withString: "", options: .LiteralSearch, range: nil)
-        } else if location.containsString("四川") {
-            return location.stringByReplacingOccurrencesOfString("四川", withString: "", options: .LiteralSearch, range: nil)
-        } else if location.containsString("贵州") {
-            return location.stringByReplacingOccurrencesOfString("贵州", withString: "", options: .LiteralSearch, range: nil)
-        } else if location.containsString("云南") {
-            return location.stringByReplacingOccurrencesOfString("云南", withString: "", options: .LiteralSearch, range: nil)
-        } else if location.containsString("陕西") {
-            return location.stringByReplacingOccurrencesOfString("陕西", withString: "", options: .LiteralSearch, range: nil)
-        } else if location.containsString("甘肃") {
-            return location.stringByReplacingOccurrencesOfString("甘肃", withString: "", options: .LiteralSearch, range: nil)
-        } else if location.containsString("西藏") {
-            return location.stringByReplacingOccurrencesOfString("西藏", withString: "", options: .LiteralSearch, range: nil)
-        } else if location.containsString("新疆") {
-            return location.stringByReplacingOccurrencesOfString("新疆", withString: "", options: .LiteralSearch, range: nil)
-        } else if location.containsString("青海") {
-            return location.stringByReplacingOccurrencesOfString("青海", withString: "", options: .LiteralSearch, range: nil)
+    static func removeProvinceNameFromString(_ location: String) -> String {
+        if location.contains("河北") {
+            return location.replacingOccurrences(of: "河北", with: "", options: .literal, range: nil)
+        } else if location.contains("山西") {
+            return location.replacingOccurrences(of: "山西", with: "", options: .literal, range: nil)
+        } else if location.contains("辽宁") {
+            return location.replacingOccurrences(of: "辽宁", with: "", options: .literal, range: nil)
+        } else if location.contains("吉林") {
+            return location.replacingOccurrences(of: "吉林", with: "", options: .literal, range: nil)
+        } else if location.contains("黑龙江") {
+            return location.replacingOccurrences(of: "黑龙江", with: "", options: .literal, range: nil)
+        } else if location.contains("江苏") {
+            return location.replacingOccurrences(of: "江苏", with: "", options: .literal, range: nil)
+        } else if location.contains("浙江") {
+            return location.replacingOccurrences(of: "浙江", with: "", options: .literal, range: nil)
+        } else if location.contains("安徽") {
+            return location.replacingOccurrences(of: "安徽", with: "", options: .literal, range: nil)
+        } else if location.contains("福建") {
+            return location.replacingOccurrences(of: "福建", with: "", options: .literal, range: nil)
+        } else if location.contains("江西") {
+            return location.replacingOccurrences(of: "江西", with: "", options: .literal, range: nil)
+        } else if location.contains("山东") {
+            return location.replacingOccurrences(of: "山东", with: "", options: .literal, range: nil)
+        } else if location.contains("河南") {
+            return location.replacingOccurrences(of: "河南", with: "", options: .literal, range: nil)
+        } else if location.contains("湖北") {
+            return location.replacingOccurrences(of: "湖北", with: "", options: .literal, range: nil)
+        } else if location.contains("内蒙古") {
+            return location.replacingOccurrences(of: "内蒙古", with: "", options: .literal, range: nil)
+        } else if location.contains("宁夏") {
+            return location.replacingOccurrences(of: "宁夏", with: "", options: .literal, range: nil)
+        } else if location.contains("湖南") {
+            return location.replacingOccurrences(of: "湖南", with: "", options: .literal, range: nil)
+        } else if location.contains("广东") {
+            return location.replacingOccurrences(of: "广东", with: "", options: .literal, range: nil)
+        } else if location.contains("广西") {
+            return location.replacingOccurrences(of: "广西", with: "", options: .literal, range: nil)
+        } else if location.contains("海南") {
+            return location.replacingOccurrences(of: "海南", with: "", options: .literal, range: nil)
+        } else if location.contains("四川") {
+            return location.replacingOccurrences(of: "四川", with: "", options: .literal, range: nil)
+        } else if location.contains("贵州") {
+            return location.replacingOccurrences(of: "贵州", with: "", options: .literal, range: nil)
+        } else if location.contains("云南") {
+            return location.replacingOccurrences(of: "云南", with: "", options: .literal, range: nil)
+        } else if location.contains("陕西") {
+            return location.replacingOccurrences(of: "陕西", with: "", options: .literal, range: nil)
+        } else if location.contains("甘肃") {
+            return location.replacingOccurrences(of: "甘肃", with: "", options: .literal, range: nil)
+        } else if location.contains("西藏") {
+            return location.replacingOccurrences(of: "西藏", with: "", options: .literal, range: nil)
+        } else if location.contains("新疆") {
+            return location.replacingOccurrences(of: "新疆", with: "", options: .literal, range: nil)
+        } else if location.contains("青海") {
+            return location.replacingOccurrences(of: "青海", with: "", options: .literal, range: nil)
         }
         return location
     }
     
-    static func setPaginatedTableFooterView(total: Int, numOfLoaded: Int, isLoadingNextPage: Bool, buttonTitle: String, buttonActionSelector: Selector, viewController: UIViewController) -> UIView {
+    static func setPaginatedTableFooterView(_ total: Int, numOfLoaded: Int, isLoadingNextPage: Bool, buttonTitle: String, buttonActionSelector: Selector, viewController: UIViewController) -> UIView {
         // no more models can be loaded
         if total == numOfLoaded {
-            return UIView(frame: CGRectZero)
+            return UIView(frame: CGRect.zero)
         }
-        let footerView = UIView(frame: CGRectMake(0, 0, ScreenSize.width, TableSectionFooterHeightWithButton))
+        let footerView = UIView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: TableSectionFooterHeightWithButton))
         if !isLoadingNextPage { // Not loading next page, should show next page button
             let nextPageButton = Appearance.setupTableFooterButtonWithTitle(buttonTitle, backgroundColor: ColorSettledGreen)
-            nextPageButton.addTarget(viewController, action: buttonActionSelector, forControlEvents: .TouchUpInside)
+            nextPageButton.addTarget(viewController, action: buttonActionSelector, for: .touchUpInside)
             footerView.addSubview(nextPageButton)
         } else {    // currently loading next page, should show activity indicator
             // Create and add the activityIndicator to footerView to indicate currentyl loading next page
-            let activityIndicator = UIActivityIndicatorView(activityIndicatorStyle: .White)
+            let activityIndicator = UIActivityIndicatorView(activityIndicatorStyle: .white)
             activityIndicator.alpha = 1.0
-            activityIndicator.color = UIColor.blackColor()
-            activityIndicator.center = CGPointMake(ScreenSize.width / 2, TableSectionFooterHeightWithButton / 2)
+            activityIndicator.color = UIColor.black
+            activityIndicator.center = CGPoint(x: ScreenSize.width / 2, y: TableSectionFooterHeightWithButton / 2)
             activityIndicator.hidesWhenStopped = false
             footerView.addSubview(activityIndicator)
             activityIndicator.startAnimating()

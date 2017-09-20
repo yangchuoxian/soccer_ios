@@ -30,13 +30,13 @@ class VTSendApplicationViewController: UIViewController, NSURLConnectionDelegate
         self.textView_application.delegate = self
     }
     
-    func textViewDidChange(textView: UITextView) {
+    func textViewDidChange(_ textView: UITextView) {
         // Get the placeholder label
-        let placeHolderLabel = textView.viewWithTag(TagValue.TextViewPlaceholder.rawValue)
-        if !textView.hasText() {
-            placeHolderLabel?.hidden = false
+        let placeHolderLabel = textView.viewWithTag(TagValue.textViewPlaceholder.rawValue)
+        if !textView.hasText {
+            placeHolderLabel?.isHidden = false
         } else {
-            placeHolderLabel?.hidden = true
+            placeHolderLabel?.isHidden = true
         }
         
         let enteredApplicationLength = Toolbox.trim(self.textView_application.text).characters.count
@@ -51,15 +51,15 @@ class VTSendApplicationViewController: UIViewController, NSURLConnectionDelegate
         super.didReceiveMemoryWarning()
     }
     
-    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         // resign the keyboard when tapped somewhere else other than the text field or the keyboard itself
         self.textView_application.resignFirstResponder()
     }
     
-    @IBAction func sendApplication(sender: AnyObject) {
+    @IBAction func sendApplication(_ sender: AnyObject) {
         self.application = Toolbox.trim(self.textView_application.text)
         let connection = Toolbox.asyncHttpPostToURL(URLSendMessage,
-            parameters: "recipientId=\(self.teamCaptainUserId)&messageContent=\(self.application)&type=\(MessageType.Application.rawValue)&toTeam=\(self.teamObject.teamId)",
+            parameters: "recipientId=\(self.teamCaptainUserId)&messageContent=\(self.application)&type=\(MessageType.application.rawValue)&toTeam=\(self.teamObject.teamId)",
             delegate: self)
         if connection == nil {
             Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络连接失败")
@@ -69,11 +69,11 @@ class VTSendApplicationViewController: UIViewController, NSURLConnectionDelegate
         }
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.HUD.hide(true, afterDelay: 0)
         self.HUD = nil
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络超时")
@@ -81,11 +81,11 @@ class VTSendApplicationViewController: UIViewController, NSURLConnectionDelegate
         self.responseData = NSMutableData()
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.HUD.hide(true, afterDelay: 0)
         self.HUD = nil
-        let responseStr = NSString(data: self.responseData!, encoding: NSUTF8StringEncoding)!
-        if (responseStr as String).rangeOfString("newMessageId") != nil {    // send application succeeded
+        let responseStr = NSString(data: self.responseData! as Data, encoding: String.Encoding.utf8.rawValue)!
+        if (responseStr as String).range(of: "newMessageId") != nil {    // send application succeeded
             // set up HUD to show that application sent successfully
             Toolbox.showCustomAlertViewWithImage("checkmark", title: "申请发送成功")
         } else {    // send application failed with error message
@@ -98,14 +98,14 @@ class VTSendApplicationViewController: UIViewController, NSURLConnectionDelegate
     /**
      * MBProgressHUD delegate method, invoked automatically when the HUD that shows application sent succeeded was hidden
      */
-    func hudWasHidden(hud: MBProgressHUD!) {
+    func hudWasHidden(_ hud: MBProgressHUD!) {
         // send notification to notify that application has sent successfully
-        NSNotificationCenter.defaultCenter().postNotificationName(
-            "applicationSentSuccessfully",
+        NotificationCenter.default.post(
+            name: Notification.Name(rawValue: "applicationSentSuccessfully"),
             object: self.teamObject
         )
         // unwind segue, go back to teams table view controller
-        self.performSegueWithIdentifier("unwindToTeamListFromSendApplicationSegue", sender: self)
+        self.performSegue(withIdentifier: "unwindToTeamListFromSendApplicationSegue", sender: self)
     }
     
     deinit {

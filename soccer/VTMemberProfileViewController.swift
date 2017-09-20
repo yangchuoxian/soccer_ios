@@ -47,7 +47,7 @@ class VTMemberProfileTableViewController: UITableViewController, UIActionSheetDe
         // changes like
         // a. remove the member from the team or
         // b. promote the member as the new captain
-        let currentTeamId = NSUserDefaults.standardUserDefaults().stringForKey("teamIdSelectedInTeamsList")
+        let currentTeamId = UserDefaults.standard.string(forKey: "teamIdSelectedInTeamsList")
         let captainUserId = Team.retrieveCaptainIdFromLocalDatabaseWithTeamId(currentTeamId!)
         
         let currentUser = Singleton_CurrentUser.sharedInstance
@@ -59,16 +59,16 @@ class VTMemberProfileTableViewController: UITableViewController, UIActionSheetDe
                     // add right button in navigation bar programmatically
                     // since current user is the captain of this team, he/she is allowed to make changes to members in this team
                     self.navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(named: "more"),
-                        style: .Plain,
+                        style: .plain,
                         target: self,
-                        action: "showExtraActionsAvailableToTeamMember")
+                        action: #selector(VTMemberProfileTableViewController.showExtraActionsAvailableToTeamMember))
             }
         } else {
             Toolbox.showCustomAlertViewWithImage("unhappy", title: "没有找到球队")
         }
         
         // load user avatar asynchronously
-        Toolbox.loadAvatarImage(self.userObject!.userId, toImageView: self.imageView_avatar, avatarType: AvatarType.User)
+        Toolbox.loadAvatarImage(self.userObject!.userId, toImageView: self.imageView_avatar, avatarType: AvatarType.user)
         self.label_username.text = self.userObject!.username
 
         if Toolbox.isStringValueValid(self.userObject!.dateOfBirth) {
@@ -94,18 +94,18 @@ class VTMemberProfileTableViewController: UITableViewController, UIActionSheetDe
         }
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         // Set this in the root view controller so that the back button displays back instead of the root view controller name
         Appearance.customizeNavigationBar(self, title: "球员资料")
         // clear the selection style of previously selected table cell
         let selectedIndexPath = self.tableView.indexPathForSelectedRow
         if selectedIndexPath != nil {
-            self.tableView.deselectRowAtIndexPath(selectedIndexPath!, animated: true)
+            self.tableView.deselectRow(at: selectedIndexPath!, animated: true)
         }
     }
     
-    override func tableView(tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+    override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
         if section != 3 {
             return DefaultTableSectionFooterHeight
         } else {
@@ -117,17 +117,17 @@ class VTMemberProfileTableViewController: UITableViewController, UIActionSheetDe
         }
     }
     
-    override func tableView(tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+    override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         if section != 3 {
-            return UIView(frame: CGRectZero)
+            return UIView(frame: CGRect.zero)
         } else {
-            let footerView = UIView(frame: CGRectMake(0, 0, ScreenSize.width, TableSectionFooterHeightWithButton))
+            let footerView = UIView(frame: CGRect(x: 0, y: 0, width: ScreenSize.width, height: TableSectionFooterHeightWithButton))
             
             // only when the current logged user is NOT the user showing in this profile page, do we  add a "send message" button at the bottom, since user cannot send message to himself/herself
             if Singleton_CurrentUser.sharedInstance.userId != self.userObject!.userId {
                 // add send message button
                 self.button_sendMessage = Appearance.setupTableFooterButtonWithTitle("发送消息", backgroundColor: ColorSettledGreen)
-                self.button_sendMessage?.addTarget(self, action: "sendMessageToTeamMember", forControlEvents: .TouchUpInside)
+                self.button_sendMessage?.addTarget(self, action: #selector(VTMemberProfileTableViewController.sendMessageToTeamMember), for: .touchUpInside)
                 footerView.addSubview(self.button_sendMessage!)
             }
             return footerView
@@ -141,7 +141,7 @@ class VTMemberProfileTableViewController: UITableViewController, UIActionSheetDe
         self.userObject = nil
         
         if self.button_sendMessage != nil {
-            self.button_sendMessage?.removeTarget(nil, action: nil, forControlEvents: .AllEvents)
+            self.button_sendMessage?.removeTarget(nil, action: nil, for: .allEvents)
             self.button_sendMessage = nil
         }
         
@@ -171,10 +171,10 @@ class VTMemberProfileTableViewController: UITableViewController, UIActionSheetDe
             destructiveButtonTitle: nil,
             otherButtonTitles: removeFromTeam, setAsCaptain
         )
-        actionSheet.showInView(self.view)
+        actionSheet.show(in: self.view)
     }
     
-    func actionSheet(actionSheet: UIActionSheet, clickedButtonAtIndex buttonIndex: Int) {
+    func actionSheet(_ actionSheet: UIActionSheet, clickedButtonAt buttonIndex: Int) {
         if buttonIndex == 0 {   // cancel button clicked
             return
         }
@@ -197,9 +197,9 @@ class VTMemberProfileTableViewController: UITableViewController, UIActionSheetDe
         self.removeTeamMemberOrPromoteTeamCaptainAlertView?.show()
     }
     
-    func alertView(alertView: UIAlertView, clickedButtonAtIndex buttonIndex: Int) {
+    func alertView(_ alertView: UIAlertView, clickedButtonAt buttonIndex: Int) {
         if buttonIndex == 1 {     // establish button clicked, submit the request to either delete team member or promote team captain
-            let currentTeamId = NSUserDefaults.standardUserDefaults().stringForKey("teamIdSelectedInTeamsList")
+            let currentTeamId = UserDefaults.standard.string(forKey: "teamIdSelectedInTeamsList")
             let postParametersString = "userId=\(self.userObject!.userId)&teamId=\(currentTeamId!)&booted=true"
             
             var connection: NSURLConnection?
@@ -225,27 +225,27 @@ class VTMemberProfileTableViewController: UITableViewController, UIActionSheetDe
     }
     
     func sendMessageToTeamMember() {
-        self.performSegueWithIdentifier("sendMessageToTeamMemberSegue", sender: self)
+        self.performSegue(withIdentifier: "sendMessageToTeamMemberSegue", sender: self)
     }
 
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "sendMessageToTeamMemberSegue" {
             let currentUser = Singleton_CurrentUser.sharedInstance
-            let destinationViewController = segue.destinationViewController as! VTConversationCollectionViewController
-            destinationViewController.messageGroupId = Message.decideMessageGroupId(currentUser.userId!, receiverUserId: self.userObject!.userId, messageType: MessageType.OneToOneMessage.rawValue)
+            let destinationViewController = segue.destination as! VTConversationCollectionViewController
+            destinationViewController.messageGroupId = Message.decideMessageGroupId(currentUser.userId!, receiverUserId: self.userObject!.userId, messageType: MessageType.oneToOneMessage.rawValue)
             destinationViewController.secondUserId = self.userObject!.userId
             destinationViewController.receiverUsername = self.userObject!.username
         } else if segue.identifier == "memberStatsSegue" {
-            let destinationViewController = segue.destinationViewController as! VTMemberStatsTableViewController
+            let destinationViewController = segue.destination as! VTMemberStatsTableViewController
             destinationViewController.userObject = self.userObject
         }
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         self.HUD?.hide(true)
         self.HUD = nil
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络超时")
@@ -253,44 +253,44 @@ class VTMemberProfileTableViewController: UITableViewController, UIActionSheetDe
         self.responseData = NSMutableData()
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         self.HUD?.hide(true)
         self.HUD = nil
-        let responseStr = NSString(data: self.responseData!, encoding: NSUTF8StringEncoding)
+        let responseStr = NSString(data: self.responseData! as Data, encoding: String.Encoding.utf8.rawValue)
         
         if self.indexOfCurrentHttpRequest == .promoteTeamCaptain {
             if responseStr == "OK" {
                 // go back to the members table view controller and also notify that captain has changed with the captain user id
-                NSNotificationCenter.defaultCenter().postNotificationName(
-                    "teamCaptainChangedOnServer",
+                NotificationCenter.default.post(
+                    name: Notification.Name(rawValue: "teamCaptainChangedOnServer"),
                     object: self.userObject!.userId
                 )
-                self.navigationController?.popViewControllerAnimated(true)
+                self.navigationController?.popViewController(animated: true)
             } else {    // http request failed with error message
                 var HUD = MBProgressHUD(view: self.navigationController?.view)
-                self.navigationController?.view.addSubview(HUD)
-                HUD.customView = UIImageView(image: UIImage(named: "unhappy"))
+                self.navigationController?.view.addSubview(HUD!)
+                HUD?.customView = UIImageView(image: UIImage(named: "unhappy"))
                 // Set custom view mode
-                HUD.mode = .CustomView
-                HUD.labelText = responseStr as! String
-                HUD.show(true)
+                HUD?.mode = .customView
+                HUD?.labelText = responseStr as! String
+                HUD?.show(true)
                 // hide and remove HUD view a while after
-                HUD.hide(true, afterDelay: 1)
+                HUD?.hide(true, afterDelay: 1)
                 HUD = nil
             }
         } else if self.indexOfCurrentHttpRequest == .deleteTeamMember {
             if responseStr == "OK" {
-                let currentTeamId = NSUserDefaults.standardUserDefaults().stringForKey("teamIdSelectedInTeamsList")
+                let currentTeamId = UserDefaults.standard.string(forKey: "teamIdSelectedInTeamsList")
                 // update the number of members for this team in local database
                 let newNumberOfMembers = Team.changeNumberOfMembersInTeam(currentTeamId!, reduce: true)
-                if newNumberOfMembers != ErrorCode.LocalDatabaseError.rawValue {
+                if newNumberOfMembers != ErrorCode.localDatabaseError.rawValue {
                     let teamInfoAfterDeletingTeamMember = [
                         "deletedMemberUserId": self.userObject!.userId,
                         "newNumberOfMembers": "\(newNumberOfMembers)"
                     ]
                     // go back to the members table view controller and also notify that team member has been removed
-                    NSNotificationCenter.defaultCenter().postNotificationName("teamMemberDeletedOnServer", object: teamInfoAfterDeletingTeamMember)
-                    self.navigationController?.popViewControllerAnimated(true)
+                    NotificationCenter.default.post(name: Notification.Name(rawValue: "teamMemberDeletedOnServer"), object: teamInfoAfterDeletingTeamMember)
+                    self.navigationController?.popViewController(animated: true)
                 } else {
                     Toolbox.showCustomAlertViewWithImage("unhappy", title: "本地数据库操作失败")
                 }

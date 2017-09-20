@@ -9,7 +9,7 @@
 import UIKit
 
 protocol VTTeamCalendarViewDelegate {
-    func getActivitiesForThisDate(activities: [Activity])
+    func getActivitiesForThisDate(_ activities: [Activity])
 }
 
 class VTTeamCalendarViewController: UIViewController, JTCalendarDataSource, NSURLConnectionDelegate, NSURLConnectionDataDelegate {
@@ -27,15 +27,15 @@ class VTTeamCalendarViewController: UIViewController, JTCalendarDataSource, NSUR
     var activityList = [Activity]()
     var activityDates = [String]()
     var teamId: String!
-    var selectedDate: NSDate?
+    var selectedDate: Date?
     var selectedActivity: Activity?
     var delegate: VTTeamCalendarViewDelegate?
     var HUD: MBProgressHUD?
     var responseData: NSMutableData? = NSMutableData()
     
     // when retrieving activities from server, there's a date range to be specified, generally it is a 3 months period including the previous month, the current month in calendarContentView and the next month, the following 2 variables record this date range
-    var startDateOfCurrentBatchOfActivities: NSDate?
-    var endDateOfCurrentBatchOfActivities: NSDate?
+    var startDateOfCurrentBatchOfActivities: Date?
+    var endDateOfCurrentBatchOfActivities: Date?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -43,14 +43,14 @@ class VTTeamCalendarViewController: UIViewController, JTCalendarDataSource, NSUR
         self.navigationController!.navigationBar.topItem!.title = ""
         
         // add right button in navigation bar programmatically
-        self.navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(named: "menu"), style: .Bordered, target: self, action: "presentLeftMenuViewController:")
-        self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Stop, target: self, action: "goBackToTeamsTableView")
+        self.navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(named: "menu"), style: .bordered, target: self, action: #selector(UIViewController.presentLeftMenuViewController(_:)))
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .stop, target: self, action: #selector(VTTeamCalendarViewController.goBackToTeamsTableView))
 
         // drop shadow effect for new activity button view
-        self.view_newActivityButtonContainer.layer.shadowColor = UIColor.blackColor().CGColor
+        self.view_newActivityButtonContainer.layer.shadowColor = UIColor.black.cgColor
         self.view_newActivityButtonContainer.layer.shadowOpacity = 0.5
         self.view_newActivityButtonContainer.layer.shadowRadius = 1.5
-        self.view_newActivityButtonContainer.layer.shadowOffset = CGSizeMake(1.0, 1.0)
+        self.view_newActivityButtonContainer.layer.shadowOffset = CGSize(width: 1.0, height: 1.0)
         
         // set up and show JTCalendar
         self.calendar = JTCalendar()
@@ -69,31 +69,31 @@ class VTTeamCalendarViewController: UIViewController, JTCalendarDataSource, NSUR
         self.calendar.calendarAppearance.focusSelectedDayChangeMode = true
         
         // retrieve selected team id in userDefaults
-        self.teamId = NSUserDefaults.standardUserDefaults().stringForKey("teamIdSelectedInTeamsList")
+        self.teamId = UserDefaults.standard.string(forKey: "teamIdSelectedInTeamsList")
         
         // add tap gesture event to calendarMenuView, when single tapped and if the calendar is in week mode, switch it back to month mode
-        let singleTap = UITapGestureRecognizer(target: self, action: "switchToMonthMode")
+        let singleTap = UITapGestureRecognizer(target: self, action: #selector(VTTeamCalendarViewController.switchToMonthMode))
         singleTap.numberOfTapsRequired = 1
-        self.calendarMenuView.userInteractionEnabled = true
+        self.calendarMenuView.isUserInteractionEnabled = true
         self.calendarMenuView.addGestureRecognizer(singleTap)
         
         // add notification observer to watch if new activity was published
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "showNewPublishedActivity:", name: "newActivityPublished", object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTTeamCalendarViewController.showNewPublishedActivity(_:)), name: NSNotification.Name(rawValue: "newActivityPublished"), object: nil)
         // add notification observer to watch if activity record selected
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "showSelectedActivityDetails:", name: "activitySelected", object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(VTTeamCalendarViewController.showSelectedActivityDetails(_:)), name: NSNotification.Name(rawValue: "activitySelected"), object: nil)
     }
     
     func goBackToTeamsTableView() {
-        self.performSegueWithIdentifier("unwindToTeamListSegue", sender: self)
+        self.performSegue(withIdentifier: "unwindToTeamListSegue", sender: self)
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         self.getActivitiesForRecentMonths()
         Appearance.customizeNavigationBar(self, title: "球队活动")
     }
     
-    func showNewPublishedActivity(notification: NSNotification) {
+    func showNewPublishedActivity(_ notification: Notification) {
         Toolbox.showCustomAlertViewWithImage("checkmark", title: "新活动发布成功")
         let publishedActivity = notification.object as! Activity
         
@@ -115,9 +115,9 @@ class VTTeamCalendarViewController: UIViewController, JTCalendarDataSource, NSUR
         }
     }
     
-    func showSelectedActivityDetails(notification: NSNotification) {
+    func showSelectedActivityDetails(_ notification: Notification) {
         self.selectedActivity = notification.object as? Activity
-        self.performSegueWithIdentifier("activityDetailSegue", sender: self)
+        self.performSegue(withIdentifier: "activityDetailSegue", sender: self)
     }
     
     func switchToMonthMode() {
@@ -126,7 +126,7 @@ class VTTeamCalendarViewController: UIViewController, JTCalendarDataSource, NSUR
             self.calendar.calendarAppearance.isWeekMode = false
             self.calendar.reloadAppearance()
             
-            UIView.animateWithDuration(0.3, delay: 0.0, options: UIViewAnimationOptions.CurveEaseInOut, animations: {
+            UIView.animate(withDuration: 0.3, delay: 0.0, options: UIViewAnimationOptions(), animations: {
                 self.calendarContentViewHeightConstraint.constant = CalendarMenuHeightOfMonthMode
                 var frame:CGRect = self.calendarContentView.frame
                 frame.size.height = CalendarMenuHeightOfMonthMode
@@ -145,7 +145,7 @@ class VTTeamCalendarViewController: UIViewController, JTCalendarDataSource, NSUR
         // Dispose of any resources that can be recreated.
     }
     
-    func calendarHaveEvent(calendar: JTCalendar!, date: NSDate!) -> Bool {
+    func calendarHaveEvent(_ calendar: JTCalendar!, date: Date!) -> Bool {
         let dateString = date.getDateString()
         if self.activityDates.contains(dateString) {
             // there is at least one activity on this date
@@ -155,15 +155,15 @@ class VTTeamCalendarViewController: UIViewController, JTCalendarDataSource, NSUR
         return false
     }
     
-    func calendarDidDateSelected(calendar: JTCalendar!, date: NSDate!) {
+    func calendarDidDateSelected(_ calendar: JTCalendar!, date: Date!) {
         self.selectedDate = date
         let selectedDateString = date.getDateString()
         
-        let currentDate = NSDate()
-        let cal = NSCalendar.currentCalendar()
+        let currentDate = Date()
+        let cal = Calendar.current
         // since the time of self.selectedDate is always midnight, so in order to compare the 2 dates(the user selected date and today's date) to see if user wants to publish an activity before TODAY, a date of today with the time being midnight needs to be constructed as well
-        var midNightOfCurrentDate:NSDate?
-        cal.rangeOfUnit(.Day, startDate: &midNightOfCurrentDate, interval: nil, forDate: currentDate)
+        var midNightOfCurrentDate:Date?
+        (cal as NSCalendar).range(of: .day, start: &midNightOfCurrentDate, interval: nil, for: currentDate)
         
         // if the calendar is NOT YET in week mode, change it to week mode
         if self.calendar.calendarAppearance.isWeekMode == false {
@@ -172,7 +172,7 @@ class VTTeamCalendarViewController: UIViewController, JTCalendarDataSource, NSUR
             self.calendar.calendarAppearance.isWeekMode = true
             self.calendar.reloadAppearance()
             
-            UIView.animateWithDuration(0.3, delay: 0.0, options: UIViewAnimationOptions.CurveEaseInOut, animations: {
+            UIView.animate(withDuration: 0.3, delay: 0.0, options: UIViewAnimationOptions(), animations: {
                 self.calendarContentViewHeightConstraint.constant = CalendarMenuHeightOfWeekMode
                 var frame:CGRect = self.calendarContentView.frame
                 frame.size.height = CalendarMenuHeightOfWeekMode
@@ -187,13 +187,13 @@ class VTTeamCalendarViewController: UIViewController, JTCalendarDataSource, NSUR
         // a). the current user is the team captain, and
         // b). the selected date is in the future,
         // can he/she publish new activity
-        if Singleton_UserOwnedTeam.sharedInstance.teamId == self.teamId && (midNightOfCurrentDate!.compare(self.selectedDate!) == NSComparisonResult.OrderedAscending || midNightOfCurrentDate!.compare(self.selectedDate!) == NSComparisonResult.OrderedSame) {
-            UIView.animateWithDuration(0.3, animations: {
+        if Singleton_UserOwnedTeam.sharedInstance.teamId == self.teamId && (midNightOfCurrentDate!.compare(self.selectedDate!) == ComparisonResult.orderedAscending || midNightOfCurrentDate!.compare(self.selectedDate!) == ComparisonResult.orderedSame) {
+            UIView.animate(withDuration: 0.3, animations: {
                 self.view_newActivityButtonContainer.alpha = 1.0
                 self.activityTableViewBottomLayoutConstraint.constant = 62
             })
         } else {
-            UIView.animateWithDuration(0.3, animations: {
+            UIView.animate(withDuration: 0.3, animations: {
                 self.view_newActivityButtonContainer.alpha = 0
                 self.activityTableViewBottomLayoutConstraint.constant = 0
             })
@@ -214,11 +214,11 @@ class VTTeamCalendarViewController: UIViewController, JTCalendarDataSource, NSUR
         if self.calendar.calendarAppearance.isWeekMode {
             let weekday = self.calendarContentView.currentDate!.getDateComponents().weekday
             let timeInterval = 60 * 60 * 24 * -(weekday - 2)
-            let startDateOfCurrentShowingWeek = self.calendarContentView.currentDate!.dateByAddingTimeInterval(NSTimeInterval(timeInterval))
-            let endDateOfCurrentShowingWeek = self.calendarContentView.currentDate!.dateByAddingTimeInterval(NSTimeInterval(60 * 60 * 24 * (7 - weekday + 1)))
+            let startDateOfCurrentShowingWeek = self.calendarContentView.currentDate!.addingTimeInterval(TimeInterval(timeInterval))
+            let endDateOfCurrentShowingWeek = self.calendarContentView.currentDate!.addingTimeInterval(TimeInterval(60 * 60 * 24 * (7 - weekday + 1)))
             
-            if startDateOfCurrentShowingWeek.compare(self.startDateOfCurrentBatchOfActivities!) == NSComparisonResult.OrderedAscending ||
-                endDateOfCurrentShowingWeek.compare(self.endDateOfCurrentBatchOfActivities!) == NSComparisonResult.OrderedDescending {  // current showing week in calendar contains dates that are outside the date range of current batch of activities, so we should send http request to server asking for activities data for a new date range
+            if startDateOfCurrentShowingWeek.compare(self.startDateOfCurrentBatchOfActivities!) == ComparisonResult.orderedAscending ||
+                endDateOfCurrentShowingWeek.compare(self.endDateOfCurrentBatchOfActivities!) == ComparisonResult.orderedDescending {  // current showing week in calendar contains dates that are outside the date range of current batch of activities, so we should send http request to server asking for activities data for a new date range
                     return true
             } else {
                 return false
@@ -260,8 +260,8 @@ class VTTeamCalendarViewController: UIViewController, JTCalendarDataSource, NSUR
             startTime = "\(Int(year))-\(Int(month - 1))-01"
             endTime = "\(Int(year))-\(Int(month + 1))-28"
         }
-        self.startDateOfCurrentBatchOfActivities = NSDate(dateString: startTime)
-        self.endDateOfCurrentBatchOfActivities = NSDate(dateString: endTime)
+        self.startDateOfCurrentBatchOfActivities = Date(dateString: startTime)
+        self.endDateOfCurrentBatchOfActivities = Date(dateString: endTime)
         
         let urlStringToGetActivitiesWithinPeriod = URLGetActivities + "?teamId=\(self.teamId)&startTime=\(startTime)&endTime=\(endTime)"
         let connection = Toolbox.asyncHttpGetFromURL(urlStringToGetActivitiesWithinPeriod, delegate: self)
@@ -270,16 +270,16 @@ class VTTeamCalendarViewController: UIViewController, JTCalendarDataSource, NSUR
         }
     }
     
-    func connection(connection: NSURLConnection, didReceiveData data: NSData) {
-        self.responseData?.appendData(data)
+    func connection(_ connection: NSURLConnection, didReceive data: Data) {
+        self.responseData?.append(data)
     }
     
-    func connection(connection: NSURLConnection, didFailWithError error: NSError) {
+    func connection(_ connection: NSURLConnection, didFailWithError error: Error) {
         Toolbox.showCustomAlertViewWithImage("unhappy", title: "网络超时")
         // if cannot get activities from server, then get activites from local database
         let dbManager = DBManager(databaseFilename: "soccer_ios.sqlite")
-        let activitiesInLocalDatabaseWithinDateRange = dbManager.loadDataFromDB(
-            "select * from activities where forUserId=? and date between ? and ?",
+        let activitiesInLocalDatabaseWithinDateRange = dbManager?.loadData(
+            fromDB: "select * from activities where forUserId=? and date between ? and ?",
             parameters: [
                 Singleton_CurrentUser.sharedInstance.userId!,
                 self.startDateOfCurrentBatchOfActivities!.getDateString(),
@@ -287,8 +287,8 @@ class VTTeamCalendarViewController: UIViewController, JTCalendarDataSource, NSUR
             ]
         )
         if activitiesInLocalDatabaseWithinDateRange.count > 0 {
-            self.activityList.removeAll(keepCapacity: false)
-            self.activityDates.removeAll(keepCapacity: false)
+            self.activityList.removeAll(keepingCapacity: false)
+            self.activityDates.removeAll(keepingCapacity: false)
             for i in 0...activitiesInLocalDatabaseWithinDateRange.count - 1 {
                 let activity = Activity.formatDatabaseRecordToActivity(activitiesInLocalDatabaseWithinDateRange[i] as! [AnyObject])
                 self.activityList.append(activity)
@@ -301,14 +301,14 @@ class VTTeamCalendarViewController: UIViewController, JTCalendarDataSource, NSUR
         self.responseData = NSMutableData()
     }
     
-    func connectionDidFinishLoading(connection: NSURLConnection) {
+    func connectionDidFinishLoading(_ connection: NSURLConnection) {
         // handle server response and save activities results as a NSMutableDictionary with date as the key and activity JSON info as the object, the date has the format "2000-12-01"
-        let jsonArray = (try? NSJSONSerialization.JSONObjectWithData(self.responseData!, options: .MutableLeaves)) as? [AnyObject]
+        let jsonArray = (try? JSONSerialization.jsonObject(with: self.responseData! as Data, options: .mutableLeaves)) as? [AnyObject]
         
         if jsonArray != nil {   // get activities data succeeded
             // clear activityList first if activityList is NOT empty
-            self.activityList.removeAll(keepCapacity: false)
-            self.activityDates.removeAll(keepCapacity: false)
+            self.activityList.removeAll(keepingCapacity: false)
+            self.activityDates.removeAll(keepingCapacity: false)
             
             for object in jsonArray! {
                 let activity = Activity(data: object as! [String: AnyObject])
@@ -325,25 +325,25 @@ class VTTeamCalendarViewController: UIViewController, JTCalendarDataSource, NSUR
         self.responseData = NSMutableData()
     }
     
-    @IBAction func initiateNewActivity(sender: AnyObject) {
-        self.performSegueWithIdentifier("newActivitySegue", sender: self)
+    @IBAction func initiateNewActivity(_ sender: AnyObject) {
+        self.performSegue(withIdentifier: "newActivitySegue", sender: self)
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "newActivitySegue" {
-            let destinationNavigationController = segue.destinationViewController as? UINavigationController
+            let destinationNavigationController = segue.destination as? UINavigationController
             let newActivityTableViewController = destinationNavigationController?.viewControllers[0] as? VTNewActivityTableViewController
             newActivityTableViewController?.activityDate = self.selectedDate!
         } else if segue.identifier == "containerOfTeamActivitiesForDateSegue" {
-            let destinationViewController = segue.destinationViewController as! VTTeamActivitiesForDateTableViewController
+            let destinationViewController = segue.destination as! VTTeamActivitiesForDateTableViewController
             self.delegate = destinationViewController
         } else if segue.identifier == "activityDetailSegue" {
-            let destinationViewController = segue.destinationViewController as! VTTeamActivityInfoTableViewController
+            let destinationViewController = segue.destination as! VTTeamActivityInfoTableViewController
             destinationViewController.activityObject = self.selectedActivity
         }
     }
     
-    @IBAction func unwindToTeamCalendarView(segue: UIStoryboardSegue) {
+    @IBAction func unwindToTeamCalendarView(_ segue: UIStoryboardSegue) {
     }
     
     // Class destructor
@@ -362,8 +362,8 @@ class VTTeamCalendarViewController: UIViewController, JTCalendarDataSource, NSUR
             }
             self.calendar = nil
         }
-        self.activityList.removeAll(keepCapacity: false)
-        self.activityDates.removeAll(keepCapacity: false)
+        self.activityList.removeAll(keepingCapacity: false)
+        self.activityDates.removeAll(keepingCapacity: false)
         self.selectedActivity = nil
         self.teamId = nil
         self.selectedDate = nil
@@ -371,6 +371,6 @@ class VTTeamCalendarViewController: UIViewController, JTCalendarDataSource, NSUR
         self.startDateOfCurrentBatchOfActivities = nil
         self.endDateOfCurrentBatchOfActivities = nil
         
-        NSNotificationCenter.defaultCenter().removeObserver(self)
+        NotificationCenter.default.removeObserver(self)
     }
 }

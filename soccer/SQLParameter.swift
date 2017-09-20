@@ -20,21 +20,21 @@ class SQLParameter: NSObject {
         let stringValue = value as? String
         if stringValue != nil {
             self.parameterStringValue = value as! String
-            self.parameterType = .String
+            self.parameterType = .string
         } else {
             self.parameterIntegerValue = value as! Int
-            self.parameterType = .Integer
+            self.parameterType = .integer
         }
     }
     
     init(stringValue: String, index: Int) {
-        self.parameterType = .String
+        self.parameterType = .string
         self.parameterStringValue = stringValue
         self.parameterIndex = index
     }
     
     init(integerValue: Int, index: Int) {
-        self.parameterType = .Integer
+        self.parameterType = .integer
         self.parameterIntegerValue = integerValue
         self.parameterIndex = index
     }
